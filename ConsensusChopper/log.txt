@@ -1,0 +1,5 @@
+Run inputs are: 
+/home/javi/testzone
+tgme
+150
+50
