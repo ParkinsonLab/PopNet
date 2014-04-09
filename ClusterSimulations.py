@@ -3,6 +3,8 @@ Created on Apr 7, 2014
 
 @author: Javi
 '''
+
+import numpy as np
 '''The cluster simulation script aims to perform simulation based functions on clustering patterns. 
 This category is started with comparing the clustering patterns of random strain-pairs.
 However, other similar functins may evolve from this, and should be included in this script.'''
@@ -14,21 +16,32 @@ It iterates through all clusters, compares, and gives out either 1 or 0 as a res
 Output: data for each chromosome is transformed to a list of 1s and 0s. 
 Format: {chr:[0, 1...]}'''
 def strainPairComparison(clusters, strains):
-    for chr in clusters:
-
+    results = {}
+    for name, chr in clusters.items():
+        thisChr = []
+        results[name] = thisChr
+        for block in chr:
+            if identical(block, strains):
+                thisChr.append(1)
+            else
+                thisChr.append(0)
+    return results
+        
 '''helper function for strainPairComparison. 
 determines if the strains are identical in this block'''
 def identical(clusters, strains):        
     for line in clusters:
         if set(strains).issubset(set(line)):
             return True
+    return False
     
 '''(List) -> list of tuples representing blocks
 iterates through a list using a moving window, and deterine whether a particular
 section is considered identical or not. Requires at least 5 consecutive identities
 to begin an identity block. '''
 def prune(numbers):
-    pass
+    numarray = np.array(numbers)
+    
 
 '''(matrix) -> dictionary of key sites: relevant strains
 gives a NxN matrix containing identity information between strains, find the important
