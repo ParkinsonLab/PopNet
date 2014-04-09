@@ -61,7 +61,7 @@ class FqBlock:
         self.seqid = newseqid
         
     def __print(self):
-        print(self.build())
+        print self.build()
         
     def reset(self):
         self.__init__(self.blocklength, self.overlap)

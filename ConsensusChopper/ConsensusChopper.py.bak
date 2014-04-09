@@ -13,7 +13,7 @@ import os
 from os import listdir
 from os.path import isfile, join
 import re
-from .FqBlock import FqBlock
+from FqBlock import FqBlock
    
  
 
@@ -40,9 +40,9 @@ def chop(newdirectory, newchopdirectory, newsourcename, newidentifier, newlength
     
      
     source = open(sourcename, "r")
-    print("\nreading file %s ..." % sourcename)
+    print "\nreading file %s ..." % sourcename
     data = source.read()
-    print("done.")
+    print "done."
     
     product = open("%s/%s-chopped.fq" % (chopdirectory, sourcename.split(".")[0]), "w")
     
@@ -88,10 +88,10 @@ def chop(newdirectory, newchopdirectory, newsourcename, newidentifier, newlength
 
 if __name__ == '__main__':
     #modify these as needed
-    directory = input("Please specify working directory, in full \n")
-    identifier = input("Please input sequence identifier, not including the @ symbol \n")
-    length = eval(input("Please specify the length of moving window \n"))
-    overlap = eval(input("Please specify the length of overlap \n"))
+    directory = raw_input("Please specify working directory, in full \n")
+    identifier = raw_input("Please input sequence identifier, not including the @ symbol \n")
+    length = input("Please specify the length of moving window \n")
+    overlap = input("Please specify the length of overlap \n")
     
     #Do not modify
     os.chdir(directory)  
@@ -106,7 +106,7 @@ if __name__ == '__main__':
     
     onlyfiles = [ f for f in listdir(directory) if isfile(join(directory,f)) ]
     for f in onlyfiles:
-        print("\nProcessing %s ..." % f)
+        print "\nProcessing %s ..." % f
         log.write("\nProcessing %s ... " % f)
         
         try: 
@@ -119,4 +119,4 @@ if __name__ == '__main__':
             log.write("\nerror, %s is not a fq file" % f)
  
               
-    print("\nend of script")
+    print "\nend of script"

@@ -14,13 +14,13 @@ from subprocess import call
 import itertools
 
 def toMCLTab(matrix, outpath):
-    print("Writing MCL tab file")
+    print "Writing MCL tab file"
     with open(outpath, "w") as tab:
         for index, name in enumerate(sorted(matrix)): #writes the doms string, as well as the tab file
             tab.write("%d %s\n"%(index, name))                     
     
 def toMCL(matrix, outpath):
-    print("Encoding matrix to MCL")
+    print "Encoding matrix to MCL"
     dimension = len(matrix) #dimensions match the number of samples
     with open(outpath, "w") as output:                    
         #The header portion of each matrix
@@ -45,17 +45,17 @@ def toMCL(matrix, outpath):
     
 
 def nexusOutput(tree):
-    print("Encoding to Nexus format")
+    print "Encoding to Nexus format"
     #Tree is {"genome": info}. items returns a list of items, of which index 0 is the genome tuple. [1] is the info table.
-    data = list(tree.items())[0][1]
+    data = tree.items()[0][1]
     exampleDict = data[0]
     samplecount = len(exampleDict)
     
     #calculating total length
-    lineLength = len(list(exampleDict.items())[0][1])
-    lastLineLength = len(list(data[-1].items())[0][1])
+    lineLength = len(exampleDict.items()[0][1])
+    lastLineLength = len(data[-1].items()[0][1])
     totalLength = lineLength * (len(data) - 1) + lastLineLength    
-    print("writing..")
+    print "writing.."
     with open("Genome_nexus.nex", "w") as output:
         #write the header portion
         output.write("#NEXUS\nBEGIN taxa;\n\tDIMENSIONS ntax=%i;\nTAXLABELS\n"%(samplecount))         
@@ -67,11 +67,11 @@ def nexusOutput(tree):
                 output.write("\t" + key + "\t" + info + "\n")
             output.write("\n")
         output.write("\t;\nEND;")
-    print("done")
+    print "done"
 
 def nexusMatrixOutput(matrix, sampleList):
     samplecount = len(sampleList)    
-    print("writing..")
+    print "writing.."
     for chr in matrix:
         data = matrix[chr]
         with open("%s_matrix_nexus.nex"%chr, "w") as output:
@@ -88,11 +88,11 @@ def nexusMatrixOutput(matrix, sampleList):
                     output.write("%i "%data[x][y])
                 output.write("\n")
             output.write(";\nEND [distances];")
-    print("done")
+    print "done"
 
 def clusterMatrixOutput(matrix, sampleList):
     samplecount = len(sampleList)    
-    print("writing..")
+    print "writing.."
     for chr in matrix:
         data = matrix[chr]
         with open("%s_matrix.cluster"%chr, "w") as output:
@@ -107,7 +107,7 @@ def clusterMatrixOutput(matrix, sampleList):
                 for y in sampleList:
                     output.write("%i\t"%data[x][y])
                 output.write("\n")
-    print("done")
+    print "done"
 
 def toNexusTree(tree, sampleList):
     baseSampleDict = {}
@@ -117,9 +117,9 @@ def toNexusTree(tree, sampleList):
     results = []
     for chr in tree:
         for position in chr:
-            for key, info in list(chr[position].items()):
+            for key, info in chr[position].items():
                 sampleDict[key] += info
-            if len(list(sampleDict.items())[0]) >= 33:
+            if len(sampleDict.items()[0]) >= 33:
                 results.append(sampleDict)
                 sampleDict = copy.deepcopy(baseSampleDict)
             
@@ -148,7 +148,7 @@ if __name__ == '__main__':
         samplenames.append(refname)
         #sample count does not increase by 1 because the dash is added manually.
         
-        print("reading..")
+        print "reading.."
         #read data
         tree = []
         block = {}
@@ -180,7 +180,7 @@ if __name__ == '__main__':
             symbols = re.split("\\t",line[1])
             for x in range(samplecount):
                 if not re.match("[ATCNG.-]",symbols[x]): 
-                    print("error wrong symbol" + symbols[x])
+                    print "error wrong symbol" + symbols[x]
                 thisblock[samplenames[x]] += symbols[x]
             
             

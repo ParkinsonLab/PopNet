@@ -96,7 +96,7 @@ def read_range_borda(filename, num_ridings, voters_per_riding): #works
         for i in range(num_ridings):
             for j in range(voters_per_riding):
                 votes_in_ridings[i][j] = borda_ballots[i*voters_per_riding + j]
-    print("done")    
+    print "done"    
     return votes_in_ridings
 
 def diamond(max_itr):
@@ -114,11 +114,11 @@ def rec_diamond(max_itr, cur_itr):
 def one_itr(matrix):
     result = np.empty_like(matrix)
     length = len(matrix)
-    for x in range(length):
-        for y in range(length):
+    for x in xrange(length):
+        for y in xrange(length):
             ncount = 0
-            for a in range(x-1, x+2):
-                for b in range(y-1, y+2):
+            for a in xrange(x-1, x+2):
+                for b in xrange(y-1, y+2):
                     if not out_of_bound(a, b, matrix):
                         ncount += matrix[a, b]
             result[x, y] = transform(matrix[x,y], ncount)
@@ -138,10 +138,10 @@ def transform(value, neighbors):
     return 0
         
 def game_of_life(matrix, num):
-    print(matrix)
-    for x in range(num):
+    print matrix
+    for x in xrange(num):
         matrix = one_itr(matrix)
-        print(matrix)
+        print matrix
         
         
 if __name__ == '__main__':

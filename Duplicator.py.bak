@@ -7,10 +7,10 @@ import os
 
 if __name__ == '__main__':
        #modify these as needed
-    directory = input("Please specify working directory, in full \n")
-    identifier = input("Please input sequence identifier, not including the @ symbol \n")
-    length = eval(input("Please specify the length of moving window \n"))
-    overlap = eval(input("Please specify the length of overlap \n"))
+    directory = raw_input("Please specify working directory, in full \n")
+    identifier = raw_input("Please input sequence identifier, not including the @ symbol \n")
+    length = input("Please specify the length of moving window \n")
+    overlap = input("Please specify the length of overlap \n")
     
     #Do not modify
     os.chdir(directory)  
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     
     onlyfiles = [ f for f in listdir(directory) if isfile(join(directory,f)) ]
     for f in onlyfiles:
-        print("\nProcessing %s ..." % f)
+        print "\nProcessing %s ..." % f
         log.write("\nProcessing %s ... " % f)
         
         try: 

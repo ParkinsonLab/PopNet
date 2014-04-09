@@ -13,7 +13,7 @@ import os
 import similarity
 
 if __name__ == '__main__':
-    print("Runner Script Start")
+    print "Runner Script Start"
 #     #Job: Encode whole genome information into MCL format.
 #     filePath = "/data/javi/Toxo/64Genomes/matrixBackup/persistentResult.txt"
 #     tabPath = "/data/javi/Toxo/64Genomes/matrixBackup/persistentMatrix.tab"
@@ -31,4 +31,4 @@ if __name__ == '__main__':
     
     #Job: Similarity Comparisons
     
-    print("Runner Script End")
+    print "Runner Script End"

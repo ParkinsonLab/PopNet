@@ -54,7 +54,7 @@ if __name__ == '__main__':
         samplenames.append(refname)
         #sample count does not increase by 1 because the dash is added manually.
         
-        print("reading..")
+        print "reading.."
         #read data
         tree = []
         chrName = ""
@@ -80,15 +80,15 @@ if __name__ == '__main__':
                 #checks if all symbols are valid.
                 for x in range(samplecount):
                     if not re.match("[ATCNG.-]",symbols[x]): 
-                        print("error wrong symbol" + symbols[x])
+                        print "error wrong symbol" + symbols[x]
 
                 #performs calculation for pi
                 prepi = RPC(symbols)
-                print(prepi)
+                print prepi
                 pi = float(prepi[0]) / float(prepi[1])
                 chrTree[position] = pi
             
-        print("writing..")    
+        print "writing.."    
         for chr in tree:
             with open("%s_nexus.nex"%chr[0], "w") as output:            
                 #write the header portion
@@ -96,7 +96,7 @@ if __name__ == '__main__':
                 output.write("%s\tpi\ttheta\n"%chr[0])
                 for e in sorted(chr[1].items()):
                     output.write("%i\t%f\n" % (e[0], e[1]))
-        print("done\n")
+        print "done\n"
         
         
         

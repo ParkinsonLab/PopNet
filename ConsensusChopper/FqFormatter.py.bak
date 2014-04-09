@@ -7,7 +7,7 @@ import os
 from os import listdir
 from os.path import isfile, join
 import re
-from .FqBlock import FqBlock
+from FqBlock import FqBlock
 
 def format(directory, f):
     source = open("f", "r").read()
@@ -15,7 +15,7 @@ def format(directory, f):
 
 if __name__ == '__main__':
      #modify these as needed
-    directory = input("Please specify working directory, in full \n")
+    directory = raw_input("Please specify working directory, in full \n")
     
     #Do not modify
     os.chdir(directory)  
@@ -30,7 +30,7 @@ if __name__ == '__main__':
     
     onlyfiles = [ f for f in listdir(directory) if isfile(join(directory,f)) ]
     for f in onlyfiles:
-        print("\nProcessing %s ..." % f)
+        print "\nProcessing %s ..." % f
         log.write("\nProcessing %s ... " % f)
         
         try: 
@@ -42,4 +42,4 @@ if __name__ == '__main__':
             log.write("\nerror, %s is not a fq file" % f)
  
               
-    print("\nend of script")
+    print "\nend of script"

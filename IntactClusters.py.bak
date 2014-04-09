@@ -27,7 +27,7 @@ def calculateBlock(targets, clusters):
     results = {}
     for targetName, target in list(targets.items()):
         results[targetName] = isIntact(target, clusters)
-        if results[targetName] > 1: print(('ERROR: TARGET INTACT IN MORE THAN 1 CLUSTER. \n{0}\n{1}'.format(targetName, clusters)))
+        if results[targetName] > 1: print('ERROR: TARGET INTACT IN MORE THAN 1 CLUSTER. \n{0}\n{1}'.format(targetName, clusters))
     return results
 
 '''(dict of list of dicts, filename) -> None, writes to file
@@ -38,9 +38,9 @@ def write(resultsTree, outfile):
     #something to put on the first part of each line
     selfName = "GENOME"
     
-    with open(outfile, "wb") as output:
+    with open(outfile, "w") as output:
         #write the hit lit as the keys within the first block 
-        output.write('$\n' + '\n'.join(list(list(resultsTree.values())[0][0].keys())) + '\n$\n')
+        output.write('$\n' + '\n'.join(list(resultsTree.values())[0][0].keys()) + '\n$\n')
         
         #write the rest
         for chrName, chr in list(resultsTree.items()):

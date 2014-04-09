@@ -21,7 +21,7 @@ if __name__ == '__main__':
     try:
         onlyfiles = [ f for f in listdir(directory) if (isfile(join(directory,f)) and (f.endswith(".fq"))) ]
     except Exception:
-        print("\n%s is not a valid file." % f)
+        print "\n%s is not a valid file." % f
         sys.exit()
     
     "files identified. starting..."
@@ -29,5 +29,5 @@ if __name__ == '__main__':
         with open(f, "r") as input:
             outputname = prefix(f) + ".fasta"
             count = SeqIO.convert(f, "fastq", outputname, "fasta")
-            print("Converted %i reads in %s" % (count, f))
-    print("done.")
+            print "Converted %i reads in %s" % (count, f)
+    print "done."

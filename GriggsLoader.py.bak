@@ -10,9 +10,9 @@ import NexusEncoder
 
 
 def load(path):
-    print("loading..")
+    print "loading.."
     with open(path) as source:
-        nameList = [_f for _f in re.split("\t",source.readline().replace("\r\n", "").replace("\n", "")) if _f] #gets names, split, filter for preceeding tabs. Name will be in order.
+        nameList = filter(None, re.split("\t",source.readline().replace("\r\n", "").replace("\n", ""))) #gets names, split, filter for preceeding tabs. Name will be in order.
         rawData = re.split("\n", source.read())
         tree = {}
         chrBranch = {}
@@ -33,27 +33,27 @@ def load(path):
 #                print "%s\t%s"%(samp, snp)
                 posBranch[samp] = snp.replace("\r", "")
                 
-    print("loading done")
+    print "loading done"
     return (tree, nameList)
 
 def aggregateForNexus(treeTuple):
-    print("begin aggregate")
+    print "begin aggregate"
     results = []
     baseBlock = {}
     for name in treeTuple[1]:
         baseBlock[name] = ""
     block = copy.deepcopy(baseBlock)
     
-    for chrs in list(treeTuple[0].items()):
+    for chrs in treeTuple[0].items():
         for pos in sorted(chrs[1].items()):
-            for name, info in list(pos[1].items()):
+            for name, info in pos[1].items():
                 block[name] += info
                 last = name
             if len(block[last]) >= 33:
                 results.append(block)
                 block = copy.deepcopy(baseBlock)
         results.append(block)
-    print("aggregate done") 
+    print "aggregate done" 
     return {"Genome" : results}
 
 if __name__ == '__main__':    
@@ -66,5 +66,5 @@ if __name__ == '__main__':
     	import SnpSorter
     	SnpSorter.snpDensity(treeTup[0], densityOutput, treeTup[1])
     
-    print("end of GriggsLoader script")
+    print "end of GriggsLoader script"
             

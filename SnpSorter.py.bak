@@ -39,8 +39,8 @@ def addData(f, dataTree, minCoverage):
     try:
         data = f.read()
         noHeader = re.search(fetchRegexPattern(f.name), data).group(1)
-    except Exception as e:
-        print("header parsing error in %s: %s" % (f.name, str(e)))
+    except Exception, e:
+        print "header parsing error in %s: %s" % (f.name, str(e))
         sys.exit()
     
     #Divide the remaining data into lines
@@ -69,7 +69,7 @@ def addData(f, dataTree, minCoverage):
 
 
 def fetchRegexPattern(name):
-    print("fetching RegEx for %s" % name)
+    print "fetching RegEx for %s" % name
     if name.endswith(".snps"):
         return "(?s)^.*?=\n(.*)"
     else:
@@ -94,9 +94,9 @@ def organizeLine(rawLine, name, minCoverage):
                 return [lineSplit[0].upper(), int(lineSplit[1]), name[:5].upper(), lineSplit[4].upper()] 
             else:
                 return None
-    except Exception as e:
-        print("Illegal Line in file %s: %s" % (name, e))
-        print(lineSplit)
+    except Exception, e:
+        print "Illegal Line in file %s: %s" % (name, e)
+        print lineSplit
         traceback.print_exc()
         sys.exit()
     
@@ -130,7 +130,7 @@ def record(dataTree, output, fileList):
                 
 #Assumes a sorted fileList, with type 1 reference being first and type 3 being second. 
 def resort(dataTree, fileList):
-    print("resorting..")
+    print "resorting.."
     for chrName in dataTree:
         chrBranch = dataTree[chrName]
         
@@ -297,7 +297,7 @@ def recordMatrix(matrixDict):
                 total = 0
                 for index in chrBranch:
                     indexBranch = chrBranch[index]
-                    dimension = len(list(indexBranch.keys())) #dimensions match the number of samples
+                    dimension = len(indexBranch.keys()) #dimensions match the number of samples
                     #now we make the files in here, one separate file per chromosome per 10kb.
                     matrixPrefix = "matrix/%s.%d"%(chrName, index)
                     with open(matrixPrefix + ".mci", "w") as output, open(matrixPrefix + ".tab", "w") as tab:
@@ -322,7 +322,7 @@ def recordMatrix(matrixDict):
                         
                         #This parts allows the matrix to divide by the first value,
                         #thus normalizing all input to between zero and 1
-                        tempPos = list(indexBranch.keys())[1]
+                        tempPos = indexBranch.keys()[1]
                         total = max(float(indexBranch[tempPos][tempPos]), float(1))
                         
                         for x in indexBranch:
@@ -401,7 +401,7 @@ def analyzeMatrix(results):
 #                     print "hit zzz", matrixStats[entry[2]];  
                 output.write("%d - %d \n%s\n###\n"%(entry[0], entry[1], entry[2]))         
         
-        sortedInvStats = sorted({(v,k) for k, v in matrixStats.items()}, reverse=True)
+        sortedInvStats = sorted({(v,k) for k, v in matrixStats.iteritems()}, reverse=True)
         
         #debug!
         #temp = {(v,k) for k, v in matrixStats.iteritems()}
@@ -412,7 +412,7 @@ def analyzeMatrix(results):
             
             #debug!
             if sortedInvStats[1] == "3142.\tME49\tARI.V\nP89.S\tVEG.S\tGT1.S\n3045.\tTGSKN":
-                print("wrote this!")
+                print "wrote this!"
             
                                 
         
@@ -421,7 +421,7 @@ def toRange(numList):
         #This is a bit of a convoluted function, but it basically sorts the list of numbers into a list of tuples representing the ranges
         #for ex. [1,2,4,5,9] -> [(1,2), (4,5), (9,9)]
         #this is then transformed to have one entry per line and returned as a string to be written in the parent function
-        return [(t[0][1], t[-1][1]) for t in (tuple(g[1]) for g in itertools.groupby(enumerate(sorted(numList)), lambda i_x: i_x[0] - i_x[1]))]
+        return [(t[0][1], t[-1][1]) for t in (tuple(g[1]) for g in itertools.groupby(enumerate(sorted(numList)), lambda(i, x): i - x))]
         
             
 def arrangeMatrixResults(tree): 
@@ -559,7 +559,7 @@ if __name__ == '__main__':
         os.mkdir(matrixDir)
     matrix = calculateMatrix(dataTree, sampleList)
     recordMatrix(matrix)    
-    print("\nend of script")
+    print "\nend of script"
 
 
 

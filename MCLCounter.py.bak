@@ -9,7 +9,7 @@ import copy
 import Chr_NexusEncoder
 import NexusEncoder
 import numpy
-
+import matplotlib
 
 #path = results.analyzed
 #tabpath = the tab file
@@ -19,7 +19,7 @@ def loadClusters(path, tabpath):
     with open(path, "r") as source, open(tabpath, "r") as tab:
         #create the sampleList for making the matrix
         sampleList = []
-        rawSampleList = [_f for _f in re.split("\n",tab.read()) if _f]
+        rawSampleList = filter(None, re.split("\n",tab.read()))
         for element in rawSampleList:
             ts = re.split(" ", element)
             sampleList.append(ts[1])
@@ -30,7 +30,7 @@ def loadClusters(path, tabpath):
         for chr in chrs:
             chrBranch = []
             results[chr[0]] = chrBranch
-            segments = [_f for _f in re.split("\n\n", chr[1]) if _f] #each "matrix" is separated by a blank line.
+            segments = filter(None, re.split("\n\n", chr[1])) #each "matrix" is separated by a blank line.
             for segment in segments:
                 chrBranch.append(segment)
     print("done")    
@@ -44,11 +44,11 @@ def distribution(treeTuple, outputpath):
     data = treeTuple[0]
     sampleList = treeTuple[1]
     
-    for chrName, chr in list(data.items()):
+    for chrName, chr in data.items():
         chrBranch = []
         results[chrName] = chrBranch
         for segment in chr:
-            split = [_f for _f in re.split("\n", segment) if _f]
+            split = filter(None, re.split("\n", segment))
             position = int(split[0][1:])
             size = len(split) - 1
             chrBranch.append((position, size))
@@ -67,7 +67,7 @@ def graph_distribution(results):
 #    sizedPdf = PdfPages('%s_300Plots.pdf')
 
     count = 0
-    for chrName, chr in list(results.items()):
+    for chrName, chr in results.items():
         
         positions = [x[0] for x in chr]
         values = [x[1] for x in chr]
@@ -100,12 +100,12 @@ def findDifferences(treeTuple, outpath, blackList):
         
         results = {}
         
-        for name, chr in list(data.items()):
+        for name, chr in data.items():
             chrResultBranch = {}
             results[name] = chrResultBranch
-            prevCluster = [_f for _f in re.split("\n", chr[0])[1:] if _f]
+            prevCluster = filter(None, re.split("\n", chr[0])[1:])
             for cluster in chr[1:]:
-                clusterSplit = [_f for _f in re.split("\n", cluster) if _f]
+                clusterSplit = filter(None, re.split("\n", cluster))
                 score = diffScore(clusterSplit[1:], prevCluster)
                 chrResultBranch[int(clusterSplit[0][1:])] = len(score)
                 
@@ -187,7 +187,7 @@ def graphResults(name, results):
     pdf = PdfPages('%s.pdf'%name)
 #    sizedPdf = PdfPages('%s_300Plots.pdf'%results.name)
     count = 1 
-    for chrName, chr in list(results.items()):
+    for chrName, chr in results.items():
         positions = [x[0] for x in sorted(chr.items())]
         values = [x[1] for x in sorted(chr.items())]
         plt.figure(count)
@@ -215,13 +215,13 @@ def count(treeTuple, outputPath):
             for b in sampleList:
                 baseResultMatrix[a][b] = 0
         #Organizing the data and input into matrix.         
-        for name, chr in list(data.items()):
+        for name, chr in data.items():
             #reset
             resultMatrix = copy.deepcopy(baseResultMatrix)
             for segment in chr:
-                split = [_f for _f in re.split("\n", segment) if _f]
+                split = filter(None, re.split("\n", segment))
                 for line in split[1:]:
-                    pairs = returnAllPairs([_f for _f in re.split("\t", line) if _f])
+                    pairs = returnAllPairs(filter(None, re.split("\t", line)))
                     for x, y in pairs:
                         resultMatrix[x][y] += 1
                         if x != y:
@@ -239,22 +239,20 @@ def count(treeTuple, outputPath):
 #                 output.write("\n")
         print("done")
         return (results, sampleList)
-
-'''(List of elements) -> list of pairs
-gets all the possible pairs within this list of elements'''    
+    
 def returnAllPairs(list):
     if len(list) == 1:
         return [(list[0], list[0])]
     result = []
     for e in list[1:]:
         result.append((list[0], e))
-    #result += [(list[0], list[0])]
+    result += [(list[0], list[0])]
     return result + returnAllPairs(list[1:])
 
 def aggregate(tree):
     '''combines all the information from all the chromosomes'''
     print("aggregating results...")
-    chrs = list(tree.items())
+    chrs = tree.items()
     for chr in chrs[1:]:
         for sampa in chr[1]:
             for sampb in chr[1][sampa]:
@@ -267,7 +265,7 @@ def aggregate(tree):
                         
 def summary_distribution(results):
     summary = {}
-    for name, chr in list(results.items()):
+    for name, chr in results.items():
         for dp in chr:
             num_of_clusters = dp[1]
             if num_of_clusters not in summary:
@@ -284,28 +282,27 @@ def printMatrix(matrix, outfile):
 #        row_format ="{:>30}" * (len(header) + 1)
         row_format = "{:>30}" * 2 + "\n"
 #        output.write(row_format.format("", *header) + "\n")
-        for name, info in list(matrix.items()):
+        for name, info in matrix.items():
 #            output.write(row_format.format(name, *[x[1] for x in info.items()]) + "\n")
             output.write(row_format.format(name, str(info)))
             
 def printDiff(filename, results):
     with open(filename, "w") as out:
-        for key, item in list(results.items()):
+        for key, item in results.items():
             out.write(key + "\n")
-            for key, item in list(item.items()):
+            for key, item in item.items():
                 out.write("{0} : {1}\n".format(key, item))
                                 
 '''(chrName:list of strings) -> chrName: List of Matrices
 Breaks the each "clustering pattern" into a 2D list of elements.'''
 def toMatrix(clusters):
     results = {}
-    for chrName, chr in list(clusters.items()):
+    for chrName, chr in clusters.items():
         results[chrName] = [[y.split('\t') for y in x.split('\n')[1:]] for x in chr]
     return results
         
                     
-if __name__ == '__main__':
-    import matplotlib    
+if __name__ == '__main__':    
     matplotlib.use("pdf")
     import matplotlib.pyplot as plt
     from matplotlib.backends.backend_pdf import PdfPages

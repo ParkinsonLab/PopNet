@@ -42,7 +42,7 @@ def parse():
     #Convert converts the specified names in target and hitList into the column numbers on the matrix.
     #This way, we know what we are looking for inside the matrix. 
     if typeI == "" or path == "":
-        print("Error: hit list or path not specified.")
+        print "Error: hit list or path not specified."
         sys.exit()
     
     convert = {}
@@ -101,7 +101,7 @@ def parse():
                     outfile.write("%s - %s: %s\n"%(target, type, matrixTable[target][type]))
                 #this count here supplies the block number. It ends up being useless but oh well. 
                 count+=1
-    print("done!")
+    print "done!"
 
 
 def setTypes(hitList_param, target_param): #(type_1_name, type_2_name, type_3_name), target_name

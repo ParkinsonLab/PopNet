@@ -15,7 +15,7 @@ import itertools
 
 def nexusOutput(tree, samplenames):
     samplecount = len(samplenames)    
-    print("writing..")    
+    print "writing.."    
     for chr in tree:
         with open("%s_nexus.nex"%chr[0], "w") as output:            
             #write the header portion
@@ -29,11 +29,11 @@ def nexusOutput(tree, samplenames):
                 output.write("\n")
             output.write("\n")
             output.write("\t;\nEND;")
-    print("done\n%i"%totalcount)
+    print "done\n%i"%totalcount
 
 def nexusMatrixOutput(matrix, sampleList):
     samplecount = len(sampleList)    
-    print("writing..")
+    print "writing.."
     for chr in matrix:
         data = matrix[chr]
         with open("%s_matrix_nexus.nex"%chr, "w") as output:
@@ -50,11 +50,11 @@ def nexusMatrixOutput(matrix, sampleList):
                     output.write("%i "%data[x][y])
                 output.write("\n")
             output.write(";\nEND [distances];")
-    print("done")
+    print "done"
 
 def clusterMatrixOutput(matrix, sampleList):
     samplecount = len(sampleList)    
-    print("writing..")
+    print "writing.."
     for chr in matrix:
         data = matrix[chr]
         with open("%s_matrix.txt"%chr, "w") as output:
@@ -69,7 +69,7 @@ def clusterMatrixOutput(matrix, sampleList):
                 for y in sampleList:
                     output.write("\t%i"%data[x][y])
                 output.write("\n")
-    print("done")
+    print "done"
     
 if __name__ == '__main__':
     directory = "/data/javi/Toxo/BaseData/tempz"
@@ -95,7 +95,7 @@ if __name__ == '__main__':
         samplenames.append(refname)
         #sample count does not increase by 1 because the dash is added manually.
         
-        print("reading..")
+        print "reading.."
         #read data
         tree = []
         block = {}
@@ -136,7 +136,7 @@ if __name__ == '__main__':
                 symbols = re.split("\\t",line[1])
                 for x in range(samplecount):
                     if not re.match("[ATCNG.-]",symbols[x]): 
-                        print("error wrong symbol" + symbols[x])
+                        print "error wrong symbol" + symbols[x]
                     thisblock[samplenames[x]] += symbols[x]
                 
                 
