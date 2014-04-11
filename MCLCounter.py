@@ -14,16 +14,22 @@ import numpy
 #path = results.analyzed
 #tabpath = the tab file
 
-def loadClusters(path, tabpath):
-    print("loading clusters...")
-    with open(path, "r") as source, open(tabpath, "r") as tab:
-        #create the sampleList for making the matrix
+
+def loadSampleList(tabpath):
+    with open(tabpath, "r") as tab:
         sampleList = []
-        rawSampleList = [_f for _f in re.split("\n",tab.read()) if _f]
+        rawSampleList = [_f for _f in re.split("\n", tab.read()) if _f]
         for element in rawSampleList:
             ts = re.split(" ", element)
             sampleList.append(ts[1])
-            
+    
+    return sampleList
+
+def loadClusters(path, tabpath):
+    print("loading clusters...")
+    with open(path, "r") as source:
+        #create the sampleList for making the matrix
+        sampleList = loadSampleList(tabpath)   
         rawData = source.read()
         results = {}
         chrs = re.findall("(?s)(@.+?)\n(.+?)\n(?=$|@)", rawData)
@@ -38,6 +44,8 @@ def loadClusters(path, tabpath):
 
 
 
+    
+    
 def distribution(treeTuple, outputpath):
     print("calculating distribution...")
     results = {}
@@ -299,7 +307,7 @@ def printDiff(filename, results):
 Breaks the each "clustering pattern" into a 2D list of elements.'''
 def toMatrix(clusters):
     results = {}
-    for chrName, chr in list(clusters.items()):
+    for chrName, chr in clusters.items():
         results[chrName] = [[y.split('\t') for y in x.split('\n')[1:]] for x in chr]
     return results
         
