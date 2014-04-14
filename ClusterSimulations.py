@@ -23,7 +23,7 @@ def strainPairComparison(clusters, strains):
             results.append(1)
         else:
             results.append(0)
-    return results
+    return prune(results)
         
 '''helper function for strainPairComparison. 
 determines if the strains are identical in this block'''
@@ -39,13 +39,14 @@ section is considered identical or not. Requires at least 5 consecutive identiti
 to begin an identity block. '''
 def prune(numbers):
     numarray = np.array(numbers)
-    results = np.array()
+    results = []
     inBlock = False
     windowSize = 10
     enterValue = 10 #miin number of 1s required to enter a block. 
     exitValue = 3 #min number of 0s required to exit the block. Low because we're looking ahead
     tolerance = 2 #to exit a block, the first (tolerance) elements must not be 1s. 
     start = None
+    
     
     for x in range(len(numbers) - windowSize):
         value = sum(numarray[x:x+windowSize])
@@ -57,7 +58,9 @@ def prune(numbers):
             if value >= enterValue:
                 inBlock = True
                 start = x
-    return sorted(results)
+    if inBlock: results.append([start, x])
+    
+    return np.array(results)
     
             
 
@@ -68,28 +71,27 @@ blocks. Input should be from prune().
 IDENTITY MATRIX MUST BE A {CHRNAME: 1D ARRAY of the datatype specified in toIdentity
 '''
 def findKeyBlocks(identityMatrix):
-    tolerance = 15
+    tolerance = 5
     minMembers = 4
     keyBlocks = {}
     
     
     for name, chr in identityMatrix.items():
     #chr is of shape (#ofpairs, ['data'])
-        data = np.array(chr['data'].tolist())
-        assigned = []
+        dataList = chr['data'].tolist()
+        data = np.array(dataList)
+        assigned = np.zeros_like(data)
         chrKeyBlocks = {}
         keyBlocks[name] = chrKeyBlocks
-        for strain in chr:
-            for element in strain['data']:          
-                if element not in assigned:
-                    mask1 = np.abs(data[:,:,0] - element[0]) < tolerance
-                    mask2 = np.abs(data[:,:,1] - element[1]) < tolerance
-                    corrElements = mask1 * mask2
-                    if np.sum(corrElements) > minMembers:
-                        
-                        chrKeyBlocks[element] = chr
-                        corrList = np.sort(np.where(corrElements)[0])
-                        assigned += chr[corrElements]
+        for block in data:       
+            if not assigned[data==block].any():
+                mask1 = np.abs(data[:,0] - block[0]) < tolerance
+                mask2 = np.abs(data[:,1] - block[1]) < tolerance
+                corrElements = mask1 * mask2
+                if np.sum(corrElements) > minMembers:
+                    corrList = np.sort(np.where(corrElements)[0])
+                    chrKeyBlocks[(block[0], block[1])] = chr['name'][corrList]
+                    assigned[corrElements] = 1
     return keyBlocks
 
 
@@ -99,22 +101,33 @@ more to this script so this seems to be a good dividing step. Handles the constr
 of the identity matrix as well'''
 def toIdentity(clusterTree, strains):            
     identityMatrix = {}
-    datatype = np.dtype([('name', tuple), ('data', list)])
+    datatype = np.dtype([('name', list), ('data', list)])
     for name, chr in clusterTree.items():
+        print("processing {0}..".format(name))
         thisChr = []
-        for x in range(len(strains)):
-            for item in strains[x:]:
-                thisChr.append(((x, item), strainPairComparison(clusterTree, strains)))
+        for x in range(len(strains)-1):
+            for item in strains[x+1:]:
+#                 print(" ".join([strains[x], item]))
+                twoStrains = strainPairComparison(chr, [strains[x], item])
+                for block in twoStrains:
+                    thisChr.append(([strains[x], item], block))
         chrarr = np.array(thisChr, dtype=datatype)
-    identityMatrix[name] = thisChr
+        identityMatrix[name] = chrarr
     return findKeyBlocks(identityMatrix)
 
+
 def recordKeyBlocks(keyBlocks, outfile):
+    print("recording...")
     with open(outfile, "wb") as output:
-        for chrName, chr in keyBlocks:
-            output.write(bytes("@{0}\n".format(chrName)))
-            for name, strains in chr.items():
-                output.write(bytes("@({0}, {1})\n{2}\n".format(name[0], name[1], "\n".join(strains))))
+        for chrName, chr in keyBlocks.items():
+            output.write(bytes("@{0}\n".format(chrName), encoding='utf-8'))
+            for name, strains in sorted(chr.items()):
+                strainList = []
+                for pair in strains:
+                    for item in pair:
+                        if item not in strainList:
+                            strainList.append(item)
+                output.write(bytes("@({0}, {1})\n{2}\n\n".format(name[0], name[1], "\n".join(sorted(strainList))), encoding='utf-8'))
     
             
 '''(clusterTree) -> Dict of key sites: relevant strains
@@ -126,12 +139,21 @@ def simulation(clusters):
 
 
 if __name__ == '__main__':
-    filepath = '/home/javi/testzone/Griggs Stuff/persistentResults.txt'
-    tabpath = '/home/javi/testzone/Griggs Stuff/persistentMatrix.tab'
-    outpath = '/home/javi/testzone/Griggs Stuff/keyblocks'
-    clusterTree = MCLCounter.toMatrix(MCLCounter.loadClusters(filepath, tabpath)[0])
-    sampleList = MCLCounter.loadSampleList(tabpath)
-    recordKeyBlocks(toIdentity(clusterTree, sampleList), outpath)
+#     filepath = '/home/javi/testzone/Griggs Stuff/persistentResults.txt'
+#     tabpath = '/home/javi/testzone/Griggs Stuff/persistentMatrix.tab'
+#     outpath = '/home/javi/testzone/Griggs Stuff/keyblocks'
+
+#     filepath = r"F:\Documents\ProjectData\testzone\Griggs Stuff\persistentResults.txt"
+#     tabpath = r"F:\Documents\ProjectData\testzone\Griggs Stuff\persistentMatrix.tab"
+#     outpath = r"F:\Documents\ProjectData\testzone\Griggs Stuff\keyblocks.txt"
     
+    filepath = r"F:\Documents\ProjectData\64Genomes\Counting\persistentResult.txt"
+    tabpath = r"F:\Documents\ProjectData\64Genomes\Counting\persistentMatrix.tab"
+    outpath = r"F:\Documents\ProjectData\64Genomes\Counting\keyblocks-simple.txt"
+    
+    clusterTree = MCLCounter.toMatrix(MCLCounter.loadClusters(filepath, tabpath)[0])
+    sampleList = MCLCounter.loadSampleList(tabpath)[:10]
+    recordKeyBlocks(toIdentity(clusterTree, sampleList), outpath)
+    print("End of ClusterSimulations Script")
 
     
