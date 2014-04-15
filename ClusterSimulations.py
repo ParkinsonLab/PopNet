@@ -119,17 +119,64 @@ def toIdentity(clusterTree, strains):
 def recordKeyBlocks(keyBlocks, outfile):
     print("recording...")
     with open(outfile, "wb") as output:
-        for chrName, chr in keyBlocks.items():
-            output.write(bytes("@{0}\n".format(chrName), encoding='utf-8'))
+        for chrName, chr in sorted(keyBlocks.items()):
+            output.write(bytes("@{0}\n".format(chrName)).encode('utf-8'))
             for name, strains in sorted(chr.items()):
-                strainList = []
-                for pair in strains:
-                    for item in pair:
-                        if item not in strainList:
-                            strainList.append(item)
-                output.write(bytes("@({0}, {1})\n{2}\n\n".format(name[0], name[1], "\n".join(sorted(strainList))), encoding='utf-8'))
-    
+#                 strainList = []
+#                 for pair in strains:
+#                     for item in pair:
+#                         if item not in strainList:
+#                             strainList.append(item)
+                output.write(bytes("@({0}, {1})\n{2}\n\n".format(name[0], name[1], "\n".join(sorted(build(strains))))).encode('utf-8'))
+
+def build(pairs):
+    lines = []
+    for pair in pairs:
+        found = False
+        for line in lines:
+            if found: break
+            if pair[0] in line or pair[1] in line:
+                found = True
+                if pair[0] not in line:
+                    line.add(pair[0])
+                elif pair[1] not in line:
+                    line.add(pair[1])
+        if not found:
+            lines.append(set(pair))
             
+    return [" ".join(x) for x in lines]
+            
+    
+def toSimilarity(clusterTree, keyBlocks):
+    print("converting to similarity mode.. ")
+    compactTree = {}
+    for chrName, chr in keyBlocks.items():
+        compactChr = {}
+        compactTree[chrName] = compactChr
+        for coords, strains in sorted(chr.items()):
+            strainList = []
+            for pair in strains:
+                for item in pair:
+                    if item not in strainList:
+                        strainList.append(item)
+            for x in range(coords[0],coords[1]):
+                compactChr[x] = " ".join(strainList)
+
+    
+    print('constructing new tree...')
+    resultsTree = {}
+    for chrName, chr in clusterTree.items():
+        resultsChr = []
+        resultsTree[chrName] = resultsChr
+        for index, block in enumerate(chr):
+            if index in compactTree[chrName]:
+                resultsChr.append(compactTree[chrName][index])
+            else:
+                resultsChr.append("A")
+    return resultsTree
+    
+    
+                
 '''(clusterTree) -> Dict of key sites: relevant strains
 This is the main function for the simulation. Interesting 
 sites where many strains share identity will be picked out and
@@ -143,17 +190,29 @@ if __name__ == '__main__':
 #     tabpath = '/home/javi/testzone/Griggs Stuff/persistentMatrix.tab'
 #     outpath = '/home/javi/testzone/Griggs Stuff/keyblocks'
 
+    filepath = '/data/javi/Toxo/64Genomes/Counting/persistentResult.txt'
+    tabpath = '/data/javi/Toxo/64Genomes/Counting/persistentMatrix.tab'
+    outpath = '/data/javi/Toxo/64Genomes/Counting/keyblocks.txt'
+
 #     filepath = r"F:\Documents\ProjectData\testzone\Griggs Stuff\persistentResults.txt"
 #     tabpath = r"F:\Documents\ProjectData\testzone\Griggs Stuff\persistentMatrix.tab"
 #     outpath = r"F:\Documents\ProjectData\testzone\Griggs Stuff\keyblocks.txt"
     
-    filepath = r"F:\Documents\ProjectData\64Genomes\Counting\persistentResult.txt"
-    tabpath = r"F:\Documents\ProjectData\64Genomes\Counting\persistentMatrix.tab"
-    outpath = r"F:\Documents\ProjectData\64Genomes\Counting\keyblocks-simple.txt"
+#     filepath = r"F:\Documents\ProjectData\64Genomes\Counting\persistentResult.txt"
+#     tabpath = r"F:\Documents\ProjectData\64Genomes\Counting\persistentMatrix.tab"
+#     outpath = r"F:\Documents\ProjectData\64Genomes\Counting\keyblocks-simple.txt"
     
     clusterTree = MCLCounter.toMatrix(MCLCounter.loadClusters(filepath, tabpath)[0])
-    sampleList = MCLCounter.loadSampleList(tabpath)[:10]
-    recordKeyBlocks(toIdentity(clusterTree, sampleList), outpath)
+    sampleList = MCLCounter.loadSampleList(tabpath)
+    keyblocks = toIdentity(clusterTree, sampleList)
+    recordKeyBlocks(keyblocks, outpath)
+    
+#     import ClusterPattern as cp
+#     colorTree = cp.calculateColor(toSimilarity(clusterTree, keyblocks))
+#     print('writing..')
+#     cp.write(colorTree, outpath)
+    
+    
     print("End of ClusterSimulations Script")
 
     

@@ -27,10 +27,10 @@ def toPattern(strains, clusters):
         if len(line) > 1:
             pairs += interestingPairs(strains, line)
     
-    if len(pairs) == 0: return ""
+    if len(pairs) == 0: return frozenset("None")
     pairset = set(pairs)
     stringPairs = ["".join([x[0], x[1]]) for x in pairset]
-    pattern = "".join(sorted(stringPairs))
+    pattern = frozenset(sorted(stringPairs))
     return pattern        
     
 def interestingPairs(strains, line):
@@ -48,13 +48,14 @@ def interestingPairs(strains, line):
     
     
 def createColorTable(patternTree):
+      
     allPatterns = set()
     maxVal = 16777216
     
-    for chrName, chr in list(patternTree.items()):
+    for chrName, chr in patternTree.items():
         for pattern in chr:
             if pattern not in allPatterns:
-                allPatterns.add(pattern)
+                allPatterns.add(frozenset(pattern))
     
     interval = maxVal / len(allPatterns)
     results = {}
@@ -99,22 +100,28 @@ def write(resultsTree, outfile):
     
     with open(outfile, "wb") as output:
         #write the hit lit as the keys within the first block 
-        output.write(bytes('$\n{0}\n$\n'.format(itemName), 'utf-8'))
+        output.write(bytes('$\n{0}\n$\n'.format(itemName)).encode('utf-8'))
         
         #write the rest
         for chrName, chr in resultsTree.items():
-            output.write(bytes('%s\n' % chrName, "utf-8"))
+            output.write(bytes('%s\n' % chrName).encode("utf-8"))
             count = 0
             for block in chr:
-                output.write(bytes('#%d\n%s - %s: %d\n'%(count, selfName, itemName, block), "utf-8"))
+                output.write(bytes('#%d\n%s - %s: %d\n'%(count, selfName, itemName, block)).encode("utf-8"))
                 count+=1
                 
 if __name__ == '__main__':
-    directory = 'F:\Documents\ProjectData\\64Genomes\Counting' 
-    filepath = 'F:\Documents\ProjectData\\64Genomes\Counting\persistentResult.txt'
-    tabpath = 'F:\Documents\ProjectData\\64Genomes\Counting\persistentMatrix.tab'
-    outpath = 'F:\Documents\ProjectData\\64Genomes\Counting\pattern.txt'
-    strains = ['ME49', 'RAY', 'PRU', 'ARI', 'B73', 'B41']
+#     directory = 'F:\Documents\ProjectData\\64Genomes\Counting' 
+#     filepath = 'F:\Documents\ProjectData\\64Genomes\Counting\persistentResult.txt'
+#     tabpath = 'F:\Documents\ProjectData\\64Genomes\Counting\persistentMatrix.tab'
+#     outpath = 'F:\Documents\ProjectData\\64Genomes\Counting\pattern.txt'
+
+    filepath = '/data/javi/Toxo/64Genomes/Counting/persistentResult.txt'
+    tabpath = '/data/javi/Toxo/64Genomes/Counting/persistentMatrix.tab'
+    outpath = '/data/javi/Toxo/64Genomes/Counting/pattern.txt'
+#     strains = ['ME49', 'RAY', 'PRU', 'ARI', 'B73', 'B41']
+#     strains = ['CAST', 'TgCkCr1', 'RH-88', 'RH-JSR', 'GT1', 'TgCkCr10', 'TgCkBr141']
+    strains = ['BRC_TgH_18002_GUY-KOE', 'GUY-2004-ABE', 'BRC_TgH_18003_GUY-MAT', 'BRC_TgH_18009', 'BRC_TgH_18021', 'GUY-2003-MEL', 'BRC_TgH_18001_GUY-DOS']
     clusterTree = MCLCounter.toMatrix(MCLCounter.loadClusters(filepath, tabpath)[0])
     results = calculateColor(translate(clusterTree, strains))
     write(results, outpath)

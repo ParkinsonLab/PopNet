@@ -256,7 +256,7 @@ def returnAllPairs(list):
     result = []
     for e in list[1:]:
         result.append((list[0], e))
-    #result += [(list[0], list[0])]
+    result += [(list[0], list[0])]
     return result + returnAllPairs(list[1:])
 
 def aggregate(tree):
@@ -332,14 +332,14 @@ if __name__ == '__main__':
     os.chdir("/data/javi/Toxo/64Genomes/Counting")
 
     diffPath = "/data/javi/Toxo/64Genomes/Counting/diffs/diff.txt"
-#    treeTuple = count(loadClusters(path, tabpath), outputpath)
-    treeTuple = loadClusters(path, tabpath)
+    treeTuple = count(loadClusters(path, tabpath), outputpath)
+#    treeTuple = loadClusters(path, tabpath)
     
-#     #To Encode to Nexus
-#     wholegenome = aggregate(treeTuple[0])
-#     Chr_NexusEncoder.clusterMatrixOutput(wholegenome, treeTuple[1])
-#     Chr_NexusEncoder.nexusMatrixOutput(wholegenome, treeTuple[1])
-#     NexusEncoder.nexusOutput(wholegenome)
+    #To Encode to Nexus
+    wholegenome = aggregate(treeTuple[0])
+    Chr_NexusEncoder.clusterMatrixOutput(wholegenome, treeTuple[1])
+    Chr_NexusEncoder.nexusMatrixOutput(wholegenome, treeTuple[1])
+#    NexusEncoder.nexusOutput(wholegenome)
     
 #     #To calculate distribution
 #     path = "/data/javi/Toxo/64Genomes/Counting/persistentResult.txt"
@@ -348,11 +348,11 @@ if __name__ == '__main__':
 #     os.chdir("/data/javi/Toxo/64Genomes/Counting")
 #     summary_distribution(distribution(loadClusters(path, tabpath), outputpath))
     
-    # To calculate diff score
-    results = findDifferences(treeTuple, outputpath, [])
-#    print results
-    graphResults("Differences", results[0])
-    printDiff(diffPath, results[0])
-    printMatrix(results[1], "diffmatrix.txt")
+#     # To calculate diff score
+#     results = findDifferences(treeTuple, outputpath, [])
+# #    print results
+#     graphResults("Differences", results[0])
+#     printDiff(diffPath, results[0])
+#     printMatrix(results[1], "diffmatrix.txt")
 #    print results
     print("end of MCLCounter script")

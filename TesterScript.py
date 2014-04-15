@@ -43,20 +43,31 @@ if __name__ == '__main__':
 #     print(mask2)
 #     print(des)
 
-    import ClusterSimulations as cs
-    import MCLCounter
-    filepath = r"F:\Documents\ProjectData\64Genomes\Counting\persistentResult.txt"
-    tabpath = r"F:\Documents\ProjectData\64Genomes\Counting\persistentMatrix.tab"
-    outpath = r"F:\Documents\ProjectData\64Genomes\Counting\keyblocks-simple.txt"
-     
-    clusterTree = MCLCounter.toMatrix(MCLCounter.loadClusters(filepath, tabpath)[0])['@TGME49_chrXI']
-    sampleList = ['TgCat_PRC2', 'COUG']
-    print(cs.strainPairComparison(clusterTree, sampleList))
-    sampleList = ['G662M', 'COUG']
-    print(cs.strainPairComparison(clusterTree, sampleList))
-    sampleList = ['G662M', 'TgCat_PRC2']
-    print(cs.strainPairComparison(clusterTree, sampleList))
-
+#     import ClusterSimulations as cs
+#     import MCLCounter
+#     filepath = r"F:\Documents\ProjectData\64Genomes\Counting\persistentResult.txt"
+#     tabpath = r"F:\Documents\ProjectData\64Genomes\Counting\persistentMatrix.tab"
+#     outpath = r"F:\Documents\ProjectData\64Genomes\Counting\keyblocks-simple.txt"
+#      
+#     clusterTree = MCLCounter.toMatrix(MCLCounter.loadClusters(filepath, tabpath)[0])['@TGME49_chrXI']
+#     sampleList = ['TgCat_PRC2', 'COUG']
+#     print(cs.strainPairComparison(clusterTree, sampleList))
+#     sampleList = ['G662M', 'COUG']
+#     print(cs.strainPairComparison(clusterTree, sampleList))
+#     sampleList = ['G662M', 'TgCat_PRC2']
+#     print(cs.strainPairComparison(clusterTree, sampleList))
+    
+    import SP_IOUtils as io
+    dict = {}
+    for x in range(5):
+        thislevel = {}
+        dict[x] = thislevel
+        for y in range(3):
+            thislevel[y] = [z for z in range(3)]
+            
+        
+    outpath = "/home/javi/testzone/testfile.txt"
+    io.dumpDict(dict, outpath)
 
 
 
