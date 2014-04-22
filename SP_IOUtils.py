@@ -28,3 +28,5 @@ def recursiveDictJoin(dict):
         return recursiveListJoin(dict)
     return "\n".join(["\n{0}:{{\n{1}}}".format(x, recursiveDictJoin(y)) for x, y in dict.items()])
         
+def dumpDataTree(dataTree):
+    pass

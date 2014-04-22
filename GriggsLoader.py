@@ -17,10 +17,10 @@ def load(path):
         tree = {}
         chrBranch = {}
         posBranch = {}
-    
+        prevLineSplit = None
             
         for line in rawData[:-1]:
-            lineSplit = re.split("\t", line.replace("\n", ""))
+            lineSplit = re.split("\t", line.replace("\n", "").replace("\r", ""))
             if lineSplit[0] not in tree:
                 chrBranch = {}
                 tree[lineSplit[0]] = chrBranch
@@ -29,13 +29,69 @@ def load(path):
                 posBranch = {}
                 chrBranch[int(lineSplit[1])] = posBranch
             
+            if hasDrift(lineSplit) and prevLineSplit:
+                line = correctDrift(lineSplit, prevLineSplit)
+            
             for snp, samp in zip(lineSplit[3:], nameList):
 #                print "%s\t%s"%(samp, snp)
-                posBranch[samp] = snp.replace("\r", "")
+                posBranch[samp] = snp
+                
+            prevLineSplit = lineSplit
                 
     print("loading done")
     return (tree, nameList)
 
+'''(list of chars) -> boolean
+see if there are any SNPs which aren't shared by at least 2 other strains.
+Those SNPs are considered drifts and shouldn't be included'''
+def hasDrift(line):
+    snps = line[3:]
+    for element in set(snps):
+        if snps.count(element) < 3:
+            return True
+    return False
+
+'''(list of chars) -> list of chars
+picks out the positions where "drift" occurs, and corrects them. Their values
+will be reassigned according to which strains the targets were similar in the
+previous line. If those strains show different SNPs now, we'll use the majority'''
+def correctDrift(line, prevLine):
+    driftIndices = identifyDrift(line)
+    for drift in driftIndices:
+        candidates = findSimilar(prevLine, drift)
+        line[drift] = findMajority([line[x] for x in candidates])
+
+'''(list of chars) -> list of ints
+helper function for correctDrift. ids the elements that are drifts by index'''
+def identifyDrift(line):
+    snps = line[3:]
+    drifts = []
+    indices = []
+    for element in set(snps):
+        if snps.count(element) < 3:
+            drifts.append(element)
+    for index, element in enumerate(snps):
+        if element in drifts:
+            indices.append(index)
+    return indices
+
+'''(list of chars, index) -> list of ints
+find the indices of the elements that are identical to the
+element at index'''
+def findSimilar(line, index):
+    indices = []
+    for otherIndex, element in enumerate(line[3:]):
+        if element == line[index]:
+            indices.append(otherIndex)
+    return indices
+
+'''(list of chars) -> string (of a char)
+finds the most common element here'''
+def findMajority(list):
+    candidates = set(list)
+    counts = [(list.count(x), x) for x in candidates]
+    return sorted(counts)[0][1]
+    
 def aggregateForNexus(treeTuple):
     print("begin aggregate")
     results = []
@@ -62,9 +118,9 @@ if __name__ == '__main__':
     treeTup =  load("/data/javi/Toxo/64Genomes/OrderedSNPV6.txt")  
     NexusEncoder.nexusOutput(aggregateForNexus(treeTup))
     
-    with open("density.txt", "w") as densityOutput:
-    	import SnpSorter
-    	SnpSorter.snpDensity(treeTup[0], densityOutput, treeTup[1])
+#     with open("density.txt", "w") as densityOutput:
+#     	import SnpSorter
+#     	SnpSorter.snpDensity(treeTup[0], densityOutput, treeTup[1])
     
     print("end of GriggsLoader script")
             
