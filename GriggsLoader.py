@@ -30,8 +30,12 @@ def load(path):
                 chrBranch[int(lineSplit[1])] = posBranch
             
             if hasDrift(lineSplit) and prevLineSplit:
-                line = correctDrift(lineSplit, prevLineSplit)
-            
+                #this bit determines what to do with "drift". continue to skip line. use the
+                #correctDrift to correct to previous match. This also kind of assumes that
+                #drift doesn't really happen at positions with real SNPs. 
+                
+                #lineSplit = correctDrift(lineSplit, prevLineSplit)
+                continue
             for snp, samp in zip(lineSplit[3:], nameList):
 #                print "%s\t%s"%(samp, snp)
                 posBranch[samp] = snp
@@ -59,18 +63,22 @@ def correctDrift(line, prevLine):
     driftIndices = identifyDrift(line)
     for drift in driftIndices:
         candidates = findSimilar(prevLine, drift)
-        line[drift] = findMajority([line[x] for x in candidates])
+        majority = findMajority([line[x] for x in candidates])
+        print(line[drift] + " "  + majority)
+        line[drift] = majority
+    return line
 
 '''(list of chars) -> list of ints
 helper function for correctDrift. ids the elements that are drifts by index'''
 def identifyDrift(line):
+    MININUM_SHARED = 3
     snps = line[3:]
     drifts = []
     indices = []
     for element in set(snps):
-        if snps.count(element) < 3:
+        if snps.count(element) < MININUM_SHARED:
             drifts.append(element)
-    for index, element in enumerate(snps):
+    for index, element in enumerate(line):
         if element in drifts:
             indices.append(index)
     return indices
@@ -80,7 +88,7 @@ find the indices of the elements that are identical to the
 element at index'''
 def findSimilar(line, index):
     indices = []
-    for otherIndex, element in enumerate(line[3:]):
+    for otherIndex, element in enumerate(line):
         if element == line[index]:
             indices.append(otherIndex)
     return indices
@@ -90,7 +98,7 @@ finds the most common element here'''
 def findMajority(list):
     candidates = set(list)
     counts = [(list.count(x), x) for x in candidates]
-    return sorted(counts)[0][1]
+    return sorted(counts, reverse=True)[0][1]
     
 def aggregateForNexus(treeTuple):
     print("begin aggregate")

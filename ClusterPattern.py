@@ -50,12 +50,15 @@ def interestingPairs(strains, line):
 def createColorTable(patternTree):
       
     allPatterns = set()
-    maxVal = 16777216
+    maxVal = 16777215
     
     for chrName, chr in patternTree.items():
         for pattern in chr:
             if pattern not in allPatterns:
-                allPatterns.add(frozenset(pattern))
+                allPatterns.add(pattern)
+    
+    if len(allPatterns)%8 == 0:
+        allPatterns.update(frozenset(['FILLER1']))
     
     interval = maxVal / len(allPatterns)
     results = {}
@@ -63,6 +66,7 @@ def createColorTable(patternTree):
     for index, pattern in enumerate(allPatterns):
         results[pattern] = int(interval * index)
     
+    print(results)
     return results
 
     
@@ -96,7 +100,7 @@ def translate(dataTree, strains):
 def write(resultsTree, outfile):
     #something to put on the first part of each line
     selfName = "GENOME"
-    itemName = "ME49Cluster"
+    itemName = "Cluster"
     
     with open(outfile, "wb") as output:
         #write the hit lit as the keys within the first block 

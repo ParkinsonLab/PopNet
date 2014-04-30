@@ -18,15 +18,24 @@ def recursiveListJoin(list):
         return repr(list)
     return "\n[{0}]".format(", ".join([recursiveListJoin(x) for x in list]))
 
-def dumpDict(dict, outpath):
-    with open(outpath, "wb") as output:
-        output.write(bytes(recursiveDictJoin(dict)).encode('utf-8'))
+def listJoin(list):
+    if len(list) < 2:
+        return list
+    return "\n".join(list)
 
-def recursiveDictJoin(dict):
+def dumpDict(input_dict, outpath):
+    with open(outpath, "wb") as output:
+        output.write(bytes(recursiveDictJoin(input_dict)).encode('utf-8'))
+
+
+def recursiveDictJoin(input_dict):
     import types
-    if not isinstance(dict, types.DictType):
-        return recursiveListJoin(dict)
-    return "\n".join(["\n{0}:{{\n{1}}}".format(x, recursiveDictJoin(y)) for x, y in dict.items()])
+    if not isinstance(input_dict, types.DictType):
+        return listJoin(input_dict)
+    return "\n".join(["\n{0}:{{\n{1}}}".format(x, recursiveDictJoin(y)) for x, y in sorted(input_dict.items())])
+
         
-def dumpDataTree(dataTree):
-    pass
+def dumpDataTree(dataTree, outpath):
+    with open(outpath, "wb") as output:
+        for name, chr in sorted(dataTree.items()):
+            output.write(bytes(name + ":\n" + recursiveDictJoin(chr) + "\n").encode('utf-8'))

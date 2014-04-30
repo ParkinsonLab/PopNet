@@ -4,13 +4,16 @@ Created on Feb 26, 2014
 @author: javi
 '''
 
-import SnpSorter
-import GriggsLoader
-import NexusEncoder
-import MCLCounter
-import Chr_NexusEncoder
+import SnpSorter as snps
+import GriggsLoader as gl
+import NexusEncoder as nex
+import MCLCounter as mclc
+import Chr_NexusEncoder as chrnex
 import os
-import similarity
+import similarity as sim
+import CytoscapeEncoder as ce
+import GroupComposition as gc
+import ClusterPattern as cp
 
 if __name__ == '__main__':
     print("Runner Script Start")
@@ -31,4 +34,23 @@ if __name__ == '__main__':
     
     #Job: Similarity Comparisons
     
+#     #Job: Encoding to Cytoscape File
+#     filepath = "/data/javi/Toxo/64Genomes/Filtered/persistentResult.txt"
+#     tabpath = "/data/javi/Toxo/64Genomes/Filtered/persistentMatrix.tab"
+#     outpath = "/data/javi/Toxo/64Genomes/Filtered/cytoscape{0}.gml"
+#     
+#     dataTree = mclc.loadClusters(filepath, tabpath)
+#     counted = mclc.count(dataTree, "/data/javi/Toxo/64Genomes/Filtered/counted.txt")
+#     for name, chr in counted[0].items():
+#         ce.parse(chr, name, counted[1], outpath.format(name))
+
+    #Job: Running the Group Composition Script
+    filepath = "/data/javi/Toxo/64Genomes/Filtered/persistentResult.txt"
+    tabpath = "/data/javi/Toxo/64Genomes/Filtered/persistentMatrix.tab"
+    outpath = "/data/javi/Toxo/64Genomes/Filtered/GroupComposition.txt"
+    dataTree = mclc.toMatrix(mclc.loadClusters(filepath, tabpath)[0])
+    
+    composition = gc.findComposition('ME49', dataTree)
+    colored = cp.calculateColor(composition)
+    cp.write(colored, outpath)
     print("Runner Script End")

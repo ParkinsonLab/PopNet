@@ -326,12 +326,12 @@ if __name__ == '__main__':
 #     treeTuple = loadClusters(path, tabpath)
             
     #To Load the whole genome. 
-    path = "/data/javi/Toxo/64Genomes/Counting/persistentResult.txt"
-    tabpath = "/data/javi/Toxo/64Genomes/Counting/persistentMatrix.tab"
-    outputpath = "/data/javi/Toxo/64Genomes/Counting/Count.txt"
-    os.chdir("/data/javi/Toxo/64Genomes/Counting")
+    path = "/data/javi/Toxo/64Genomes/Filtered/persistentResult.txt"
+    tabpath = "/data/javi/Toxo/64Genomes/Filtered/persistentMatrix.tab"
+    outputpath = "/data/javi/Toxo/64Genomes/Filtered/Count.txt"
+    os.chdir("/data/javi/Toxo/64Genomes/Filtered")
 
-    diffPath = "/data/javi/Toxo/64Genomes/Counting/diffs/diff.txt"
+    diffPath = "/data/javi/Toxo/64Genomes/Filtered/diffs/diff.txt"
     treeTuple = count(loadClusters(path, tabpath), outputpath)
 #    treeTuple = loadClusters(path, tabpath)
     
