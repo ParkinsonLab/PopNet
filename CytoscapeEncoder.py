@@ -4,20 +4,80 @@ Created on Apr 24, 2014
 @author: javi
 '''
 from decimal import *
+import numpy as np
+
 getcontext().prec = 5
+
+'''(dictionary) -> dictionary
+Figure out what the lower bounds should be, and how to properly space the edge
+widths to best reflect the observable connections'''
+def pruneMatrix(matrix):
+    #construct the np matrix
+    sampleList = sorted(matrix.keys())
+    npMatrix = np.zeros((len(sampleList), len(sampleList)))
+    for index, source in enumerate(sampleList):
+            for target in sampleList[index:]:
+                npMatrix[sampleList.index(source)][sampleList.index(target)] = matrix[source][target]
+                
+    #identify lower bounds
+    dropCutoff = analyzeMatrix(npMatrix)
+    print(dropCutoff)
+    filteredMatrix = npMatrix * (npMatrix > dropCutoff)
+    transformedMatrix = transformMatrix(filteredMatrix)
+    
+    return transformedMatrix
+    
+'''helper for prune. Calculates a few statistics about the matrix
+and returns them
+
+dropCutoff: half way between the average and the highest'''
+def analyzeMatrix(npMatrix):
+    
+    #current method is to go half way between max and median. 
+    actualValues = npMatrix * (npMatrix < npMatrix[0,0])
+    dropCutoff = (npMatrix.max() + sorted(actualValues.flat)[len(actualValues.flat)/2]) / 2
+    return dropCutoff
+
+'''same idea, really'''
+def transformMatrix(npMatrix):
+    #values are mapped log2 from zero to maxValue
+    maxValue = 2
+    scalingFactor = 10
+    
+    max = npMatrix.max()
+    toFraction = npMatrix / max
+    
+#     retired, trying something new
+#     highAverage = np.average(toFraction, weights=npMatrix>0)
+#     
+#     transformedMatrix = (np.power(toFraction / highAverage, scalingFactor)) * maxValue
+    
+    transformedMatrix = np.power(toFraction, np.log(toFraction) * -1 * scalingFactor) * maxValue
+    
+    return transformedMatrix
+    
+    
+    
+    
+        
 '''(dictionary) -> String
 takes a single matrix (2x nested dictionary) and converts it to a series of nodes and edges
 in accordance with the GML format, to be incorportated into a larger
 GML file for cytoscape.'''
-def fromMatrix(matrix, name, sampleList):
+def fromMatrix(matrix, name):
+    print(name + " cutoff is:")
+    sampleList = sorted(matrix.keys())
     #nodes are two-tuples consisting of id and label
     nodes = [(index, name) for index, name in enumerate(sampleList)]
     edges = []
+    prunedMatrix = pruneMatrix(matrix)
     
     #edges consists of three-tuples 
-    for index, source in enumerate(sampleList):
-        for target in sampleList[index:]:
-            edges.append((source, target, matrix[source][target]))
+    for sourceIndex, source in enumerate(sampleList):
+        for targetIndex, target in enumerate(sampleList):
+            value = prunedMatrix[sourceIndex, targetIndex]
+            if value > 0:
+                edges.append((source, target, value))
     
     text = "\
     graph [\n\
@@ -36,7 +96,7 @@ Currently only accepts dataTree style input. Each parse call creates one file.
 '''
 def parse(matrix, name, sampleList, outfile):
     with open(outfile, 'w') as output:
-        output.write(fromMatrix(matrix, name, sampleList))
+        output.write(fromMatrix(matrix, name))
 
 '''for the sake of readability, the header info for the GML file will be
 stored here'''
@@ -54,8 +114,8 @@ def getNodeText(ID, label):
             id    {0}\n\
             label    \"{1}\"\n\
             graphics [\n\
-                w    0.2\n\
-                h    0.2\n\
+                w    1\n\
+                h    1\n\
             ]\n\
         ]\n".format(ID, label)
     return text
@@ -63,9 +123,8 @@ def getNodeText(ID, label):
 '''(String, String, int) -> String
 same.'''
 def getEdgeText(source, target, width):
-    calibrated_width = calibrateWidth(width)
-    
-    if not calibrated_width > 0:
+   
+    if not width > 0 or source == target:
         return ""
     
     text = "\
@@ -76,17 +135,17 @@ def getEdgeText(source, target, width):
                 width    {2}\n\
                 type    \"line\"\n\
             ]\n\
-        ]\n".format(source, target, calibrated_width)
+        ]\n".format(source, target, width)
     return text
 
-'''(int) -> decimal
-given the raw # of connections, calculates an appropriate edge width. 
-setting inside'''
-def calibrateWidth(width):
-    min_width = 120
-    scaling_factor = Decimal(300)
-    
-    return max(0, Decimal(width - min_width) / scaling_factor)
+# '''(int) -> decimal
+# given the raw # of connections, calculates an appropriate edge width. 
+# setting inside'''
+# def calibrateWidth(width):
+#     min_width = 120
+#     scaling_factor = Decimal(300)
+#     
+#     return max(0, Decimal(width - min_width) / scaling_factor)
     
 if __name__ == '__main__':
     pass

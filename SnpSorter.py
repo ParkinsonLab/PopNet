@@ -454,7 +454,7 @@ if __name__ == '__main__':
     #directory = "/home/javi/testzone/snps"
     #directory = "/data/javi/Toxo/BaseData/tempz"
     #directory = "data/javi/Toxo/NewSeqs/temp"
-    directory = "/data/javi/Toxo/64Genomes"
+    directory = "/data/javi/Toxo/64Genomes/Filtered"
     
     #Use this if using on scinet
 #    directory = "/scratch/j/jparkins/xescape/SNPSort"
@@ -516,7 +516,9 @@ if __name__ == '__main__':
 #     
 #         
 #     if int(forceRefs) == 1:
-#         print "resorting"
+#         print "resorting"#                 this bit determines what to do with "drift". continue to skip line. use the
+#                 correctDrift to correct to previous match. This also kind of assumes that
+#                 drift doesn't really happen at positions with real SNPs. 
 #         resorted = resort(dataTree, sampleList)
 #         with open("resortedResults.txt", "w") as resortedResults:
 #             record(dataTree, resortedResults, sampleList)

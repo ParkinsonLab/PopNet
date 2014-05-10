@@ -7,7 +7,7 @@ import re
 import copy
 import os
 import NexusEncoder
-
+from collections import Counter as counter
 
 def load(path):
     print("loading..")
@@ -29,13 +29,16 @@ def load(path):
                 posBranch = {}
                 chrBranch[int(lineSplit[1])] = posBranch
             
-            if hasDrift(lineSplit) and prevLineSplit:
-                #this bit determines what to do with "drift". continue to skip line. use the
-                #correctDrift to correct to previous match. This also kind of assumes that
-                #drift doesn't really happen at positions with real SNPs. 
-                
-                #lineSplit = correctDrift(lineSplit, prevLineSplit)
+            if isDrift(lineSplit):
                 continue
+            
+            if hasDrift(lineSplit) and prevLineSplit:
+#                 this bit determines what to do with "drift". continue to skip line. use the
+#                 correctDrift to correct to previous match. This also kind of assumes that
+#                 drift doesn't really happen at positions with real SNPs. 
+                 
+                lineSplit = correctDrift(lineSplit, prevLineSplit)
+                
             for snp, samp in zip(lineSplit[3:], nameList):
 #                print "%s\t%s"%(samp, snp)
                 posBranch[samp] = snp
@@ -45,6 +48,11 @@ def load(path):
     print("loading done")
     return (tree, nameList)
 
+'''(list of chars) -> boolean
+see if this position is valid: has at least one valid SNPs shared by more than two strains'''
+def isDrift(line):
+    return sorted(counter(line).items(), key=lambda x: x[1], reverse=True)[1][1] < 3
+    
 '''(list of chars) -> boolean
 see if there are any SNPs which aren't shared by at least 2 other strains.
 Those SNPs are considered drifts and shouldn't be included'''
@@ -64,7 +72,7 @@ def correctDrift(line, prevLine):
     for drift in driftIndices:
         candidates = findSimilar(prevLine, drift)
         majority = findMajority([line[x] for x in candidates])
-        print(line[drift] + " "  + majority)
+#         print(line[drift] + " "  + majority)
         line[drift] = majority
     return line
 

@@ -48,7 +48,11 @@ def interestingPairs(strains, line):
     
     
 def createColorTable(patternTree):
-      
+    import random
+    
+    
+    colorIter = iter([16737894, 1337452, 3381606, 6063411, 6710937, 6037279, 9737364, 16750899])
+    
     allPatterns = set()
     maxVal = 16777215
     
@@ -57,20 +61,40 @@ def createColorTable(patternTree):
             if pattern not in allPatterns:
                 allPatterns.add(pattern)
     
-    if len(allPatterns)%8 == 0:
-        allPatterns.update(frozenset(['FILLER1']))
+    if len(allPatterns)%2 == 1:
+        allPatterns.update([frozenset(['FILLER1'])])
+
     
-    interval = maxVal / len(allPatterns)
+    interval = 148638
     results = {}
     
     for index, pattern in enumerate(allPatterns):
-        results[pattern] = int(interval * index)
-    
-    print(results)
+        results[pattern] = next(colorIter)
+        
+    printColorTable(results)
     return results
 
+'''table is a dict of frozenset:value
+just a helper function because i don't like their print'''
+def printColorTable(table):
+    maxKeyLength = max([len(x) for x in table.keys()])
+    maxValueLength = max([len(str(x)) for x in table.values()])
+    print(maxKeyLength, maxValueLength)
+    rowFormat = "{:<{klen}}\t{:<{vlen}}"
+    result = "\n".join([rowFormat.format(next(iter(x[0])), hex(x[1]), klen=maxKeyLength, vlen=maxValueLength) for x in table.items()])
+    print(result)
     
-    
+'''(dict) -> display
+Displays the color table in a readable format, with group names
+and their colors'''
+def translateColorTable(table):
+    import binascii as asc
+    hexValues = {}
+    for name, value in table.items():
+        hexValues[name] = asc.hexlify(value)
+
+
+   
 '''(Nested list of patterns, by Chr) -> Nested list of color values, by Chr
 takes the translated tree and convert each pattern to a value'''
 def calculateColor(patternTree):
@@ -81,9 +105,10 @@ def calculateColor(patternTree):
         newChr = []
         newTree[chrName] = newChr
         for pattern in chr:
-            newChr.append(colorTable[pattern])
+            newChr.append((colorTable[pattern], next(iter(pattern))))
     
     return newTree
+
 
 '''(Nested list of clusters, by Chr , list all intersting strains) -> Nested list of patterns, by Chr
 translates the clusters into patterns'''
@@ -111,7 +136,7 @@ def write(resultsTree, outfile):
             output.write(bytes('%s\n' % chrName).encode("utf-8"))
             count = 0
             for block in chr:
-                output.write(bytes('#%d\n%s - %s: %d\n'%(count, selfName, itemName, block)).encode("utf-8"))
+                output.write(bytes('#%d\n%s - %s: %d\n'%(count, selfName, block[1], block[0])).encode("utf-8"))
                 count+=1
                 
 if __name__ == '__main__':

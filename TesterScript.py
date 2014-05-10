@@ -57,10 +57,13 @@ if __name__ == '__main__':
 #     sampleList = ['G662M', 'TgCat_PRC2']
 #     print(cs.strainPairComparison(clusterTree, sampleList))
     
-    a = {}
-    a['b'] = c = ['c']
-    print(a, c)
     
+    path = "/home/javi/testzone/basic/hi.txt"
+    with open(path, "w") as output:
+        output.write("line1\nline2    aaaaa\n line3    bbbbb\n line4    ccccc")
+    with open(path, 'r') as input:
+        input.readline()
+        print(input.read())
 
 
 

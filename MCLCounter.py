@@ -287,14 +287,23 @@ def printMatrix(matrix, outfile):
     '''[[e]] -> None
     [x[1] for x in matrix.items()]
     writes a representation of the matrix into the output file'''
-    with open(outfile, "w") as output:
-        header = [x for x in matrix]
-#        row_format ="{:>30}" * (len(header) + 1)
-        row_format = "{:>30}" * 2 + "\n"
+    header = sorted([x for x in matrix.keys()])
+    header.insert(0," ")
+    maxLength = 0
+    for e in header:
+        if len(e) > maxLength:
+            maxLength = len(e)
+    
+    row_format ="{:>{length}}\t" * len(header) + "\n"            
+    with open(outfile, "w") as output:    
+#        row_format = "{:>30}" * 2 + "\n"
 #        output.write(row_format.format("", *header) + "\n")
-        for name, info in list(matrix.items()):
+        output.write(row_format.format(length=maxLength, *header))
+        for name, info in sorted(matrix.items()):
 #            output.write(row_format.format(name, *[x[1] for x in info.items()]) + "\n")
-            output.write(row_format.format(name, str(info)))
+            items = [str(x[1]) for x in sorted(info.items())]
+            items.insert(0, name)
+            output.write(row_format.format(length=maxLength, *items))
             
 def printDiff(filename, results):
     with open(filename, "w") as out:
