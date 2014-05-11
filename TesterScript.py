@@ -58,12 +58,8 @@ if __name__ == '__main__':
 #     print(cs.strainPairComparison(clusterTree, sampleList))
     
     
-    path = "/home/javi/testzone/basic/hi.txt"
-    with open(path, "w") as output:
-        output.write("line1\nline2    aaaaa\n line3    bbbbb\n line4    ccccc")
-    with open(path, 'r') as input:
-        input.readline()
-        print(input.read())
+    a = np.sort(np.array([1,2,3,4,5]))[::-1]
+    print(np.where((a-2)==0)[0][0])
 
 
 

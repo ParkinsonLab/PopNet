@@ -18,6 +18,29 @@ def getGroups(strain):
                   "RUB", "VAND"]
     groups['TgH'] = ["BRC_TgH_20005", "CASTELLS", "TgH26044", "BRC_TgH_21016"]
     groups['ME49'] = ["COUG", "GUY-2004-JAG1", "TgCat_PRC2", "ARI", "RAY", "PRU", \
+                   "B41", "ME49", "B73"]
+    groups['VEG'] = ["TgShUS28", "TgCkGy2", "ROD", "M7741", "VEG", "SOU", "G662M"]
+    groups['p89'] = ["TgCatBr64", "p89", "TgCatBr3", "TgCatBr15"]
+    groups['TgCats'] = ["TgCATBr5", "TgCatBr10", "TgCatBr18", "TgCatBr25", \
+                   "TgCatBr44", "MAS", "TgCatBr1", "TgCatBr34"]
+    groups['GAL-DOM1/2'] = ["CAST", "FOU", "GAB5-2007-GAL-DOM1", \
+                   "GAB3-2007-GAL-DOM2", "BOF"]
+    groups['GAL-DOM10'] = ["GAB2-2007-GAL-DOM2", "GAB5-2007-GAL-DOM6", "GAB1-2007-GAL-DOM10", "GAB3-2007-GAL-DOM9"]
+    groups['GT1'] = ["TgDogCo17", "GT1", "RH-JSR", "RH-88", "TgCkCr1", "TgCkBr141"]
+    notUsed  = ["TgRsCr1", "TgCtCo5", "TgCkCr10", "TgCatBr72", "TgCATBr9", "TgCatBr26" ]
+    for name, group in groups.items():
+        if strain in group:
+            del groups[name]
+    
+    return groups
+
+    
+    '''ORIGINAL GROUPS
+    groups['GUYS'] = ["BRC_TgH_18003_GUY-MAT", "BRC_TgH_18001_GUY-DOS", "BRC_TgH_18021", \
+                  "BRC_TgH_18009", "BRC_TgH_18002_GUY-KOE", "GUY-2003-MEL", "GUY-2004-ABE", \
+                  "RUB", "VAND"]
+    groups['TgH'] = ["BRC_TgH_20005", "CASTELLS", "TgH26044", "BRC_TgH_21016"]
+    groups['ME49'] = ["COUG", "GUY-2004-JAG1", "TgCat_PRC2", "ARI", "RAY", "PRU", \
                    "B41", "ME49", "B73", "SOU"]
     groups['VEG'] = ["TgShUS28", "TgCkGy2", "ROD", "M7741", "VEG"]
     groups['p89'] = ["G662M", "p89", "TgCatBr3", "TgCatBr15"]
@@ -28,15 +51,8 @@ def getGroups(strain):
                    "GAB5-2007-GAL-DOM6", "GAB2-2007-GAL-DOM2", "BOF"]
     groups['GT1'] = ["CAST", "TgDogCo17", "GT1", "RH-JSR", "RH-88", "TgCkCr1", "TgCkBr141", \
                    "TgRsCr1", "TgCtCo5", "TgCkCr10"]
+                   '''
 
-    for name, group in groups.items():
-        if strain in group:
-            del groups[name]
-    
-    return groups
-
-    
-    
 '''(string, 2-Nested list, string) -> int
 returns the index, in the first dimension, of the group that this strain is most
 closely related to, in this particular block'''    

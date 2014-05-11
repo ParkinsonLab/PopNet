@@ -16,13 +16,13 @@ def pruneMatrix(matrix):
     sampleList = sorted(matrix.keys())
     npMatrix = np.zeros((len(sampleList), len(sampleList)))
     for index, source in enumerate(sampleList):
-            for target in sampleList[index:]:
+            for target in sampleList:
                 npMatrix[sampleList.index(source)][sampleList.index(target)] = matrix[source][target]
                 
     #identify lower bounds
     dropCutoff = analyzeMatrix(npMatrix)
     print(dropCutoff)
-    filteredMatrix = npMatrix * (npMatrix > dropCutoff)
+    filteredMatrix = npMatrix * (npMatrix >= dropCutoff)
     transformedMatrix = transformMatrix(filteredMatrix)
     
     return transformedMatrix
@@ -32,12 +32,62 @@ and returns them
 
 dropCutoff: half way between the average and the highest'''
 def analyzeMatrix(npMatrix):
+    cutoffStringency = 0.65
     
     #current method is to go half way between max and median. 
     actualValues = npMatrix * (npMatrix < npMatrix[0,0])
-    dropCutoff = (npMatrix.max() + sorted(actualValues.flat)[len(actualValues.flat)/2]) / 2
-    return dropCutoff
+    
+    cutoffs = np.zeros(np.shape(actualValues)[0])
+    for x in np.arange(cutoffs.shape[0]):
+        column = actualValues[:,x]
+        clusterIterator = iter(intervalCluster(column))
+        belowCutoff = 0.
+        cutoff = 0
+        
+        try:
+            while belowCutoff/np.shape(column)[0] < cutoffStringency:
+                currCluster = next(clusterIterator)[0]
+                cutoff = max(currCluster)
+                belowCutoff += len(currCluster)
+        except StopIteration:
+            pass
+        
+        cutoffs[x] = cutoff
+#         another old algorithm
+#         cutoffs[x] = np.max(column) + np.sort(column)[len(column)/2] / 2
+#     old algorithm, discarded. 
+#     dropCutoff = (npMatrix.max() + sorted(actualValues.flat)[len(actualValues.flat)/2]) / 2
+    return cutoffs
 
+'''(ndarray) -> list of lists
+short clustering algorithm. logic: if not within x% of any "centers", current
+value becomes a new center
+results sorted lowest to highest, both amongst and within clusters'''
+def intervalCluster(npMatrix):
+    anchors = []
+    results = {}
+    closeness = 0.2
+    sortedMatrix = np.sort(npMatrix.flat)[::-1]
+    
+    for e in sortedMatrix[np.where(sortedMatrix>0)]:
+        for anchor in anchors:
+            if abs(1 - anchor/e) < closeness * (np.log10(e)+1):
+                break
+        else:
+            anchors.append(e)
+            results[e] = []
+    anchors = np.array(anchors)
+    
+    for e in sortedMatrix:
+        if e > 0:
+            distances = abs(anchors - e)
+            closest = np.where((distances - np.min(distances)) == 0)[0][0]
+            results[anchors[closest]].append(e)
+    
+    return sorted([[sorted(values)] for anchor, values in results.items()])
+        
+        
+    
 '''same idea, really'''
 def transformMatrix(npMatrix):
     #values are mapped log2 from zero to maxValue
@@ -54,7 +104,7 @@ def transformMatrix(npMatrix):
     
     transformedMatrix = np.power(toFraction, np.log(toFraction) * -1 * scalingFactor) * maxValue
     
-    return transformedMatrix
+    return np.triu(transformedMatrix)
     
     
     
