@@ -12,7 +12,8 @@ from subprocess import call
 import time
 import random
 import csv
-
+import SimilarityContigs as simcon
+import ContigIterator as conitr
 if __name__ == '__main__':
     
 #     datatype = np.dtype([('name', tuple), ('data', list)])
@@ -58,8 +59,10 @@ if __name__ == '__main__':
 #     print(cs.strainPairComparison(clusterTree, sampleList))
     
     
-    a = np.sort(np.array([1,2,3,4,5]))[::-1]
-    print(np.where((a-2)==0)[0][0])
+    a = conitr.ContigIterator(['a', 'b', 'c', 'd'])
+    for x in range(3):
+        b = a.next()
+        print(b)
 
 
 
