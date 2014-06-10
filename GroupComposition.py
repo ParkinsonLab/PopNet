@@ -53,6 +53,15 @@ def getGroups(strain):
                    "TgRsCr1", "TgCtCo5", "TgCkCr10"]
                    '''
 
+'''(dict of groups) -> list of tuples
+representing the group name of each strain for ease of iteration'''
+def expandGroups(groups):
+    results = []
+    for group, strains in groups.items():
+        for strain in strains:
+            results.append((strain, group))
+    return results
+
 '''(string, 2-Nested list, string) -> int
 returns the index, in the first dimension, of the group that this strain is most
 closely related to, in this particular block'''    

@@ -51,26 +51,34 @@ def createColorTable(patternTree):
     import random
     
     
-    colorIter = iter([16737894, 1337452, 3381606, 6063411, 6710937, 6037279, 9737364, 16750899])
-    
-    allPatterns = set()
-    maxVal = 16777215
-    
-    for chrName, chr in patternTree.items():
-        for pattern in chr:
-            if pattern not in allPatterns:
-                allPatterns.add(pattern)
-    
-    if len(allPatterns)%2 == 1:
-        allPatterns.update([frozenset(['FILLER1'])])
-
-    
-    interval = 148638
+    colorIter = iter([16737894, 1337452, 3381606, 6063411, 6710937, 6037279, 9737364, 16750899, 50637])
+    #quick fix to get the same colors
+    groups = ['GUYS', 'TgH', 'ME49', 'VEG', 'p89', 'TgCats', 'GAL-DOM1/2', 'GAL-DOM10', 'GT1']
     results = {}
+    for group in groups:
+        results[frozenset([group])] = colorIter.next()
     
-    for index, pattern in enumerate(allPatterns):
-        results[pattern] = next(colorIter)
-        
+#     allPatterns = set()
+#     maxVal = 16777215
+#     
+#     for chrName, chr in patternTree.items():
+#         for pattern in chr:
+#             if pattern not in allPatterns:
+#                 allPatterns.add(pattern)
+#     
+# #     if len(allPatterns)%2 == 1:
+# #         allPatterns.update([frozenset(['FILLER1'])])
+# 
+#     
+#     interval = 148638
+#     results = {}
+#     
+#     for index, pattern in enumerate(allPatterns):
+#         try:
+#             results[pattern] = next(colorIter)
+#         except StopIteration:
+#             pass
+            
     printColorTable(results)
     return results
 
@@ -81,7 +89,7 @@ def printColorTable(table):
     maxValueLength = max([len(str(x)) for x in table.values()])
     print(maxKeyLength, maxValueLength)
     rowFormat = "{:<{klen}}\t{:<{vlen}}"
-    result = "\n".join([rowFormat.format(next(iter(x[0])), hex(x[1]), klen=maxKeyLength, vlen=maxValueLength) for x in table.items()])
+    result = "\n".join([rowFormat.format(x[0], hex(x[1]), klen=maxKeyLength, vlen=maxValueLength) for x in table.items()])
     print(result)
     
 '''(dict) -> display

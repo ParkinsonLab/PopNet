@@ -114,7 +114,7 @@ def transformMatrix(npMatrix):
 takes a single matrix (2x nested dictionary) and converts it to a series of nodes and edges
 in accordance with the GML format, to be incorportated into a larger
 GML file for cytoscape.'''
-def fromMatrix(matrix, name):
+def fromMatrix(matrix, name, colorTable):
     print(name + " cutoff is:")
     sampleList = sorted(matrix.keys())
     #nodes are two-tuples consisting of id and label
@@ -130,13 +130,18 @@ def fromMatrix(matrix, name):
                 edges.append((source, target, value))
     
     text = "\
-    graph [\n\
-{0}\n\
+<?xml version=\"1.0\"?>\n\
+    <graph label=\"{0}\"\n\
+    xmlns:dc=\"http://purl.org/dc/elements/1.1/\"\n\
+    xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n\
+    xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"\n\
+    xmlns:cy=\"http://www.cytoscape.org\"\n\
+    xmlns=\"http://www.cs.rpi.edu/XGMML\"\n\
+    directed=\"0\" >\n\
 {1}\n\
 {2}\n\
-    ]\n".format(getHeader(name), "\n".join([getNodeText(node[0], node[1]) for node in nodes]), "\n".join([getEdgeText(sampleList.index(edge[0]), sampleList.index(edge[1]), edge[2]) for edge in edges]))
+    </graph>".format(name, "\n".join([getNodeText(node[0], node[1], colorTable) for node in nodes]), "\n".join([getEdgeText(sampleList.index(edge[0]), sampleList.index(edge[1]), edge[2], colorTable) for edge in edges]))
     return text
-
 
 
     
@@ -144,48 +149,60 @@ def fromMatrix(matrix, name):
 primary function of this encoder, to be called by the outside source.
 Currently only accepts dataTree style input. Each parse call creates one file. 
 '''
-def parse(matrix, name, sampleList, outfile):
+def parse(matrix, name, sampleList, outfile, colorTable):
     with open(outfile, 'w') as output:
-        output.write(fromMatrix(matrix, name))
+        output.write(fromMatrix(matrix, name, colorTable))
 
-'''for the sake of readability, the header info for the GML file will be
-stored here'''
-def getHeader(label):
-    header = "\
-        directed    0\n\
-        label    \"{0}\"\n".format(label)
-    return header
+# '''for the sake of readability, the header info for the GML file will be
+# stored here'''
+# def getHeader(label):
+#     header = "".format(label)
+#     return header
 
 '''(Int, String) -> String
 same idea for the node text.'''
-def getNodeText(ID, label):
+def getNodeText(ID, label, colorTable):
+    try:
+        color = toHexColor(colorTable[label])
+    except KeyError:
+        color = "000000"
+    
     text = "\
-        node [\n\
-            id    {0}\n\
-            label    \"{1}\"\n\
-            graphics [\n\
-                w    1\n\
-                h    1\n\
-            ]\n\
-        ]\n".format(ID, label)
+        <node label=\"{1}\" id=\"{0}\" >\n\
+            <att name=\"name\" type=\"string\" value=\"{1}\"/>\n\
+            <att name=\"group\" type=\"string\" value=\"{2}\"/>\n\
+            <graphics h=\"10\" w=\"10\" fill=\"{2}\" />\n\
+        </node>\n".format(ID, label, color)
     return text
+
+'''(Int) -> hex
+helper function for getNodeText, mostly. May have other uses'''
+def toHexColor(num):
+    binaryStr = "{:0>24b}".format(num)
+    RED = int(binaryStr[0:8], base=2)
+    GREEN = int(binaryStr[8:16], base=2)
+    BLUE = int(binaryStr[16:24], base=2)
+    
+    pattern = "{:0>2X}"*3
+    result = pattern.format(RED, GREEN, BLUE)
+    return result
 
 '''(String, String, int) -> String
 same.'''
-def getEdgeText(source, target, width):
+def getEdgeText(source, target, width, colorTable):
    
     if not width > 0 or source == target:
         return ""
     
+    try:
+        color = toHexColor(colorTable[target])
+    except KeyError:
+        color = "000000"
+    
     text = "\
-        edge [\n\
-            source    {0}\n\
-            target    {1}\n\
-            graphics [\n\
-                width    {2}\n\
-                type    \"line\"\n\
-            ]\n\
-        ]\n".format(source, target, width)
+        <edge source=\"{0}\" target=\"{1}\" >\n\
+            <graphics width=\"{2}\" fill=\"{3}\" />\n\
+        </edge>\n".format(source, target, width, color)
     return text
 
 # '''(int) -> decimal
