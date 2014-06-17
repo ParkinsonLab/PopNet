@@ -59,10 +59,9 @@ if __name__ == '__main__':
 #     print(cs.strainPairComparison(clusterTree, sampleList))
     
     
-    a = conitr.ContigIterator(['a', 'b', 'c', 'd'])
-    for x in range(3):
-        b = a.next()
-        print(b)
+    a = os.walk("/home/javi").next()[1]
+    b = os.mkdir("TESTPLEASEDELETE")
+    print(b)
 
 
 

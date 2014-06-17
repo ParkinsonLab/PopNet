@@ -58,8 +58,8 @@ if __name__ == '__main__':
     tabpath = "/data/javi/Toxo/64Genomes/Filtered/persistentMatrix.tab"
     outpath = "/data/javi/Toxo/64Genomes/Filtered/GroupComposition.txt"
     dataTree = mclc.toMatrix(mclc.loadClusters(filepath, tabpath)[0])
-    groups = ["CAST", "TgDogCo17", "GT1", "RH-JSR", "RH-88", "TgCkCr1", "TgCkBr141", \
-                   "TgRsCr1", "TgCtCo5", "TgCkCr10"]
+    groups = ["TgCatBr64", "TgCATBr5", "TgCatBr10", "TgCatBr18", "TgCatBr25", \
+                   "TgCatBr44", "MAS", "TgCatBr1"]
     composition = gc.multiComposition(groups, dataTree)
     colored = cp.calculateColor(composition)
     cp.write(colored, outpath)
