@@ -14,6 +14,11 @@ import random
 import csv
 import SimilarityContigs as simcon
 import ContigIterator as conitr
+import Proteins.HMMParser as hmp
+import Proteins.DomainFamily as dmf
+import Proteins.SequenceSelect as ss
+import Proteins.SRSCytoscape as srsce
+
 if __name__ == '__main__':
     
 #     datatype = np.dtype([('name', tuple), ('data', list)])
@@ -59,9 +64,31 @@ if __name__ == '__main__':
 #     print(cs.strainPairComparison(clusterTree, sampleList))
     
     
-    a = os.walk("/home/javi").next()[1]
-    b = os.mkdir("TESTPLEASEDELETE")
-    print(b)
+    directory = "/home/javi/testzone/proteins/hmmr"
+    resultPath = "/home/javi/testzone/proteins/hmmrresolved"
+    try:
+        os.mkdir(resultPath)
+    except:
+        pass
+        
+    print("reading data")
+    data = {}
+    for dir in os.walk(directory).next()[1]:
+        family = dir
+        path = "/".join([directory, dir])
+        files = [ x for x in os.listdir(path) if os.path.isfile("/".join([path,x]))]
+        for file in files:
+            strain = re.split("\.",file)[0]
+            if strain not in data:
+                data[strain] = []
+            data[strain].append(hmp.read("/".join([path, file]), family))
+        
+    print("analyzing")
+    results = {}
+    for strain, info in data.items():
+        print("resolving strain: " + strain)
+        results[strain] = dmf.choose(info)
+        dmf.printTree(results[strain], "{0}/{1}.hmmr".format(resultPath, strain))
 
 
 

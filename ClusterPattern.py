@@ -51,9 +51,9 @@ def createColorTable(patternTree):
     import random
     
     
-    colorIter = iter([16737894, 1337452, 3381606, 6063411, 6710937, 6037279, 9737364, 16750899, 50637])
+    colorIter = iter([16737894, 1337452, 10040217, 6063411, 6710937, 6037279, 9737364, 16750899, 50637, 0])
     #quick fix to get the same colors
-    groups = ['GUYS', 'TgH', 'ME49', 'VEG', 'p89', 'TgCats', 'GAL-DOM1/2', 'GAL-DOM10', 'GT1']
+    groups = ['GUYS', 'TgH', 'ME49', 'VEG', 'p89', 'TgCats', 'GAL-DOM1/2', 'GAL-DOM10', 'GT1', 'MISC']
     results = {}
     for group in groups:
         results[frozenset([group])] = colorIter.next()

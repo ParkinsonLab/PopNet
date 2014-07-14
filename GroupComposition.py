@@ -27,7 +27,7 @@ def getGroups(strain):
                    "GAB3-2007-GAL-DOM2", "BOF"]
     groups['GAL-DOM10'] = ["GAB2-2007-GAL-DOM2", "GAB5-2007-GAL-DOM6", "GAB1-2007-GAL-DOM10", "GAB3-2007-GAL-DOM9"]
     groups['GT1'] = ["TgDogCo17", "GT1", "RH-JSR", "RH-88", "TgCkCr1", "TgCkBr141"]
-    notUsed  = ["TgRsCr1", "TgCtCo5", "TgCkCr10", "TgCatBr72", "TgCATBr9", "TgCatBr26" ]
+    groups['MISC']  = ["TgRsCr1", "TgCtCo5", "TgCkCr10", "TgCatBr72", "TgCATBr9", "TgCatBr26" ]
     for name, group in groups.items():
         if strain in group:
             del groups[name]
@@ -104,6 +104,28 @@ def multiComposition(strains, dataTree):
             compiledMatrix.append(sorted(counter(chrMatrix[:, x]).items(), key=lambda x: x[1], reverse=True)[0][0])
         compiledResults[chr] = compiledMatrix
     return compiledResults
+    
+
+'''([strains], dataTree) -> [[(begin, end, color]]
+a variation on multicomposition that is divided by chromosomes. Used for generating the cytoscape view.'''
+def cytoscapeComposition(strains, dataTree):
+    resultsList = [findComposition(strain, dataTree) for strain in strains]
+    compiledResults = {}
+    for chr in sorted(resultsList[0].keys()):
+        chrList = [condense(x[chr]) for x in resultsList]
+        
+'''list -> list of tuples
+similar to what we had in the original snps sorter thing. condenses the list by grouping
+together identical elements and storing their indices.'''
+def condense(list):
+    resultList = []
+    for item in list:
+        if len(resultList) > 0 and list[-1][2] == item:
+            resultList[-1][1] += 1
+        else:
+            currentIndex = resultList[-1][1] + 1
+            resultList.append((currentIndex, currentIndex, item))
+    return resultList
     
 if __name__ == '__main__':
     pass

@@ -15,14 +15,85 @@ search result using two profiles. Picks the best family of the two'''
 def update(new, current):
     for proteinID, proteinInfo in new.items():
         if proteinID in current:
-            currProtein = current[proteinID]
             for domain, score in proteinInfo.items():
-                if domain not in currProtein or score[1] < currProtein[domain][1]:
-                        current[proteinID][domain] = new[proteinID][domain]
+                current[proteinID] = updateDomains(score, current[proteinID])
         else:
             current[proteinID] = proteinInfo
     return current
+
+'''tuple, dict -> dict
+primary method for updating a domain. runs the other parts'''
+def updateDomains(newDomain, currentProtein):
+    decision = choosePosition(newDomain, currentProtein)
+    if decision[1] == True:
+        score = newDomain[1]
+        oldScore = currentProtein[decision[0]][1]
+        if score < oldScore: #smaller score is better
+            currentProtein[decision[0]] = newDomain
+    else:
+        currentProtein = place(newDomain, currentProtein, decision[0])
+    return currentProtein
         
+    
+'''tuple, dict, int -> dict
+places the given domain at the appropriate index, and update all other indices'''
+def place(newDomain, oldDomains, index):
+    for domain in sorted(oldDomains.keys()[index-1:], reverse=True):
+        oldDomains[domain+1] = oldDomains[domain]
+    oldDomains[index] = newDomain
+    return oldDomains
+
+'''int, list of ints -> int
+returns a or b, whichever one is closer to the query'''
+def closest(query, list):
+    results = [(abs(query-x), index) for index, x in enumerate(list)]
+    return list[sorted(results)[0][1]]
+
+'''tuple, dict -> (int, bool)
+returns the index of where it should go, and whether its a replace or insert (True for replace)'''
+def choosePosition(newDomain, currentProtein):
+    oldCoords = [x[1][2] for x in sorted(currentProtein.items())]
+    newCoords = newDomain[2]
+    
+    starts = [x[0] for x in oldCoords]
+    ends = [x[1] for x in oldCoords]
+    
+    startClosest = closest(newCoords[0], starts+ends)
+    endClosest = closest(newCoords[1], starts+ends)
+    
+    #prediction based on start
+    if startClosest in starts:
+        sPrediction = (starts.index(startClosest)+1, True)
+    else:
+        sPrediction = (ends.index(startClosest)+2, False)
+            
+    #prediction based on end
+    if endClosest in ends:
+        ePrediction = (ends.index(endClosest)+1, True)
+    else:
+        ePrediction = (starts.index(endClosest)+1, False)
+
+    #pick one
+    
+    #ends
+    if startClosest == endClosest:
+        if startClosest in starts:
+            return ePrediction
+        elif endClosest in ends:
+            return sPrediction
+    #both predictions would be wrong
+    elif newCoords[0] < startClosest and newCoords[1] > endClosest:
+        return (sPrediction[0], True)
+    elif sPrediction == ePrediction:
+        return sPrediction
+    elif startClosest in starts:
+        return sPrediction
+    elif endClosest in ends:
+        return ePrediction
+    else:
+        raise Exception('unable to choose')
+
+
 '''list of trees -> tree
 
 refer to HMMParser for the tree structure. 
@@ -45,7 +116,7 @@ def printTree(tree, filepath):
             count += 1
             for domain, info in proteinInfo.items():
                 family, score, length, cys, degen = info
-                output.write("\tDomain {0:>3} Family {1} Length {3:>3} Cys {4:>2} Degen {5:>5} Score {2}\n".format(domain, family, score, length, cys, str(degen)))
+                output.write("\tDomain {0:>3} Family {1} Coords {3:>7} Cys {4:>2} Degen {5:>5} Score {2}\n".format(domain, family, score, "-".join([str(length[0]),str(length[1])]), cys, str(degen)))
         print("{0} has {1} proteins".format(re.match("^.+/(.+?)$", filepath).group(1), count))
             
 # '''tree -> tree
@@ -63,3 +134,8 @@ def printTree(tree, filepath):
 #             if score > 0.00001 or length < 90:
 #                 del tree[proteinID][domainID]
 
+'''trees -> None (output)
+
+computes some stats about this tree'''
+def summary(tree):
+    pass
