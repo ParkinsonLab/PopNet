@@ -32,37 +32,43 @@ if __name__ == '__main__':
 #     NexusEncoder.toMCL(aggregatedClusters, MCLoutpath)
 #     NexusEncoder.toMCLTab(aggregatedClusters, MCLtabpath)
     
-#     #Job: Similarity Comparisons
-#     
-#     #Job: Encoding to Cytoscape File
+    #Job: Similarity Comparisons
+     
+    #Job: Encoding to Cytoscape File
+    filepath = "/data/javi/Toxo/64Genomes/Filtered/test.txt"
+    tabpath = "/data/javi/Toxo/64Genomes/Filtered/persistentMatrix.tab"
+    outpath = "/data/javi/Toxo/64Genomes/Filtered/cytoscape/cytoscape{0}.xgmml"
+    matrixoutpath = "/data/javi/Toxo/64Genomes/Filtered/countMatrices/{0}.txt"
+    dataTree = mclc.loadClusters(filepath, tabpath)
+    dataMatrix = mclc.toMatrix(dataTree[0])
+    counted = mclc.count(dataTree, "/data/javi/Toxo/64Genomes/Filtered/counted.txt")
+     
+    groups = gc.getGroups("")
+    expandedGroups = gc.expandGroups(groups)
+    strainList = [x[0] for x in expandedGroups]
+    groupColors = cp.createColorTable({"everything" : groups.keys()})
+    composition = gc.cytoscapeComposition(strainList, dataMatrix)
+    
+    colorTable = {}
+    for strain in expandedGroups:
+        colorTable[strain[0]] = groupColors[frozenset([strain[1]])]
+    for group in groups.keys():
+        colorTable[group] = groupColors[frozenset([group])]
+ 
+    for name, chr in counted[0].items():
+        mclc.printMatrix(chr, matrixoutpath.format(name))
+        ce.parse(chr, name, counted[1], outpath.format(name), colorTable, composition[name])
+
+#     #Job: Running the Group Composition Script
 #     filepath = "/data/javi/Toxo/64Genomes/Filtered/persistentResult.txt"
 #     tabpath = "/data/javi/Toxo/64Genomes/Filtered/persistentMatrix.tab"
-#     outpath = "/data/javi/Toxo/64Genomes/Filtered/cytoscape/cytoscape{0}.xgmml"
-#     matrixoutpath = "/data/javi/Toxo/64Genomes/Filtered/countMatrices/{0}.txt"
-#     dataTree = mclc.loadClusters(filepath, tabpath)
-#     counted = mclc.count(dataTree, "/data/javi/Toxo/64Genomes/Filtered/counted.txt")
-#     
-#     groups = gc.getGroups("")
-#     expandedGroups = gc.expandGroups(groups)
-#     groupColors = cp.createColorTable({"everything" : [groups.keys()})
-#     colorTable = {}
-#     for strain in expandedGroups:
-#         colorTable[strain[0]] = groupColors[frozenset([strain[1]]]
-# 
-#     for name, chr in counted[0].items():
-#         mclc.printMatrix(chr, matrixoutpath.format(name))
-#         ce.parse(chr, name, counted[1], outpath.format(name), colorTable)
-
-    #Job: Running the Group Composition Script
-    filepath = "/data/javi/Toxo/64Genomes/Filtered/persistentResult.txt"
-    tabpath = "/data/javi/Toxo/64Genomes/Filtered/persistentMatrix.tab"
-    outpath = "/data/javi/Toxo/64Genomes/Filtered/GroupComposition.txt"
-    dataTree = mclc.toMatrix(mclc.loadClusters(filepath, tabpath)[0])
-    groups = ["TgCatBr64", "TgCATBr5", "TgCatBr10", "TgCatBr18", "TgCatBr25", \
-                   "TgCatBr44", "MAS", "TgCatBr1"]
-    composition = gc.multiComposition(groups, dataTree)
-    colored = cp.calculateColor(composition)
-    cp.write(colored, outpath)
+#     outpath = "/data/javi/Toxo/64Genomes/Filtered/GroupComposition.txt"
+#     dataTree = mclc.toMatrix(mclc.loadClusters(filepath, tabpath)[0])
+#     groups = ["TgCatBr64", "TgCATBr5", "TgCatBr10", "TgCatBr18", "TgCatBr25", \
+#                    "TgCatBr44", "MAS", "TgCatBr1"]
+#     composition = gc.multiComposition(groups, dataTree)
+#     colored = cp.calculateColor(composition)
+#     cp.write(colored, outpath)
 
 
     print("Runner Script End")

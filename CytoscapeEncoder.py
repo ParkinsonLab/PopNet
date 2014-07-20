@@ -114,7 +114,7 @@ def transformMatrix(npMatrix):
 takes a single matrix (2x nested dictionary) and converts it to a series of nodes and edges
 in accordance with the GML format, to be incorportated into a larger
 GML file for cytoscape.'''
-def fromMatrix(matrix, name, colorTable):
+def fromMatrix(matrix, name, colorTable, composition):
     print(name + " cutoff is:")
     sampleList = sorted(matrix.keys())
     #nodes are two-tuples consisting of id and label
@@ -123,9 +123,9 @@ def fromMatrix(matrix, name, colorTable):
     prunedMatrix = pruneMatrix(matrix)
     
     #edges consists of three-tuples 
-    for sourceIndex, source in enumerate(sampleList):
-        for targetIndex, target in enumerate(sampleList):
-            value = prunedMatrix[sourceIndex, targetIndex]
+    for source in sorted(nodes):
+        for target in sorted(nodes):
+            value = prunedMatrix[source[0], target[0]]
             if value > 0:
                 edges.append((source, target, value))
     
@@ -140,7 +140,8 @@ def fromMatrix(matrix, name, colorTable):
     directed=\"0\" >\n\
 {1}\n\
 {2}\n\
-    </graph>".format(name, "\n".join([getNodeText(node[0], node[1], colorTable) for node in nodes]), "\n".join([getEdgeText(sampleList.index(edge[0]), sampleList.index(edge[1]), edge[2], colorTable) for edge in edges]))
+    </graph>".format(name, "\n".join([getNodeText(node[0], node[1], colorTable, composition[node[1]]) for node in nodes]), \
+"\n".join([getEdgeText(edge[0], edge[1], edge[2], colorTable) for edge in edges]))
     return text
 
 
@@ -149,9 +150,9 @@ def fromMatrix(matrix, name, colorTable):
 primary function of this encoder, to be called by the outside source.
 Currently only accepts dataTree style input. Each parse call creates one file. 
 '''
-def parse(matrix, name, sampleList, outfile, colorTable):
+def parse(matrix, name, sampleList, outfile, colorTable, composition):
     with open(outfile, 'w') as output:
-        output.write(fromMatrix(matrix, name, colorTable))
+        output.write(fromMatrix(matrix, name, colorTable, composition))
 
 # '''for the sake of readability, the header info for the GML file will be
 # stored here'''
@@ -161,18 +162,22 @@ def parse(matrix, name, sampleList, outfile, colorTable):
 
 '''(Int, String) -> String
 same idea for the node text.'''
-def getNodeText(ID, label, colorTable):
+def getNodeText(ID, label, colorTable, composition):
     try:
         color = toHexColor(colorTable[label])
     except KeyError:
         color = "000000"
+        
+    circosText = calculateCircos(composition, colorTable)
     
     text = "\
         <node label=\"{1}\" id=\"{0}\" >\n\
             <att name=\"name\" type=\"string\" value=\"{1}\"/>\n\
             <att name=\"group\" type=\"string\" value=\"{2}\"/>\n\
-            <graphics h=\"10\" w=\"10\" fill=\"{2}\" />\n\
-        </node>\n".format(ID, label, color)
+            <att name=\"Gradient\" type=\"string\" value=\"circoschart: arcstart=90 firstarc=.6 arcwidth=.3 colorlist=&quot;{3}&quot; showlabels=false attributelist=&quot;{4}&quot;\"/>\n\
+{5}\
+            <graphics h=\"20\" w=\"20\" fill=\"{2}\" />\n\
+        </node>\n".format(ID, label, color, circosText[0], "values", circosText[1])
     return text
 
 '''(Int) -> hex
@@ -185,7 +190,7 @@ def toHexColor(num):
     
     pattern = "{:0>2X}"*3
     result = pattern.format(RED, GREEN, BLUE)
-    return result
+    return "#" + result
 
 '''(String, String, int) -> String
 same.'''
@@ -195,16 +200,37 @@ def getEdgeText(source, target, width, colorTable):
         return ""
     
     try:
-        color = toHexColor(colorTable[target])
+        color = toHexColor(colorTable[sorted([source[1], target[1]])[0]])
     except KeyError:
         color = "000000"
     
     text = "\
         <edge source=\"{0}\" target=\"{1}\" >\n\
             <graphics width=\"{2}\" fill=\"{3}\" />\n\
-        </edge>\n".format(source, target, width, color)
+        </edge>\n".format(source[0], target[0], width, color)
     return text
 
+'''list, dict -> tuple
+creates the two parameter lists, colorList and valueList, for 
+a node's circos chart'''
+def calculateCircos(composition, colorTable):
+    valueList = []
+    colorList = []
+    for section in composition:
+        valueList.append(str(section[1] - section[0] + 1))
+        colorList.append(str(toHexColor(colorTable[section[2]])))
+    
+    colorString = ",".join(colorList)
+    valueString = "\
+            <att name=\"values\" type=\"list\">\n"
+    for item in valueList:
+        valueString += "\
+                <att type=\"real\" value=\"{0}\"/>\n".format(item)
+    valueString += "\
+            </att>\n"
+    return colorString, valueString
+
+    
 # '''(int) -> decimal
 # given the raw # of connections, calculates an appropriate edge width. 
 # setting inside'''

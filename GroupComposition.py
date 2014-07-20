@@ -7,7 +7,7 @@ Created on Apr 28, 2014
 is colored according to which group is based on.. me looking at it. zzz.
 Use the createColorTable and calculateColor from ClusterPattern to visualize.'''
 
-'''Strain -> Number
+'''Strain -> Dict
 number represents the group ID, as specified in this function'''
 import numpy as np
 def getGroups(strain):
@@ -109,22 +109,35 @@ def multiComposition(strains, dataTree):
 '''([strains], dataTree) -> [[(begin, end, color]]
 a variation on multicomposition that is divided by chromosomes. Used for generating the cytoscape view.'''
 def cytoscapeComposition(strains, dataTree):
-    resultsList = [findComposition(strain, dataTree) for strain in strains]
+    resultsList = {}
+    for strain in strains:
+        resultsList[strain] = findComposition(strain, dataTree)
+    
+    for strain, item in resultsList.items():
+        for key, value in item.items():
+            resultsList[strain][key] = [iter(x).next() for x in value]
+    
     compiledResults = {}
-    for chr in sorted(resultsList[0].keys()):
-        chrList = [condense(x[chr]) for x in resultsList]
+    for chr in sorted(resultsList.values()[0].keys()):
+        chrList = {}
+        for strain in resultsList.keys():
+            chrList[strain] = condense(resultsList[strain][chr])
+        compiledResults[chr] = chrList
+    
+    return compiledResults
         
 '''list -> list of tuples
 similar to what we had in the original snps sorter thing. condenses the list by grouping
 together identical elements and storing their indices.'''
 def condense(list):
     resultList = []
+    currentIndex=0
     for item in list:
-        if len(resultList) > 0 and list[-1][2] == item:
-            resultList[-1][1] += 1
+        if len(resultList) > 0 and resultList[-1][2] == item:
+            resultList[-1] = (resultList[-1][0], resultList[-1][1]+1, resultList[-1][2])
         else:
-            currentIndex = resultList[-1][1] + 1
             resultList.append((currentIndex, currentIndex, item))
+            currentIndex = resultList[-1][1] + 1
     return resultList
     
 if __name__ == '__main__':
