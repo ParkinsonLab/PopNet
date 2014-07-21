@@ -51,7 +51,8 @@ def load(path):
 '''(list of chars) -> boolean
 see if this position is valid: has at least one valid SNPs shared by more than two strains'''
 def isDrift(line):
-    return sorted(counter(line).items(), key=lambda x: x[1], reverse=True)[1][1] < 3
+    minStrains = 4
+    return sorted(counter(line).items(), key=lambda x: x[1], reverse=True)[1][1] <= 4 #this last value is the number of required strains + 1
     
 '''(list of chars) -> boolean
 see if there are any SNPs which aren't shared by at least 2 other strains.

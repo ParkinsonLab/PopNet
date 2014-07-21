@@ -234,7 +234,15 @@ def count(treeTuple, outputPath):
                         resultMatrix[x][y] += 1
                         if x != y:
                             resultMatrix[y][x] += 1
-            results[name] = resultMatrix
+        
+            #enforce a cutoff. everything below = 0
+            cutoff = 25
+            for xindex, x in resultMatrix.items():
+                rowval = sum(x.values())
+                if rowval < 30:
+                    for yindex in x.keys():
+                        resultMatrix[xindex][yindex] = 0
+                        
         #return/outputs the result
             output.write(chr[0])
             output.write("\n")
@@ -326,14 +334,14 @@ if __name__ == '__main__':
     matplotlib.use("pdf")
     import matplotlib.pyplot as plt
     from matplotlib.backends.backend_pdf import PdfPages
-    
+      
 #     #Test Data
 #     path = "/home/javi/testzone/Griggs Stuff/persistentResults.txt"
 #     tabpath = "/home/javi/testzone/Griggs Stuff/persistentMatrix.tab"
 #     outputpath = "/home/javi/testzone/Griggs Stuff/Diff.txt"
 #     os.chdir("/home/javi/testzone/Griggs Stuff")
 #     treeTuple = loadClusters(path, tabpath)
-            
+             
     #To Load the whole genome. 
     path = "/data/javi/Toxo/64Genomes/Filtered/persistentResult.txt"
     tabpath = "/data/javi/Toxo/64Genomes/Filtered/persistentMatrix.tab"
