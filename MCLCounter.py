@@ -234,14 +234,7 @@ def count(treeTuple, outputPath):
                         resultMatrix[x][y] += 1
                         if x != y:
                             resultMatrix[y][x] += 1
-        
-            #enforce a cutoff. everything below = 0
-            cutoff = 25
-            for xindex, x in resultMatrix.items():
-                rowval = sum(x.values())
-                if rowval < 30:
-                    for yindex in x.keys():
-                        resultMatrix[xindex][yindex] = 0
+            results[name] = resultMatrix
                         
         #return/outputs the result
             output.write(chr[0])

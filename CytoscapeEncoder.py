@@ -166,6 +166,7 @@ def getNodeText(ID, label, colorTable, composition):
     try:
         color = toHexColor(colorTable[label])
     except KeyError:
+        print("KeyError!")
         color = "000000"
         
     circosText = calculateCircos(composition, colorTable)

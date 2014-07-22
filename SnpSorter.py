@@ -262,6 +262,14 @@ def calculateMatrix(dataTree, sampleList):
                         for y in posBranch:
                             if (posBranch[x] == posBranch[y]):
                                 chrMatrixBranch[x][y] += 1
+#                 #enforcing cutoff
+#                 cutoff = 30
+#                 for xindex, x in chrMatrixBranch.items():
+#                     valueSum  = sum(x.values())
+#                     if valueSum < cutoff:
+#                         for yindex in x.keys():
+#                             chrMatrixBranch[xindex][yindex] = 0
+                            
 # Use only if having ME49!
 #                     else:
 #                         for y in modSampleList:
@@ -312,6 +320,7 @@ def recordMatrix(matrixDict):
                             tab.write("%d %s\n"%(keycount, key))
                             persistentTab.write("%d %s\n"%(keycount, key))                        
                             keycount+=1
+                        
                         domString += "$\n)\n"
                         output.write(domString)
                         persistentTab.write("\n")
@@ -409,10 +418,7 @@ def analyzeMatrix(results):
         #print sortedInvStats, len(sortedInvStats), len(matrixStats)
         for x in range(len(sortedInvStats)):
             output.write("@@%s--\n%d\n"%(sortedInvStats[x][1], sortedInvStats[x][0]))
-            
-            #debug!
-            if sortedInvStats[1] == "3142.\tME49\tARI.V\nP89.S\tVEG.S\tGT1.S\n3045.\tTGSKN":
-                print("wrote this!")
+
             
                                 
         

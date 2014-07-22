@@ -7,6 +7,7 @@ import Proteins.HMMParser as hmp
 import Proteins.DomainFamily as dmf
 import Proteins.SequenceSelect as ss
 import Proteins.SRSCytoscape as srsce
+import Proteins.Chartmaker as cm
 import os
 import re
 
@@ -79,3 +80,14 @@ if __name__ == '__main__':
     with open(outpath, 'w') as output:
         output.write(cytotext)
     print("cytoscape file completed.")
+
+#     #job: Make a chart
+#     filepath="/data/javi/Proteins/orthoMCL/groups.txt"
+#     outpath="/data/javi/Proteins/orthoMCL/chart.csv"
+#     hmmrDirectory="/data/javi/Proteins/HMMResolved"
+#     clusters = srsce.loadClusters(filepath)
+#     domains = srsce.getNodeDomains(hmmrDirectory)
+#     translated = cm.translateMatrix(clusters, domains)
+#     data = cm.distributionChart(translated[0], translated[1])
+#     cm.printChart(data[0], data[1], outpath)
+    

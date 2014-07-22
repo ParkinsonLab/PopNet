@@ -14,26 +14,26 @@ def distributionChart(translatedMatrix, strainList):
     clusters = translatedMatrix
     iterated = []
     
-    while clusters:      
-        for cluster in clusters:
-            #presort into both separate names
-            separated = {}
-            for element in cluster:
-                if element[1] in separated:
-                    separated[element[1]].append(element[0])
-                else:
-                    separated[element[1]] = [element[0]]
-                    
-            for name, strains in separated:            
-                results = {}
+      
+    for cluster in clusters:
+        #presort into both separate names
+        separated = {}
+        for element in cluster:
+            if element[1] in separated:
+                separated[element[1]].append(element[0])
+            else:
+                separated[element[1]] = [element[0]]
+                
+        for name, strains in separated.items():            
+            results = {}
 
-                for strain in strainList:
-                    results[strain] = 0
+            for strain in strainList:
+                results[strain] = 0
 
-                for strain in strains.values():
-                    results[strain] += 1
-                    
-                resultMatrix.append((name, results))
+            for strain in strains:
+                results[strain] += 1
+                
+            resultMatrix.append((name, results))
     #add the .1 and stuff
     sortedResults = sorted(resultMatrix, key=lambda x: x[0])
     return (sortedResults, strainList)
@@ -46,23 +46,26 @@ def translateMatrix(data, composition):
  
     for cluster in data:
         current = []
-        translatedMatrix.append(current)
+        
         for element in cluster:
-            strain = re.split("_", element)[0]
+            
+            nameSplit = re.split("_", composition[element][0])
+            strain = nameSplit[0]
+            name = nameSplit[1]
             if strain not in strainList:
                 strainList.append(strain)
-            name = composition[element][0]
-            translatedMatrix.append((strain, name))
-    
+            current.append((strain, name))
+        translatedMatrix.append(current)
+        
     return (translatedMatrix, strainList)
 
 def printChart(matrix, strainList, outfile):
-    strainList.insert("", 0)
+    strainList.insert(0,"")
     with open(outfile, "w") as output:
         previous = ""
         count = 0
-        output.write(",".join(strainList) + "\n")
-        for item in strainList:
+        output.write(",".join(sorted(strainList)) + "\n")
+        for item in matrix:
             header = item[0]
             if header == previous:
                 header += ".{0}".format(str(count+1))
@@ -71,8 +74,10 @@ def printChart(matrix, strainList, outfile):
                 previous = item[0]
                 count = 0
             
-            body = item[1].insert(0,header)
-            output.write(",".join([str(x) for x in body]) + "\n")
+            body = header
+            for entry in sorted(item[1].items(), key=lambda x: x[0]):
+                body+=",{0}".format(str(entry[1]))
+            output.write(body + "\n")
             
             
         
