@@ -18,51 +18,35 @@ from .FqBlock import FqBlock
  
 
     
-def chop(newdirectory, newchopdirectory, newsourcename, newidentifier, newlength, newoverlap, newlog):
+def chop(directory, chopdirectory, sourcename, identifier, length, overlap, newlog):
 # initialize
-    directory = newdirectory
-    sourcename = newsourcename
-    chopdirectory = newchopdirectory
-    source = None
-    product = None
-    identifier = newidentifier
-    length = newlength
-    overlap = newoverlap
+
     nextblockid = ""
+       
+    with open(sourcename, "r") as source:
+        print("\nreading file %s ..." % sourcename)
+        data = source.read()
+        print("done.")
     
-# this is now done in main
-#     directory = raw_input("Please specify working directory, in full \n")
-#     sourcename = raw_input("please specify source file name, in full \n")
-#     identifier = raw_input("Please input sequence identifier, not including the @ symbol \n")
-#     length = input("Please specify the length of moving window \n")
-#     overlap = input("Please specify the length of overlap \n")
-#     chopdirectory = directory + "/Chopped"
+    with open("%s/%s-chopped.fq" % (chopdirectory, sourcename.split(".")[0]), "w") as product:
     
-     
-    source = open(sourcename, "r")
-    print("\nreading file %s ..." % sourcename)
-    data = source.read()
-    print("done.")
-    
-    product = open("%s/%s-chopped.fq" % (chopdirectory, sourcename.split(".")[0]), "w")
-    
-    # identifying blocks. Each block processes and writes itself into the file.
-    eof = False
-    currentblock = FqBlock(length, overlap)
-    
-    while(not eof):
-        g = re.match("(?is)(@%s.*?)\n([a-zA-Z\n]*?)\n\+\n(.*?)(@%s.*)" % (identifier, identifier), data)
-        if not g:
-            g = re.match("(?is)(@%s.*?)([a-zA-Z\n]*?)\n\+\n(.*?)$" % (identifier), data)
-            eof = True
-        currentblock.setSeqid(g.group(1))
-        currentblock.setSequence(g.group(2).replace('\n', ''))
-        currentblock.setQscore(g.group(3).replace('\n', ''))
-        currentblock.write(product)
-        try:
-            data = g.group(4)
-        except:
-            log.write("\n%s reached eof" % sourcename)
+        # identifying blocks. Each block processes and writes itself into the file.
+        eof = False
+        currentblock = FqBlock(length, overlap)
+        
+        while(not eof):
+            g = re.match("(?is)(@%s.*?)\n([a-zA-Z\n]*?)\n\+\n(.*?)(@%s.*)" % (identifier, identifier), data)
+            if not g:
+                g = re.match("(?is)(@%s.*?)([a-zA-Z\n]*?)\n\+\n(.*?)$" % (identifier), data)
+                eof = True
+            currentblock.setSeqid(g.group(1))
+            currentblock.setSequence(g.group(2).replace('\n', ''))
+            currentblock.setQscore(g.group(3).replace('\n', ''))
+            currentblock.write(product)
+            try:
+                data = g.group(4)
+            except:
+                log.write("\n%s reached eof" % sourcename)
         
             
 #         currentblock.reset()

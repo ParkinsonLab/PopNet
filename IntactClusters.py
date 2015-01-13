@@ -2,7 +2,13 @@
 Created on Apr 2, 2014
 
 @author: javi
+
+This script is used to produce a particular view on the Java based Chr view, to determine whether a group of strains cluster together
+over the entire genome. This is both a discovery (when you have some leads) and a validation tool (when you think something things
+should be grouped together). The results produced here was not used for anything, and this lead may be discontinued for all I know. 
 '''
+
+
 
 #depends on MCLCounter!
 '''(list of names, list of lines) -> int
@@ -39,7 +45,7 @@ def write(resultsTree, outfile):
     selfName = "GENOME"
     
     with open(outfile, "wb") as output:
-        #write the hit lit as the keys within the first block 
+        #write the hit list as the keys within the first block 
         output.write('$\n' + '\n'.join(list(list(resultsTree.values())[0][0].keys())) + '\n$\n')
         
         #write the rest

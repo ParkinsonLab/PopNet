@@ -9,21 +9,28 @@ import os
 import NexusEncoder
 from collections import Counter as counter
 
-def load(path):
+def load(path, excludePath=None):
     print("loading..")
     with open(path) as source:
-        nameList = [_f for _f in re.split("\t",source.readline().replace("\r\n", "").replace("\n", "")) if _f] #gets names, split, filter for preceeding tabs. Name will be in order.
+        nameList = [_f.upper() for _f in re.split("\t",source.readline().replace("\r\n", "").replace("\n", ""))[3:] if _f] #gets names, split, filter for preceeding tabs. Name will be in order.
         rawData = re.split("\n", source.read())
         tree = {}
         chrBranch = {}
         posBranch = {}
         prevLineSplit = None
+        
+        if excludePath is not None:
+            with open(excludePath, 'r') as tempfile:
+                exclude = re.split("\n", tempfile.read().upper())
+        else:
+            exclude = None
             
         for line in rawData[:-1]:
             lineSplit = re.split("\t", line.replace("\n", "").replace("\r", ""))
-            if lineSplit[0] not in tree:
+            chr = lineSplit[0].upper()
+            if chr not in tree:
                 chrBranch = {}
-                tree[lineSplit[0]] = chrBranch
+                tree[chr] = chrBranch
             
             if int(lineSplit[1]) not in chrBranch:
                 posBranch = {}
@@ -32,19 +39,24 @@ def load(path):
             if isDrift(lineSplit):
                 continue
             
-            if hasDrift(lineSplit) and prevLineSplit:
-#                 this bit determines what to do with "drift". continue to skip line. use the
-#                 correctDrift to correct to previous match. This also kind of assumes that
-#                 drift doesn't really happen at positions with real SNPs. 
-                 
-                lineSplit = correctDrift(lineSplit, prevLineSplit)
+#             if hasDrift(lineSplit) and prevLineSplit:
+# #                 this bit determines what to do with "drift". continue to skip line. use the
+# #                 correctDrift to correct to previous match. This also kind of assumes that
+# #                 drift doesn't really happen at positions with real SNPs. 
+#                  
+#                 lineSplit = correctDrift(lineSplit, prevLineSplit)
                 
             for snp, samp in zip(lineSplit[3:], nameList):
 #                print "%s\t%s"%(samp, snp)
-                posBranch[samp] = snp
+                if not (exclude and samp in exclude):
+                    posBranch[samp] = snp
                 
             prevLineSplit = lineSplit
-                
+    
+    if exclude:
+        prunedNameList = [x for x in nameList if x not in exclude]
+        return (tree, prunedNameList)
+            
     print("loading done")
     return (tree, nameList)
 
@@ -121,7 +133,11 @@ def aggregateForNexus(treeTuple):
     for chrs in list(treeTuple[0].items()):
         for pos in sorted(chrs[1].items()):
             for name, info in list(pos[1].items()):
-                block[name] += info
+                if not re.match('[AGCTN-]$', info):
+                    print("Illegal Character {3} at {0}, {1}, {2}".format(name, str(pos[0]), chrs[0], info))
+                    block[name] += 'N'
+                else:
+                    block[name] += info
                 last = name
             if len(block[last]) >= 33:
                 results.append(block)

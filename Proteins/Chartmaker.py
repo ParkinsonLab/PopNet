@@ -59,7 +59,7 @@ def translateMatrix(data, composition):
         
     return (translatedMatrix, strainList)
 
-def printChart(matrix, strainList, outfile):
+def printDistributionChart(matrix, strainList, outfile):
     strainList.insert(0,"")
     with open(outfile, "w") as output:
         previous = ""
@@ -79,5 +79,36 @@ def printChart(matrix, strainList, outfile):
                 body+=",{0}".format(str(entry[1]))
             output.write(body + "\n")
             
-            
+def domainStats(composition):
+    results = {}
+    for ID, item in composition.items():
+        strain = re.split("_", ID)[0]
+        domains = item[1]
+        if strain not in results:
+            results[strain] = {}
+        for domain in domains:
+            if domain not in results[strain]:
+                results[strain][domain] = 0
+            results[strain][domain] += 1
+    return results
+
+def printDomainStats(data, outfile):
+    with open(outfile, "w") as output:
+        famList=["fam_{0}".format(str(x)) for x in range(1, 9)]
+        header="," + ",".join(famList) + ",Total\n"
+        output.write(header + "\n")
+        
+        for strain, domainInfo in sorted(data.items()):
+            output.write(strain + ",")
+            info = []
+            for fam in sorted(famList):
+                if fam in domainInfo:
+                    info.append(str(domainInfo[fam]))
+                else:
+                    info.append(str(0))
+            total = sum([int(x) for x in info])
+            info.append(str(total))
+            output.write(",".join(info) + "\n")
+        
+        
         

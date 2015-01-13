@@ -22,8 +22,24 @@ def pruneMatrix(matrix):
     #identify lower bounds
     dropCutoff = analyzeMatrix(npMatrix)
     print(dropCutoff)
+    
+    #the axis needs to be changed for proper comparison against the full matrix!
+    tempx = dropCutoff.shape[0]
+    dropCutoff.shape = (tempx, 1)
+    
     filteredMatrix = npMatrix * (npMatrix >= dropCutoff)
+    np.fill_diagonal(filteredMatrix, 0)
     transformedMatrix = transformMatrix(filteredMatrix)
+    
+    
+#     #debug code delete later
+#     key = 'EC9-8_S288C'
+#     index = sampleList.index(key)
+#     
+#     print('{0} has cutoff off {1}'.format(key, str(dropCutoff[index])))
+#     print('with the values \n' + str(npMatrix[index]))
+#     print('result \n' + str(filteredMatrix[index]))
+#     print('and the final one \n' + str(transformedMatrix[index]))
     
     return transformedMatrix
     
@@ -32,27 +48,31 @@ and returns them
 
 dropCutoff: half way between the average and the highest'''
 def analyzeMatrix(npMatrix):
-    cutoffStringency = 0.65
+    #This value determines how many edges you get.
+    cutoffStringency = 0.8
     
-    #current method is to go half way between max and median. 
+    #current method: cutoff is calculated from the interval cluster
+    #then anything less than the cutoff is pruned. 
     actualValues = npMatrix * (npMatrix < npMatrix[0,0])
-    
+
     cutoffs = np.zeros(np.shape(actualValues)[0])
     for x in np.arange(cutoffs.shape[0]):
         column = actualValues[:,x]
         clusterIterator = iter(intervalCluster(column))
         belowCutoff = 0.
         cutoff = 0
-        
+        previous = 0
         try:
             while belowCutoff/np.shape(column)[0] < cutoffStringency:
                 currCluster = next(clusterIterator)[0]
+                previous = cutoff
                 cutoff = max(currCluster)
                 belowCutoff += len(currCluster)
+                cutoffs[x] = cutoff
         except StopIteration:
-            pass
+            cutoffs[x] = previous
         
-        cutoffs[x] = cutoff
+        
 #         another old algorithm
 #         cutoffs[x] = np.max(column) + np.sort(column)[len(column)/2] / 2
 #     old algorithm, discarded. 
@@ -64,6 +84,7 @@ short clustering algorithm. logic: if not within x% of any "centers", current
 value becomes a new center
 results sorted lowest to highest, both amongst and within clusters'''
 def intervalCluster(npMatrix):
+    max = np.max(npMatrix.flat)
     anchors = []
     results = {}
     closeness = 0.2
@@ -71,7 +92,12 @@ def intervalCluster(npMatrix):
     
     for e in sortedMatrix[np.where(sortedMatrix>0)]:
         for anchor in anchors:
-            if abs(1 - anchor/e) < closeness * (np.log10(e)+1):
+            #about this formula:
+            #it basically measures if the value is [closeness] close to an anchor, to decide
+            #if it should be a new anchor. The allowable range for anchors is increased for higher ranges,
+            #hence the log part, but should always be kept to less than 30% to avoid poor clustering at
+            #higher values. 
+            if abs(1 - anchor/e) < closeness * (1+1/(1+np.exp(-1/(max-e)))):
                 break
         else:
             anchors.append(e)
@@ -91,8 +117,8 @@ def intervalCluster(npMatrix):
 '''same idea, really'''
 def transformMatrix(npMatrix):
     #values are mapped log2 from zero to maxValue
-    maxValue = 2
-    scalingFactor = 10
+    maxValue = 4.
+    scalingFactor = 10.
     
     max = npMatrix.max()
     toFraction = npMatrix / max
@@ -104,7 +130,8 @@ def transformMatrix(npMatrix):
     
     transformedMatrix = np.power(toFraction, np.log(toFraction) * -1 * scalingFactor) * maxValue
     
-    return np.triu(transformedMatrix)
+    
+    return transformedMatrix
     
     
     
@@ -118,16 +145,19 @@ def fromMatrix(matrix, name, colorTable, composition):
     print(name + " cutoff is:")
     sampleList = sorted(matrix.keys())
     #nodes are two-tuples consisting of id and label
-    nodes = [(index, name) for index, name in enumerate(sampleList)]
+    nodes = [(index, nodeName) for index, nodeName in enumerate(sampleList)]
     edges = []
     prunedMatrix = pruneMatrix(matrix)
     
-    #edges consists of three-tuples 
+    #edges consists of three-tuples and excludes duplicated
+    excluded = []
     for source in sorted(nodes):
         for target in sorted(nodes):
-            value = prunedMatrix[source[0], target[0]]
-            if value > 0:
-                edges.append((source, target, value))
+            if (source, target) not in excluded:
+                value = prunedMatrix[source[0], target[0]]
+                if value > 0:
+                    edges.append((source, target, value))
+                    excluded.append((target, source))
     
     text = "\
 <?xml version=\"1.0\"?>\n\
@@ -170,14 +200,15 @@ def getNodeText(ID, label, colorTable, composition):
         color = "000000"
         
     circosText = calculateCircos(composition, colorTable)
-    
+#     #hacked for importing!
+#     circosText = importCircos(composition)
     text = "\
         <node label=\"{1}\" id=\"{0}\" >\n\
             <att name=\"name\" type=\"string\" value=\"{1}\"/>\n\
             <att name=\"group\" type=\"string\" value=\"{2}\"/>\n\
-            <att name=\"Gradient\" type=\"string\" value=\"circoschart: arcstart=90 firstarc=.6 arcwidth=.3 colorlist=&quot;{3}&quot; showlabels=false attributelist=&quot;{4}&quot;\"/>\n\
+            <att name=\"Gradient\" type=\"string\" value=\"circoschart: arcstart=90 firstarc=.6 arcwidth=.3 outlineWidth=0.0 colorlist=&quot;{3}&quot; showlabels=false  attributelist=&quot;{4}&quot;\"/>\n\
 {5}\
-            <graphics h=\"20\" w=\"20\" fill=\"{2}\" />\n\
+            <graphics h=\"60\" w=\"60\" outline=\"{2}\" />\n\
         </node>\n".format(ID, label, color, circosText[0], "values", circosText[1])
     return text
 
@@ -231,6 +262,26 @@ def calculateCircos(composition, colorTable):
             </att>\n"
     return colorString, valueString
 
+'''list -> tuple
+takes a precalculated list of colors and puts them into the circos format'''
+def importCircos(composition):
+    valueList = []
+    colorList = []
+    for section in composition:
+        valueList.append(str(section[1] - section[0] + 1))
+        colorList.append(str(section[2]))
+    
+    colorString = ",".join(colorList)
+    valueString = "\
+            <att name=\"values\" type=\"list\">\n"
+    for item in valueList:
+        valueString += "\
+                <att type=\"real\" value=\"{0}\"/>\n".format(item)
+    valueString += "\
+            </att>\n"
+            
+    return colorString, valueString
+    
     
 # '''(int) -> decimal
 # given the raw # of connections, calculates an appropriate edge width. 

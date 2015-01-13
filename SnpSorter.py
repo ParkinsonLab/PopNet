@@ -10,31 +10,41 @@ from os.path import isfile, join, isdir
 import re
 import traceback
 import copy
-from subprocess import call
+import subprocess as subp
 import itertools
-
-
-
+import ChrTranslator as ct
+import logging
+import StringIO
 
 
 #dataTree will be organized as  a nested dictionary:
 #dataTree{'Chromosome name':{'Nucleotide position':{'Sample name':'The SNP'}}}
 #Method inputs: File f, Dictionary dataTree. File f should end in either .snps or .vcf. 
-def addData(f, dataTree, minCoverage):
+def addData(f, sampleName, dataTree, minCoverage, reference):
 #Add a failsafe for file type
     try:
         if not (f.name.endswith(".snps") or f.name.endswith(".vcf")):
             raise Exception("Invalid file type in %s" % f.name)
     except Exception:
-        sys.exit()
-
+        sys.exit()  
+        
 #parse that coverage file if it exists
     minCoverageData = None
     if minCoverage:
         minCoverageData = re.findall("(?m)^(.*?)\t(.*?)\t.*?\n", minCoverage.read())
     
-    
+#come up with a sample name and type
+    if f.name.endswith('.snps'):
+        type = 'snps'
+    else:
+        type = 'vcf'    
 #Parsing Data
+    
+    global disregardCount
+    totalCount = 0
+    disregardCount = 0
+    
+
     #Remove the header
     try:
         data = f.read()
@@ -48,9 +58,12 @@ def addData(f, dataTree, minCoverage):
     parsed = []
     #Parsing lines
     for line in rawLines[:-1]:
-        temp = organizeLine(line, f.name, minCoverageData)
-        if temp is not None:
+        totalCount += 1
+        temp = organizeLine(line, sampleName, type, minCoverageData)
+        if temp is not None and re.search('CHR', temp[0]):
             parsed.append(temp)
+        elif temp is None:
+            disregardCount += 1
       
 #Add the parsed data to the dataTree      
     for dataPoint in parsed:
@@ -58,12 +71,17 @@ def addData(f, dataTree, minCoverage):
         #Ensures that the branch this data line refers exists.
         #If not, create it 
         currentLevel = dataTree
-        for branchName in dataPoint[:-2]:
+        for branchName in dataPoint[:2]:
             if branchName not in currentLevel:
                 currentLevel[branchName] = {}
             currentLevel = currentLevel[branchName]
         #Adds the SNP value to the tree
-        currentLevel[dataPoint[-2]] = dataPoint[-1]
+        currentLevel[dataPoint[-3]] = dataPoint[-2]
+        if reference not in currentLevel:
+            currentLevel[reference] = dataPoint[-1]
+    
+    print("{0!s} disregarded out of {1!s} total".format(disregardCount, totalCount))
+    
     return dataTree
 
 
@@ -80,18 +98,31 @@ def fetchRegexPattern(name):
 #[1]Reference Nucleotide position
 #[2]Sample name
 #[3]Nucleotide value
-def organizeLine(rawLine, name, minCoverage):
+def organizeLine(rawLine, name, type, minCoverage):
     
     lineSplit = re.split("\s+",rawLine)
     try:
-        if name.endswith(".snps"):
-            return [lineSplit[14].upper(), int(lineSplit[1]), name[:5].upper(), lineSplit[3].upper()]
+        if type is 'snps':
+            chr = ct.translate(lineSplit[14].upper())#for plasmo aligned from 3D7
+            ref = lineSplit[2].upper()
+            snp = lineSplit[3].upper()
+            indel = len(ref) > 1 or len(snp) > 1 or re.search('[^AGCT]', ref) or re.search('[^AGCT]', snp)
+            pos = int(lineSplit[1])
+            if not indel:
+                return [chr, pos, name, snp, ref]
+            else:
+                return None
         else:
-            indel = (len(lineSplit[3]) > 1 or len(lineSplit[4]) > 1)
+            chr = ct.translate(lineSplit[0].upper()).upper()
+            indel = len(lineSplit[3]) > 1 or len(lineSplit[4]) > 1 or re.search('[^AGCT]', lineSplit[3]) or re.search('[^AGCT]', lineSplit[4])
             hetero = re.search("1/1", lineSplit[9])
-            quality = (lineSplit[0], lineSplit[1]) in minCoverage
-            if hetero and not indel and not quality:
-                return [lineSplit[0].upper(), int(lineSplit[1]), name[:5].upper(), lineSplit[4].upper()] 
+            quality = float(lineSplit[5])
+            pos = int(lineSplit[1])
+            snp = lineSplit[4].upper()
+            ref = lineSplit[3].upper()
+            #choice of 5 as a quality min is a bit arbitrary
+            if hetero and not indel and quality > 0:
+                return [chr, pos, name, snp, ref] 
             else:
                 return None
     except Exception as e:
@@ -192,41 +223,41 @@ def calculateComposition(resortedData, sampleList, output):
                 currString += "\tNONE |"
         output.write("%s\n"%currString)
                 
-def snpDensity(dataTree, output, sampleList):
-
-    #Writes a header into the output file    
-    headerString = "Chromosome\tRefPosition"
-    for headerSample in sampleList:
-        headerString += "\t%s"%headerSample
-    headerString += "\n"
-    output.write(headerString)
-    
-    #create a new tree, define branches
-    posDict = {}
-    for name in sampleList:
-        posDict[name] = 0
+def snpDensity(dataTree, outpath, sampleList):
+    with open(outpath, "w") as output:
+        #Writes a header into the output file    
+        headerString = "Chromosome\tRefPosition"
+        for headerSample in sampleList:
+            headerString += "\t%s"%headerSample
+        headerString += "\n"
+        output.write(headerString)
+        
+        #create a new tree, define branches
+        posDict = {}
+        for name in sampleList:
+            posDict[name] = 0
+                    
+        for chrName in dataTree:
+            if re.search("(?i)chr", chrName):
+                chrString = chrName
+                chrBranch = dataTree[chrName]
+                length = sorted(chrBranch.keys())[-1]
+                newList = [copy.deepcopy(posDict) for x in range(length/10000 + 1)] #snps per 1000 base pairs
+                for position in chrBranch:
+                    group = position/10000
+                    posBranch = chrBranch[position]
+                    newBranch = newList[group]
+                    for sample in sampleList:
+                        if sample in posBranch:
+                            newBranch[sample] += 1
                 
-    for chrName in dataTree:
-        if re.search("(?i)chr", chrName):
-            chrString = chrName
-            chrBranch = dataTree[chrName]
-            length = sorted(chrBranch.keys())[-1]
-            newList = [copy.deepcopy(posDict) for x in range(length/100000 + 1)] #snps per 100,000 base pairs
-            for position in chrBranch:
-                group = position/100000
-                posBranch = chrBranch[position]
-                newBranch = newList[group]
-                for sample in sampleList:
-                    if sample in posBranch:
-                        newBranch[sample] += 1
-            
-            for branch in newList:
-                temppos = newList.index(branch)  * 100000
-                posString = chrString + "\t%d"% (temppos)
-                for sample in sampleList:
-                    posString += "\t%d"%branch[sample]
-                posString += "\n"
-                output.write(posString)
+                for branch in newList:
+                    temppos = newList.index(branch)  * 10000
+                    posString = chrString + "\t%d"% (temppos)
+                    for sample in sampleList:
+                        posString += "\t%d"%branch[sample]
+                    posString += "\n"
+                    output.write(posString)
                 
 #calculates how many snps are shared betweenthe strains.
 #uses the datatree and compared to all other results at that position
@@ -255,26 +286,32 @@ def calculateMatrix(dataTree, sampleList):
             
             
             for position in chrBranch:
-                chrMatrixBranch = chrMatrix[position/10000] #This one matches the above number
+                chrMatrixBranch = chrMatrix[position/10000] #This one matches the above number. and the value from snpdensity
                 posBranch = chrBranch[position]
                 for x in modSampleList:
-                    if x in posBranch:
-                        for y in posBranch:
+                    for y in modSampleList:
+                        if x in posBranch and y in posBranch:
                             if (posBranch[x] == posBranch[y]):
                                 chrMatrixBranch[x][y] += 1
-#                 #enforcing cutoff
-#                 cutoff = 30
-#                 for xindex, x in chrMatrixBranch.items():
-#                     valueSum  = sum(x.values())
-#                     if valueSum < cutoff:
-#                         for yindex in x.keys():
-#                             chrMatrixBranch[xindex][yindex] = 0
-                            
-# Use only if having ME49!
-#                     else:
-#                         for y in modSampleList:
-#                             if y not in posBranch:
-#                                 chrMatrixBranch[x][y] += 1
+                        elif x not in posBranch and y not in posBranch:
+                                chrMatrixBranch[x][y] += 1
+                                
+#Transform Matrix
+#Put the lowest value as 0 and the highest as 1, rescale all values. 
+            for index, branch in chrMatrix.items():
+                sampleKey = branch.keys()[0]
+                highest = max(branch[sampleKey][sampleKey], 1)
+                templist = []
+                for x in branch.values():
+                    templist += x.values()
+                lowest = min(templist)
+                if highest == lowest:
+                    print("bad matrix at {0} {1}".format(chrName, str(index)))
+                for x in branch.keys():
+                    for y in branch[x].keys():
+                        if branch[x][y] > highest:
+                            print("Over limit at {0} {1} {2} {3}".format(chrName, str(index), x, y))
+                        branch[x][y] = float(branch[x][y] - lowest) / float(max(highest - lowest, 1))
     
             matrixDict[chrName] = chrMatrix
     return matrixDict
@@ -286,98 +323,94 @@ def calculateMatrix(dataTree, sampleList):
 #So now we have a matrix file for every 10kb of the chromosome. In order to preserve the sanity of the folder,
 #the scheme is to create a tempfile containing each matrix, send that one off to be analyzed, and the deleted.
 #a separate persistent file will be created containing all the information in a single file, from the entire thing. 
-def recordMatrix(matrixDict):
+def recordMatrix(matrixDict, sampleList):
     persistentMatrixName = "matrix/persistentMatrix.txt"
     persistentResultName = "matrix/persistentResult.txt"   
-    persistentDensityName = "matrix/persistentDensity.txt"
-    persistentTabName = "matrix/persistentTab.txt"
-    with open(persistentMatrixName, "w") as persistentFile, open(persistentResultName, "w") as persistentResult, open(persistentDensityName, "w") as persistentDensity, open(persistentTabName, "w") as persistentTab:
+    tabname = "matrix/persistentMatrix.tab"
+    
+    with open(tabname, 'w') as persistentTab:
+                for index, key in enumerate(sampleList):
+                    persistentTab.write("{0} {1}\n".format(str(index), key))
+
+                        
+    with open(persistentMatrixName, "w") as persistentFile, open(persistentResultName, "w") as persistentResult:
         for chrName in matrixDict:
             if re.search("(?i)chr", chrName): #Only real chromosomes allowed. 
                 persistentFile.write("@%s\n"%chrName)
                 persistentResult.write("@%s\n"%chrName)
-                persistentDensity.write("@%s\n"%chrName)
-                persistentTab.write("@%s\n"%chrName)
                 chrBranch = matrixDict[chrName]
                 
-                fileList = []
-                tabList = []
-                total = 0
-                for index in chrBranch:
-                    indexBranch = chrBranch[index]
-                    dimension = len(list(indexBranch.keys())) #dimensions match the number of samples
+                    #writes the single tab file
+            
+                
+                for pindex in sorted(chrBranch):
+                    currString = ""
+                    indexBranch = chrBranch[pindex]
+                    dimension = len(indexBranch) #dimensions match the number of samples
                     #now we make the files in here, one separate file per chromosome per 10kb.
-                    matrixPrefix = "matrix/%s.%d"%(chrName, index)
-                    with open(matrixPrefix + ".mci", "w") as output, open(matrixPrefix + ".tab", "w") as tab:
-                        fileList.append(output.name)
-                        tabList.append(tab.name)                        
-                        #The header portion of each matrix
-                        output.write("(mclheader\nmcltype matrix\ndimensions %dx%d\n)\n"%(dimension, dimension))
-                        domString = "(mcldoms\n"
-                        keycount = 0
-                        for key in indexBranch: #writes the doms string, as well as the tab file
-                            domString += "%d "%keycount
-                            tab.write("%d %s\n"%(keycount, key))
-                            persistentTab.write("%d %s\n"%(keycount, key))                        
-                            keycount+=1
+                     
+                    #The header portion of each matrix
+                    currString += "(mclheader\nmcltype matrix\ndimensions %dx%d\n)\n"%(dimension, dimension)
+                    currString += "(mcldoms\n"
+                    for index, key in enumerate(sampleList): #writes the doms string, as well as the tab file
+                        currString += "%d "%index                      
+                    currString += "$\n)\n"
                         
-                        domString += "$\n)\n"
-                        output.write(domString)
-                        persistentTab.write("\n")
-                            
-                        #The data portion
-                        output.write("(mclmatrix\nbegin\n")
-                        xcount = 0
-                        
-                        #This parts allows the matrix to divide by the first value,
-                        #thus normalizing all input to between zero and 1
-                        tempPos = list(indexBranch.keys())[1]
-                        total = max(float(indexBranch[tempPos][tempPos]), float(1))
-                        
-                        for x in indexBranch:
-                            currString = "%d\t"%xcount
-                            branch = indexBranch[x]
-                            ycount = 0
-                            for y in branch:
-                                #this one is for not normalized. 
-                                #currString += "%s:%f "%(ycount, branch[y])
-                                #use for normalization
-#                                currString += "%s:%f "%(ycount, branch[y]/total)
-                                currString += "%s:%f "%(ycount, branch[y])
-                                ycount+=1
-                            currString += "$\n"
-                            xcount+=1
-                            output.write(currString)
-                        output.write(")\n")
-                    result = mcl(matrixPrefix)
-                    persistentFile.write("#%d\n%s\n"%(index, result[0]))
-                    persistentResult.write("#%d\n%s\n"%(index, result[1]))
-                    persistentDensity.write("#%d\n%d\n\n"%(index, total))
+                    #The data portion
+                    currString += "(mclmatrix\nbegin\n"
+                    xcount = 0
+                    
+                    #This parts allows the matrix to divide by the first value,
+                    #thus normalizing all input to between zero and 1
+                    for x in sampleList:
+                        currString += "%d\t"%xcount
+                        branch = indexBranch[x]
+                        ycount = 0
+                        for y in sampleList:
+                            #value is pre-normalized during matrix construction
+                            currString += "%s:%f "%(ycount, branch[y])
+                            ycount+=1
+                        currString += "$\n"
+                        xcount+=1
+                    currString += ')'
+
+                    result = mcl(currString, tabname)
+                    
+                    persistentFile.write("#%d\n%s\n"%(pindex, currString))
+                    persistentResult.write("#%d\n%s\n"%(pindex, result))
+
     analyzeMatrix(persistentResultName)
-    analyzeMatrix(persistentDensityName)
 
 #This just calls mcl in shell and runs the basic command for it, using the previously generated matrix as input.  
 #iValue is currently fixed! Small modification neede5d for it to produce iterant runs with different values.       
-def mcl(matrixPrefix):
-    iValue = 11 
-    matrixName = matrixPrefix + ".mci"
-    tabName = matrixPrefix + ".tab"
+def mcl(data, tabName):
+    iValue = 8 
+#     matrixName = matrixPrefix + ".mci"
+#    tabName = matrixPrefix + ".tab"
 #    while (iValue <= 4):    
-    modName = "%s.%f.result"%(matrixName, iValue)
-    dumpName = "%s.%f.dump"%(matrixName, iValue)
-    piValue = 8
+#     modName = "{}.{}.result".format(matrixName, iValue)
+#     dumpName = "{}.{}.dump".format(matrixName, iValue)
+    #was 3 for the Toxo stuff
+
+    piValue = 20
     #ASSUMES IVALUE IS AN INT!!
-    call(["mcl", matrixName, "-use-tab", tabName, "-I", "%d"%iValue, "-o", modName, "-pi", "%d"%piValue]) #The -I option is the inflation value. Play around with it. 
-#    call(["mcxdump", "-icl", modName, "-tabr", tabName, "-o", dumpName])  #Don't need this for now because use-tab is doing the trick. 
-#        iValue += 0.5    
-    with open(matrixName, "r") as a, open(modName, "r") as b:
-        data = a.read()
-        result = b.read()
-    os.remove("%s/%s"%(os.getcwd(), matrixName))
-    os.remove("%s/%s"%(os.getcwd(), modName))
-    os.remove("%s/%s"%(os.getcwd(), tabName))
     
-    return (data,result)
+    #lets use stdout
+    
+    p1 = subp.Popen(["echo", data], stdout = subp.PIPE)
+    p2 = subp.Popen(["mcl", "-", "-use-tab", tabName, "-I", "%d"%iValue, "-o", "-", "-pi", "%d"%piValue, "-q", "x", "-V", "all"], stdin = p1.stdout, stdout = subp.PIPE, close_fds=True) #The -I option is the inflation value. Play around with it. 
+    result = p2.stdout.read()
+    print(result)
+    
+#    call(["mcl", matrixName, "-use-tab", tabName, "-I", "%d"%iValue, "-o", modName, "-pi", "%d"%piValue, "-V", "all"]) #The -I option is the inflation value. Play around with it.  
+#     with open(matrixName, "r") as a, open(modName, "r") as b:
+#         data = a.read()
+#         result = b.read()
+#     os.remove("%s/%s"%(os.getcwd(), matrixName))
+#     os.remove("%s/%s"%(os.getcwd(), modName))
+#     os.remove("%s/%s"%(os.getcwd(), tabName))
+    
+    return result
 
 #Reads a persistentResults file, parses it, and then interprets it. 
 #Input is the file name
@@ -400,25 +433,30 @@ def analyzeMatrix(results):
                 if entry[2] in matrixStats:
                     matrixStats[entry[2]] += (entry[1] - entry[0] + 1)
                 else:
-                    matrixStats[entry[2]] = (entry[1] - entry[0] + 1)
-                
-                #Debug only!
-                #print entry[2], matrixStats[entry[2]]
-#                 if entry[2] == "3045.\t3142.\tME49\tTGSKN\tP89.S\tARI.V\nVEG.S\tGT1.S":
-#                     print "control hit"
-#                 if entry[2] == "3142.\tME49\tARI.V\nP89.S\tVEG.S\tGT1.S\n3045.\tTGSKN":
-#                     print "hit zzz", matrixStats[entry[2]];  
+                    matrixStats[entry[2]] = (entry[1] - entry[0] + 1) 
                 output.write("%d - %d \n%s\n###\n"%(entry[0], entry[1], entry[2]))         
         
         sortedInvStats = sorted({(v,k) for k, v in matrixStats.items()}, reverse=True)
         
-        #debug!
-        #temp = {(v,k) for k, v in matrixStats.iteritems()}
-        #print len(temp)
-        #print sortedInvStats, len(sortedInvStats), len(matrixStats)
+        #stats
+        total_clusters = 0
+        single_sections = 0
+        total = 0
         for x in range(len(sortedInvStats)):
-            output.write("@@%s--\n%d\n"%(sortedInvStats[x][1], sortedInvStats[x][0]))
-
+            pattern = sortedInvStats[x][1]
+            count = sortedInvStats[x][0]
+            
+            output.write("@@%s--\n%d\n"%(pattern, count))
+            
+            #calculate some statistics!
+            total += 1
+            n = len(re.split("\n", pattern))
+            total_clusters += n  
+            if n == 1: single_sections += 1
+        import decimal as dc
+        dc.getcontext().prec = 2
+        print("Analysis Results:\n Average {0} clusters over {1} sections.\n{2} unclustered region detected, representing {3}% of total".format(\
+str(dc.Decimal(total_clusters)/dc.Decimal(total)), str(total), str(single_sections), str(dc.Decimal(single_sections)/dc.Decimal(total))))
             
                                 
         
@@ -451,122 +489,199 @@ def remcl():
                 result = mcl(matrixPrefix)
                 output.write(matrix[0] + result[1] + "\n")
 
-                  
-if __name__ == '__main__':
-#modify these as needed
-    #Works with all files under a directory. 
-    #directory = raw_input("Please specify working directory, in full \n")
-    #forceRefs = raw_input("Resort to reference types? 0 for No, 1 for Yes.")
-    #directory = "/home/javi/testzone/snps"
-    #directory = "/data/javi/Toxo/BaseData/tempz"
-    #directory = "data/javi/Toxo/NewSeqs/temp"
-    directory = "/data/javi/Toxo/64Genomes/Filtered"
+#records densities of all strains
+def multiDensity(dataTree, outfile):
+    binSize = 10000
+    results = {}
+    text = ""
     
-    #Use this if using on scinet
-#    directory = "/scratch/j/jparkins/xescape/SNPSort"
-#    forceRefs = "1"
-     
-     
-    #Move working directory to specified
-    os.chdir(directory)  
-     
-    #Create a log for this run. Always called log.txt so will be replace per run.    
-    log = open("log.txt", "w")
-    log.write("\nRun inputs are: %s" % (directory))
-  
+    for chrName, chr in dataTree.items():
+        text += "@{}\n".format(chrName)
+        data = {}
+        for position, posBranch in chr.items():
+            binNum = int(position / binSize)
+            if binNum not in data: data[binNum] = 0
+            data[binNum] += 1
+            
+        results[chrName] = [x[1] for x in sorted(data.items())]
+           
+#printing only         
+        for number, bin in data.items():
+            text += str(number) + "\t" + str(bin) + "\n"
+               
+    with open(outfile, "w") as output:
+        output.write(text)
+            
+    return results
+
+#fills the empty spots in the dataTree with the reference sequence, so it functions like data from Griggloader.
+#the reference is guaranteed to be in every position.
+def fillDataTree(dataTree, sampleList, reference):
+
+    
+    for name, chr in dataTree.items():
+        print("filling data for chromosome {}".format(name))
+        for position in chr.values():
+            for sample in sampleList:
+                if sample not in position:
+                    position[sample] = position[reference]
+                    
+    return dataTree
+
+            
+if __name__ == '__main__':
+    
+# #modify these as needed
+#     #Works with all files under a directory. 
+#     #directory = raw_input("Please specify working directory, in full \n")
+#     #forceRefs = raw_input("Resort to reference types? 0 for No, 1 for Yes.")
+#     #directory = "/home/javi/testzone/snps"
+# #     directory = "/data/new/javi/yeast/results"
+# #     directory = '/data/new/javi/yeast/data'
+#     #directory = "/data/new/javi/plasmo/vcfs"
+#     #directory = "data/javi/Toxo/NewSeqs/temp"
+# #     directory = "/data/javi/Toxo/64Genomes/Filtered"
+#     directory = "/data/javi/Toxo/Hybrid"
+#     
+#     #Use this if using on scinet
+# #    directory = "/scratch/j/jparkins/xescape/SNPSort"
+#     forceRefs = 0
+#      
+#      
+#     #Move working directory to specified
+#     os.chdir(directory)  
+#      
+#     #Create a log for this run. Always called log.txt so will be replace per run.    
+#     log = open("log.txt", "w")
+#     log.write("\nRun inputs are: %s" % (directory))
+#   
 # #Locates all vcf and snps files in the directory and adds them to the dataTree one by one.   
 #     try:
 #         onlyfiles = [ f for f in listdir(directory) if (isfile(join(directory,f)) and (f.endswith(".snps") or f.endswith(".vcf"))) ]
 #     except Exception:
-#         print "\n%s is not a valid file." % f
+#         print("\n%s is not a valid file." % f)
 #         sys.exit()
-  
-# #Attempt to sort the samples so the references are processed first
-# #Only when reference types are being mapped to.
-# #The Type 1 reference is GT1. Type 3 reference is VEG.
-#     temp = []
+#     
+# # #Attempt to sort the samples so the references are processed first
+# # #Only when reference types are being mapped to.
+# # #The Type 1 reference is GT1. Type 3 reference is VEG.
+# #     temp = []
+# #     sampleList = []
+# #     if int(forceRefs) == 1:
+# #         RefA = ""
+# #         RefB = ""
+# #         for g in onlyfiles:
+# #             currName = re.split(".", g)[0].upper()
+# #             if re.match("GT1", currName):
+# #                 RefA = currName
+# #             elif re.match("VEG", currName):
+# #                 RefB = currName
+# #             else:
+# #                 sampleList.append(currName)
+# #         sampleList.insert(0,RefB)
+# #         sampleList.insert(0,RefA)
+# #     else:
+# #         for g in onlyfiles:
+# #             currName =re.split(".", g)[0].upper()
+# #             sampleList.append(currName)
+# 
+# #a simpler sample list, tailor to your own needs:
+# 
+#    
+# # fileList should already be sorted, if necessary, for resorting. 
+# # vcf files Must be accompanied by a min coverage file. 
+#     dataTree = {}   #actually a dictionary
 #     sampleList = []
-#     if int(forceRefs) == 1:
-#         RefA = ""
-#         RefB = ""
-#         for g in onlyfiles:
-#             currName = g[:5].upper()
-#             if re.match("GT1", currName):
-#                 RefA = currName
-#             elif re.match("VEG", currName):
-#                 RefB = currName
-#             else:
-#                 sampleList.append(currName)
-#         sampleList.insert(0,RefB)
-#         sampleList.insert(0,RefA)
-#     else:
-#         for g in onlyfiles:
-#             currName = g[:5].upper()
-#             sampleList.append(currName)
-  
-# #fileList should already be sorted, if necessary, for resorting. 
-# #vcf files Must be accompanied by a min coverage file. 
-#     dataTree = {}   #actually a dictionary 
+#      
+#     reference = "ME49"
+#     if reference not in sampleList: sampleList.append(reference)
+#       
 #     for f in onlyfiles:
-#         print "\nProcessing %s ..." % f
-#         log.write("\nProcessing %s ... " % f) 
-#         if f.endswith("vcf"):
-#             with open("%s_coverage.min"%(re.split("\.", f)[0]), "r") as minCoverage, open(f, "r") as data:
-#                 dataTree = addData(data, dataTree, minCoverage)
+#         print("\nProcessing %s ..." % f)
+#         log.write("\nProcessing %s ... " % f)
+#         #sample name pattern here
+#  #        pattern = '^(.+?)[_].*' #for the old plasmodium stuff
+#         pattern = '^(.+?)[\.].*'
+#          
+#         sampleName = re.match(pattern, f).group(1).upper()
+#         if sampleName not in sampleList: 
+#             if f.endswith("vcf"):
+#                 with open("%s_coverage.min"%(re.split("\.", f)[0]), "r") as minCoverage, open(f, "r") as data:
+#                     dataTree = addData(data, sampleName, dataTree, minCoverage, reference)
+#             else:
+#                 with open(f, "r") as data:
+#                     dataTree = addData(data, sampleName, dataTree, None, reference)
+#             sampleList.append(sampleName)
 #         else:
-#             with open(f, "r") as data:
-#                 dataTree = addData(data, dataTree, None)
-#         
+#             print("Duplicate for {0}".format(sampleName))
 #     with open("results.txt", "w") as results:
 #         record(dataTree, results, sampleList)
-#     
-#         
-#     if int(forceRefs) == 1:
-#         print "resorting"#                 this bit determines what to do with "drift". continue to skip line. use the
-#                 correctDrift to correct to previous match. This also kind of assumes that
-#                 drift doesn't really happen at positions with real SNPs. 
-#         resorted = resort(dataTree, sampleList)
-#         with open("resortedResults.txt", "w") as resortedResults:
-#             record(dataTree, resortedResults, sampleList)
-#             
-#         print "calculating composition"
-#         with open("percents.txt", "w") as percentageOutput:
-#             calculateComposition(dataTree,sampleList, percentageOutput)
-#             
-#         print "calculating density"
-#         with open("density.txt", "w") as density:
-#             snpDensity(dataTree,density,sampleList)
-#             
-#         print "generating matrix"
-#             
-#         matrixDir = directory + "/matrix"
-#         if not isdir(matrixDir):    
-#             os.mkdir(matrixDir)
-#         matrix = calculateMatrix(dataTree, sampleList)
-#         recordMatrix(matrix)
-         
-
+#      
+#          
+# #     if int(forceRefs) == 1:
+# #         print "resorting"
+# #         resorted = resort(dataTree, sampleList)
+# #         with open("resortedResults.txt", "w") as resortedResults:
+# #             record(dataTree, resortedResults, sampleList)
+# #              
+# #         print "calculating composition"
+# #         with open("percents.txt", "w") as percentageOutput:
+# #             calculateComposition(dataTree,sampleList, percentageOutput)
+#              
+#     print("calculating density")
+#  
+#     snpDensity(dataTree,"density.txt",sampleList)
+# #    multiDensity(dataTree, "density.txt")
+#            
+#     import DriftDetection as dd
+#     dataTree = dd.scan(dataTree)
+#       
+#     print('filling data tree')
+#     dataTree = fillDataTree(dataTree, sampleList, reference)
+#    
+#     print("generating matrix")     
+#     matrixDir = directory + "/matrix"
+#     if not isdir(matrixDir):    
+#         os.mkdir(matrixDir)
+#     matrix = calculateMatrix(dataTree, sampleList)
+#     recordMatrix(matrix)
+#       
+#     print('encoding to nexus')     
+#     import GriggsLoader as gl
+#     import NexusEncoder as ne
+#     treetuple = (dataTree, sampleList)
+#     ne.nexusOutput(gl.aggregateForNexus(treetuple))
+    
 #         #for reanalyzing Only!
 #     matrixDir = directory + "/matrix"
 #     os.chdir(matrixDir)
-#     print "remcl"
+#     print("remcl")
 #     remcl()
-#     print "Reanalyzing Matrix"
+#     print("Reanalyzing Matrix")
 #     analyzeMatrix("persistentResult.txt")
          
 #       for griggsloader
-    import GriggsLoader
-    data = GriggsLoader.load("/data/javi/Toxo/64Genomes/OrderedSNPV6.txt")
-    dataTree = data[0]
-    sampleList = data[1]
-    with open("results.txt", "w") as results:
-        record(dataTree, results, sampleList)
+    import GriggsLoader as gl
+    import NexusEncoder as ne
+    os.chdir('/data/javi/Toxo/64Genomes/Filtered/matrix')
+    data = gl.load("/data/javi/Toxo/64Genomes/OrderedSNPV6.txt", '/data/javi/Toxo/64Genomes/Filtered/matrix/exclude.txt')
+    ne.nexusOutput(gl.aggregateForNexus(data))
+#testing
+#    data = GriggsLoader.load("/data/javi/Toxo/64Genomes/test.txt") 
+
+#     dataTree = data[0]
+#     sampleList = data[1]
+#     with open("results.txt", "w") as results:
+#         record(dataTree, results, sampleList)
+#      
+#     densityFile = "/data/javi/Toxo/64Genomes/Filtered/matrix/density.txt"
+#     snpDensity(dataTree, densityFile, sampleList)
           
-    matrixDir = directory + "/matrix"
-    if not isdir(matrixDir):    
-        os.mkdir(matrixDir)
-    matrix = calculateMatrix(dataTree, sampleList)
-    recordMatrix(matrix)    
+#     matrixDir = directory + "/matrix"
+#     if not isdir(matrixDir):    
+#         os.mkdir(matrixDir)
+#     matrix = calculateMatrix(dataTree, sampleList)
+#     recordMatrix(matrix)    
     print("\nend of script")
 
 

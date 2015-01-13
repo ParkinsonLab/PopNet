@@ -71,23 +71,31 @@ if __name__ == '__main__':
 #     hmmrDirectory="/data/javi/Proteins/HMMResolved"
 #     ss.toName(filepath, hmmrDirectory, outpath)
 
-    #Job: cytoscape encoding
-    filepath="/data/javi/Proteins/orthoMCL/groups.txt"
-    outpath="/data/javi/Proteins/SRSCytoscape.xgmml"
-    hmmDirectory="/data/javi/Proteins/HMMResolved"
-    clusters = srsce.loadClusters(filepath)
-    cytotext = srsce.encode(clusters, hmmDirectory, 'SRS Proteins')
-    with open(outpath, 'w') as output:
-        output.write(cytotext)
-    print("cytoscape file completed.")
-
-#     #job: Make a chart
+#     #Job: cytoscape encoding
 #     filepath="/data/javi/Proteins/orthoMCL/groups.txt"
-#     outpath="/data/javi/Proteins/orthoMCL/chart.csv"
+#     outpath="/data/javi/Proteins/SRSCytoscape.xgmml"
+#     hmmDirectory="/data/javi/Proteins/HMMResolved"
+#     clusters = srsce.loadClusters(filepath)
+#     cytotext = srsce.encode(clusters, hmmDirectory, 'SRS Proteins')
+#     with open(outpath, 'w') as output:
+#         output.write(cytotext)
+#     print("cytoscape file completed.")
+
+#     #job: Make distrubution chart
+#     filepath="/data/javi/Proteins/orthoMCL/groups.txt"
+#     outpath="/data/javi/Proteins/chart.csv"
 #     hmmrDirectory="/data/javi/Proteins/HMMResolved"
 #     clusters = srsce.loadClusters(filepath)
 #     domains = srsce.getNodeDomains(hmmrDirectory)
 #     translated = cm.translateMatrix(clusters, domains)
 #     data = cm.distributionChart(translated[0], translated[1])
-#     cm.printChart(data[0], data[1], outpath)
+#     cm.printDistributionChart(data[0], data[1], outpath)
+    
+    #job: Make domainsstats chart
+    outpath="/data/javi/Proteins/domainStat.csv"
+    hmmrDirectory="/data/javi/Proteins/HMMResolved"
+    composition = srsce.getNodeDomains(hmmrDirectory)
+    data = cm.domainStats(composition)
+    cm.printDomainStats(data, outpath)
+    
     

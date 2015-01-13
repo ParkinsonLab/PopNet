@@ -42,10 +42,6 @@ def loadClusters(path, tabpath):
     print("done")    
     return (results, sampleList)
 
-
-
-    
-    
 def distribution(treeTuple, outputpath):
     print("calculating distribution...")
     results = {}

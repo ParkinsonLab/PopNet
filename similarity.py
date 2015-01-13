@@ -35,6 +35,7 @@ tabName = ""
 typeI = ""
 typeIII = ""
 typeII = ""
+    
 hitList = [typeI, typeIII, typeII]
 target = ""
     
@@ -47,7 +48,7 @@ def parse():
     
     convert = {}
     os.chdir(path)
-    with open(fname, "r") as infile, open("%s.%s.sim"%(target,fname), "w") as outfile, open(tabName, "r") as tabs:
+    with open(fname, "r") as infile, open("%s.sim"%(target), "w") as outfile, open(tabName, "r") as tabs:
         #Separates the file by chromosome. The processing logic goes by the tree used in SNP Sorter. 
         #Things are sorted by chromosome, then matrix, then line. 
         chrs = re.findall("(?s)(@.+?)\n(.+?)\n(?=$|@)", infile.read())
@@ -88,7 +89,7 @@ def parse():
                     #and everything excepet the header is in a regular format. 
                     #I could probably go a little fancier in the regex but I've decided not to
                     #because I don't like them all that much. 
-                    lineSplit = re.match("(?m)^(\d)+?\t(.+?)[$]", line)
+                    lineSplit = re.match("(?m)^(\d+?)\t(.+?)[$]", line)
                     header = convert[lineSplit.group(1)]
                     matrixTable[header] = {}
                     info = re.findall("(\d+?)[:]([0-9.]+?) ", lineSplit.group(2))
@@ -96,25 +97,115 @@ def parse():
                         #builds this nested dictionary containing all the information within the matrix
                         matrixTable[header][convert[cell[0]]] = cell[1]
                 for type in hitList:
+                    tally = 0
+                    for strain in type:
+                        tally += float(matrixTable[target][strain])
+                    tally = tally / len(type)
                     #looks for specific points with in specific lines
                     #depending on the target and hitList. 
-                    outfile.write("%s - %s: %s\n"%(target, type, matrixTable[target][type]))
+                    outfile.write("%s - %s: %s\n"%(target, type, tally))
                 #this count here supplies the block number. It ends up being useless but oh well. 
                 count+=1
     print("done!")
 
 
 def setTypes(hitList_param, target_param): #(type_1_name, type_2_name, type_3_name), target_name
+    global hitList
     hitList = hitList_param
+    global target
     target = target_param
 
 def setLocation(folder, file, tab): #"path_to_folder", "data file name", "tab file name"
+    global path 
     path = folder
+    global fname
     fname = file
+    global tabName 
     tabName = tab
+
+def loadToColors(path):
+    results = {}
+    filePattern = '(?s)^[$]\n(.+?)[$](.+)$'
+    linePattern = '^(.+?)\s-\s(.+?):\s(.+)$'
+
+    for filename in os.listdir(path):
+        if str(filename).endswith(".sim"):
+            with open("{}/{}".format(path, filename), 'r') as input:
+                strain = {}
+                #the file name of each sim file must be strainName.sim. Fix this manually for now.
+                strName = filename[:-4]
+                data = re.match(filePattern, input.read()).groups()[1]
+                #by looking at the file I see that it's Type I, III, and then II
+                chrs = re.split('@', data)[1:]
+                for chr in chrs:
+                    blocks = re.split('#', chr)
+                    colors = []
+                    chrName = "@" + blocks[0].rstrip("\n")
+                    
+                    for block in blocks[1:]:
+                        lines = re.split("\n", block)
+                        blockNum = lines[0]
+                        
+                        red = int(float(re.match(linePattern, lines[1]).groups()[2]) * 255)
+                        green = int(float(re.match(linePattern, lines[2]).groups()[2]) * 255)
+                        blue = int(float(re.match(linePattern, lines[3]).groups()[2]) * 255)
+                        
+                        hexPattern = '{:0>2X}'*3
+                        hex = '#' + hexPattern.format(red, green, blue)
+                        colors.append(hex)
+                    
+                    strain[chrName] = condense(colors)
+                results[strName] = aggregate(strain)
+    return results
+
+def condense(list):
+    chrBlocks = []
+    color = ''
+    length = 0
+    
+    for block in list:
+        if block is not color:
+            if length > 0:
+                chrBlocks.append((0, length, color))
+            color = block
+            length = 1
+        else:
+            length += 1
+    
+    chrBlocks.append((0, length, color))
+    return chrBlocks
+                        
+def aggregate(matrix):
+    results = [(0, 5, '#000000')]
+    import ChrNameSorter as cns
+    for name, chr in sorted(matrix.items(), key=lambda x: cns.getValue(x[0])):
+        results.append((0, 1, '#000000'))
+        results += chr
+    return results
+                                
+
     
 if __name__ == '__main__':
-   parse()
+    path = "/data/new/javi/yeast/results/matrix"
+    fname = "persistentMatrix.txt"
+    tabname = "persistentMatrix.tab"
+    setLocation(path, fname, tabname)
+    
+        
+    global typeI 
+    typeI = ['PW5', 'KYOKAI7', 'YJM269', 'YPS163', 'T7', 'EC9-8', 'Y10', 'UC5', 'ZTW1']
+    global typeII 
+    typeII = ['BY4742', 'BY4741', 'CLIB324', 'W303', 'FL100', 'CEN.PK113-7D', 'SIGMA1278B', 'S288C']
+    global typeIII 
+    typeIII = ['VIN13', 'T73', 'CBS7960', 'RM11-1A', 'EC1118', 'JAY291', 'AWRI1631', 'M22', 'CLIB215', 'VL3', 'LALVINQA23', 'AWRI796', 'FOSTERSO', 'FOSTERSB', 'YJM789', 'CLIB382']
+    
+    types = ['BY4742', 'BY4741', 'CLIB324', 'W303', 'FL100', 'CEN.PK113-7D', 'SIGMA1278B', 'S288C', 'PW5', 'KYOKAI7', 'YJM269', 'YPS163', 'T7', 'EC9-8', 'Y10', 'UC5', 'ZTW1'\
+, 'VIN13', 'T73', 'CBS7960', 'RM11-1A', 'EC1118', 'JAY291', 'AWRI1631', 'M22', 'CLIB215', 'VL3', 'LALVINQA23', 'AWRI796', 'FOSTERSO', 'FOSTERSB', 'YJM789', 'CLIB382']
+    for type in types:
+        print('parsing for type {}'.format(type))
+        setTypes([typeI, typeIII, typeII], type)
+        parse()
+    print("Done!")
         
         
                     

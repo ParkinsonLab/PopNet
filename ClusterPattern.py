@@ -45,16 +45,58 @@ def interestingPairs(strains, line):
     
     return pairs + interestingPairs(strains, line[1:])
         
+'''int -> [int]
+returns a list of colors in intrgb (like before) given a number'''
+def generateColors(numColors):    
+    #l and hInterval actually represents the number of intervals present, not the length of each.
     
+    import colorsys
+    max_h_interval = 8
     
-def createColorTable(patternTree):
+    if numColors >= max_h_interval: hInterval = max_h_interval
+    else: hInterval = numColors
+    
+    lInterval = (numColors-1)/max_h_interval + 1 
+    
+    colorList = []
+    for x in range(1,lInterval+1):
+        x = float(x)
+        lum = x / (lInterval + 1)
+        for y in range(1,hInterval+1):
+            y = float(y)
+            hue = (y + x%2/2) / hInterval
+            print("{}{}".format(hue, lum))
+            colorList.append(coordToInt(colorsys.hls_to_rgb(hue, lum, 1)))
+    
+    return iter(colorList[:numColors])
+'''(f, f, f) -> int
+helper for generateColors. Takes the rgb coords and return a int'''
+def coordToInt(coord):    
+    r = int(coord[0] * 255)
+    g = int(coord[1] * 255)
+    b = int(coord[2] * 255)
+    
+    hex = "0x{:02X}{:02X}{:02X}".format(r, g, b)
+    print(hex)
+    return int(hex, 0)
+
+def createColorTable(patternTree, groups):
     import random
     
-    
-    colorIter = iter([16737894, 1337452, 10040217, 6063411, 6710937, 6037279, 9737364, 16750899, 50637, 16777215])
-    #quick fix to get the same colors
-    groups = ['GUYS', 'TgH', 'ME49', 'VEG', 'p89', 'TgCats', 'GAL-DOM1/2', 'GAL-DOM10', 'GT1', 'MISC']
+#     #quick fix to get the same colors; for 64 genomes
+#    colorIter = iter([16737894, 1337452, 10040217, 6063411, 6710937, 6037279, 13421823, 16776960, 50637, 9737364, 16777215])
+#     groups = ['GUYS', 'TgH', 'ME49', 'VEG', 'p89', 'TgCats', 'GAL-DOM1/2', 'GAL-DOM10', 'GT1', 'MISC', 'NONE']
+
+    #for 8 genomes
+#    colorIter = iter([255, 65280, 10066278, 16711680, 16777215])
+#    groups = ['ME49', 'VEG', 'TYPEX', 'GT1', 'NONE']
+
+    #yeast
+#    colorIter = iter([255, 65280, 16711680, 16777215])
+#    groups = ['S288C', 'AWR', 'UC5', 'NONE']
+       
     results = {}
+    colorIter = generateColors(len(groups))
     for group in groups:
         results[frozenset([group])] = colorIter.next()
     
@@ -144,22 +186,12 @@ def write(resultsTree, outfile):
             output.write(bytes('%s\n' % chrName).encode("utf-8"))
             count = 0
             for block in chr:
-                output.write(bytes('#%d\n%s - %s: %d\n'%(count, selfName, block[1], block[0])).encode("utf-8"))
+                output.write(bytes('#%d\n%s - %s: %d\n'%(count, selfName, itemName, block)).encode("utf-8"))
                 count+=1
+
+
+    
                 
 if __name__ == '__main__':
-#     directory = 'F:\Documents\ProjectData\\64Genomes\Counting' 
-#     filepath = 'F:\Documents\ProjectData\\64Genomes\Counting\persistentResult.txt'
-#     tabpath = 'F:\Documents\ProjectData\\64Genomes\Counting\persistentMatrix.tab'
-#     outpath = 'F:\Documents\ProjectData\\64Genomes\Counting\pattern.txt'
-
-    filepath = '/data/javi/Toxo/64Genomes/Counting/persistentResult.txt'
-    tabpath = '/data/javi/Toxo/64Genomes/Counting/persistentMatrix.tab'
-    outpath = '/data/javi/Toxo/64Genomes/Counting/pattern.txt'
-#     strains = ['ME49', 'RAY', 'PRU', 'ARI', 'B73', 'B41']
-#     strains = ['CAST', 'TgCkCr1', 'RH-88', 'RH-JSR', 'GT1', 'TgCkCr10', 'TgCkBr141']
-    strains = ['BRC_TgH_18002_GUY-KOE', 'GUY-2004-ABE', 'BRC_TgH_18003_GUY-MAT', 'BRC_TgH_18009', 'BRC_TgH_18021', 'GUY-2003-MEL', 'BRC_TgH_18001_GUY-DOS']
-    clusterTree = MCLCounter.toMatrix(MCLCounter.loadClusters(filepath, tabpath)[0])
-    results = calculateColor(translate(clusterTree, strains))
-    write(results, outpath)
-    print("end of ClusterPattern script")
+#Testing Only
+    print(generateColors(10))

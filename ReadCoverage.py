@@ -11,6 +11,7 @@ import numpy
 import matplotlib
 import traceback
 import copy
+import VCFChrTranslator as vct
 
 def calcReadCoverage(file, output, minOutput):
     #dataparsing
@@ -24,7 +25,8 @@ def calcReadCoverage(file, output, minOutput):
     for x in range(0, len(noHeader)):
         currLine = noHeader[x]
         lineSegment = re.split("\t", currLine)
-        info = [lineSegment[2], int(lineSegment[3]), len(lineSegment[9])] #Info is: chromosome, leftmost position, length of the match.
+        #the chr name is translated using vct
+        info = [vct.translate(lineSegment[2]), int(lineSegment[3]), len(lineSegment[9])] #Info is: chromosome, leftmost position, length of the match.
         
         if not info[0] in dataTree:
             dataTree[info[0]] = {}
@@ -110,7 +112,7 @@ if __name__ == '__main__':
     
     #modify these as needed
 #    directory = raw_input("Please specify working directory, in full \n")
-    directory = "/data/javi/Toxo/BaseData/tempz"
+    directory = "/data/new/javi/yeast/scinetDownload/sams"
     #Do not modify
     os.chdir(directory)  
     
@@ -126,7 +128,7 @@ if __name__ == '__main__':
             if namesplit[len(namesplit)-1] == "sam":
                 outputName = "%s_coverage"%namesplit[0]
                 calcReadCoverage(open(f, "r"), open("%s.txt"%outputName, "w+"), open("%s.min"%outputName, "w"))
-                graphResults(open("%s.txt"%outputName, "r"))
+#                 graphResults(open("%s.txt"%outputName, "r"))
         except Exception as e:
             print(traceback.print_exc())
     

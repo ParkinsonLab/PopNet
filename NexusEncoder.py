@@ -144,8 +144,8 @@ if __name__ == '__main__':
         #into whichever genome is used as alignment reference. This is because there is 
         #relationship to ME49, but it's not reflected per se in the data section. 
         #practically, it adds a "-" to every slot for ME49. 
-        refname = "ME49"
-        samplenames.append(refname)
+#         refname = "ME49"
+#         samplenames.append(refname)
         #sample count does not increase by 1 because the dash is added manually.
         
         print("reading..")
@@ -184,7 +184,7 @@ if __name__ == '__main__':
                 thisblock[samplenames[x]] += symbols[x]
             
             
-            thisblock[refname] += "-" #adds the "-" for the reference sequence
+#             thisblock[refname] += "-" #adds the "-" for the reference sequence
             
             charcount += 1
             totalcount += 1

@@ -72,7 +72,7 @@ def clusterMatrixOutput(matrix, sampleList):
     print("done")
     
 if __name__ == '__main__':
-    directory = "/data/javi/Toxo/BaseData/tempz"
+    directory = "/data/new/javi/yeast/results"
     filename = "results.txt"
     os.chdir(directory)
     with open(filename, "r") as source:
@@ -91,8 +91,9 @@ if __name__ == '__main__':
         #into whichever genome is used as alignment reference. This is because there is 
         #relationship to ME49, but it's not reflected per se in the data section. 
         #practically, it adds a "-" to every slot for ME49. 
-        refname = "ME49"
-        samplenames.append(refname)
+        #commented out for yeast dataset
+#         refname = "ME49"
+#         samplenames.append(refname)
         #sample count does not increase by 1 because the dash is added manually.
         
         print("reading..")
@@ -140,7 +141,7 @@ if __name__ == '__main__':
                     thisblock[samplenames[x]] += symbols[x]
                 
                 
-                thisblock[refname] += "-" #adds the "-" for the reference sequence
+#                 thisblock[refname] += "-" #adds the "-" for the reference sequence
                 
                 charcount += 1
                 totalcount += 1

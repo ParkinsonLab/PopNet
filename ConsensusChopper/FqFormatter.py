@@ -3,19 +3,23 @@ Created on Sep 23, 2013
 
 @author: javi
 '''
+
+'''FastA to FastQ!'''
 import os
 from os import listdir
 from os.path import isfile, join
 import re
 from .FqBlock import FqBlock
+from Bio import SeqIO
 
 def format(directory, f):
-    source = open("f", "r").read()
-    temp = re.match("{(@.*?\n\+\n")
+    with open(f, 'r') as source:
+        data = source.read()
+    re.findall(">.+?\n(.+)(?:[>]|$)")
 
 if __name__ == '__main__':
      #modify these as needed
-    directory = input("Please specify working directory, in full \n")
+    directory = ''
     
     #Do not modify
     os.chdir(directory)  
@@ -34,12 +38,12 @@ if __name__ == '__main__':
         log.write("\nProcessing %s ... " % f)
         
         try: 
-            if f.split(".")[1] == "fq":
+            if f.split(".")[1] == "fasta":
                 format(directory, f)
             else:
-                log.write("\nerror, %s is not a fq file" % f)
+                log.write("\n%s is not a fq file" % f)
         except:
-            log.write("\nerror, %s is not a fq file" % f)
+            log.write("\n%s is not a fq file" % f)
  
               
     print("\nend of script")
