@@ -33,8 +33,8 @@ if __name__ == '__main__':
     import re
 
 
-    baseDirectory = '/data/new/javi/toxo/SNPSort/TEST'
-#    baseDirectory = '/scratch/j/jparkins/xescape/SNPSort'
+    baseDirectory = '/data/new/javi/toxo/SNPSort20'
+#     baseDirectory = '/scratch/j/jparkins/xescape/SNPSort'
     outputDirectory = baseDirectory + '/matrix/'
     cytoscapeDirectory = outputDirectory + '/cytoscape'
     rawresultpath = outputDirectory + "results.txt"
@@ -46,16 +46,17 @@ if __name__ == '__main__':
     densitypath = outputDirectory + "density.txt"
     countpath = outputDirectory + "counted.txt"  
     grouppath = outputDirectory + "groups.txt"
-    
+    reference = 'ME49'
     
     for folder in [outputDirectory, cytoscapeDirectory, matrixDirectory]:
         if not isdir(folder):  
             os.mkdir(folder)
     
     #Grigg data
+    
     os.chdir(baseDirectory)
-    griggpath = baseDirectory + '/OrderedSNPV7.txt'
-    data = gl.load(griggpath)
+    griggpath = baseDirectory + '/OrderedSNPV8.txt'
+    data = gl.load(griggpath, reference)
 #     excludepath = outputDirectory + '/exclude.txt'
 #     data = gl.load(griggpath, excludepath)
     dataTree = data[0]

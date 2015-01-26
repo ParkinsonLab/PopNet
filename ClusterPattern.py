@@ -65,7 +65,7 @@ def generateColors(numColors):
         for y in range(1,hInterval+1):
             y = float(y)
             hue = (y + x%2/2) / hInterval
-            print("{}{}".format(hue, lum))
+            print("Hue:{} Lum:{}".format(hue, lum))
             colorList.append(coordToInt(colorsys.hls_to_rgb(hue, lum, 1)))
     
     return iter(colorList[:numColors])

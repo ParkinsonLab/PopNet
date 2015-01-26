@@ -15,7 +15,8 @@ import itertools
 import ChrTranslator as ct
 import logging
 import StringIO
-
+import numpy as np
+import math
 
 #dataTree will be organized as  a nested dictionary:
 #dataTree{'Chromosome name':{'Nucleotide position':{'Sample name':'The SNP'}}}
@@ -328,87 +329,128 @@ def recordMatrix(matrixDict, sampleList):
     persistentResultName = "matrix/persistentResult.txt"   
     tabname = "matrix/persistentMatrix.tab"
     
+    #writes the single tab file
     with open(tabname, 'w') as persistentTab:
                 for index, key in enumerate(sampleList):
                     persistentTab.write("{0} {1}\n".format(str(index), key))
 
                         
     with open(persistentMatrixName, "w") as persistentFile, open(persistentResultName, "w") as persistentResult:
+        
+        for chrName in matrixDict:
+            if re.search("(?i)chr", chrName): #Only real chromosomes allowed. 
+                chrBranch = matrixDict[chrName]
+                #calibration
+                iValues = []
+                piValues = []
+                for pindex in sorted(chrBranch)[::int(math.ceil(len(chrBranch)/100.))]:
+                    currString = buildMatrix(chrBranch[pindex], sampleList)
+                    iValue, piValue = optimizeIValue(currString, tabname)
+                    iValues.append(iValue)
+                    piValues.append(piValue)
+                
+        iValue = sum(iValues) / float(len(iValues))
+        piValue = sum(piValues) / float(len(piValues))
+        print('Applied IValue is' + str(iValue))
+        print('Applied IValue is' + str(piValue))
+                
         for chrName in matrixDict:
             if re.search("(?i)chr", chrName): #Only real chromosomes allowed. 
                 persistentFile.write("@%s\n"%chrName)
                 persistentResult.write("@%s\n"%chrName)
                 chrBranch = matrixDict[chrName]
-                
-                    #writes the single tab file
             
-                
                 for pindex in sorted(chrBranch):
-                    currString = ""
-                    indexBranch = chrBranch[pindex]
-                    dimension = len(indexBranch) #dimensions match the number of samples
-                    #now we make the files in here, one separate file per chromosome per 10kb.
-                     
-                    #The header portion of each matrix
-                    currString += "(mclheader\nmcltype matrix\ndimensions %dx%d\n)\n"%(dimension, dimension)
-                    currString += "(mcldoms\n"
-                    for index, key in enumerate(sampleList): #writes the doms string, as well as the tab file
-                        currString += "%d "%index                      
-                    currString += "$\n)\n"
-                        
-                    #The data portion
-                    currString += "(mclmatrix\nbegin\n"
-                    xcount = 0
-                    
-                    #This parts allows the matrix to divide by the first value,
-                    #thus normalizing all input to between zero and 1
-                    for x in sampleList:
-                        currString += "%d\t"%xcount
-                        branch = indexBranch[x]
-                        ycount = 0
-                        for y in sampleList:
-                            #value is pre-normalized during matrix construction
-                            currString += "%s:%f "%(ycount, branch[y])
-                            ycount+=1
-                        currString += "$\n"
-                        xcount+=1
-                    currString += ')'
+                    currString = buildMatrix(chrBranch[pindex], sampleList)
 
-                    result = mcl(currString, tabname)
+                    result = mcl(currString, tabname, iValue, piValue)
                     
                     persistentFile.write("#%d\n%s\n"%(pindex, currString))
                     persistentResult.write("#%d\n%s\n"%(pindex, result))
 
     analyzeMatrix(persistentResultName)
 
+'''(string, string) -> (num, num)
+finds the best I and PI value according to some criteria. 
+Current Scheme:
+
+largest without singletons
+'''
+def optimizeIValue(currString, tabpath):
+    iMax = 8
+    piMax = 20
+    step = 0.2
+    
+    for x in reversed(np.arange(0, piMax, step)):
+        temp = mcl(currString, tabpath, iMax, x)
+        if not hasSingleton(temp): 
+#             print("I Value = {0}, pi Value = {1}".format(iMax, x))
+            return (iMax, x)
+        
+    for x in reversed(np.arange(1, iMax, step)):
+        temp = mcl(currString, tabpath, x, 0)
+        if not hasSingleton(temp): 
+#             print("I Value = {0}, pi Value = {1}".format(x, 0))
+            return (x, 0)
+    
+    print('Poor clustering during calibration! Defaulting to max values for this iteration.')
+    return (iMax, piMax)
+
+'''[[string]] -> bool
+Helper: see if this pattern has singletons
+'''
+def hasSingleton(pattern):
+    for line in re.split("\n", pattern)[:-1]:
+        if len(re.split("\t",line)) == 1:
+            return True
+    return False
+
+'''(dict, list) -> string
+builds the matrix (.mci) string to be used in mcl
+'''
+def buildMatrix(tree, sampleList):
+    
+    currString = ""
+    dimension = len(tree) #dimensions match the number of samples
+    #now we make the files in here, one separate file per chromosome per 10kb.
+     
+    #The header portion of each matrix
+    currString += "(mclheader\nmcltype matrix\ndimensions %dx%d\n)\n"%(dimension, dimension)
+    currString += "(mcldoms\n"
+    for index, key in enumerate(sampleList): #writes the doms string, as well as the tab file
+        currString += "%d "%index                      
+    currString += "$\n)\n"
+        
+    #The data portion
+    currString += "(mclmatrix\nbegin\n"
+    xcount = 0
+    
+    #This parts allows the matrix to divide by the first value,
+    #thus normalizing all input to between zero and 1
+    for x in sampleList:
+        currString += "%d\t"%xcount
+        branch = tree[x]
+        ycount = 0
+        for y in sampleList:
+            #value is pre-normalized during matrix construction
+            currString += "%s:%f "%(ycount, branch[y])
+            ycount+=1
+        currString += "$\n"
+        xcount+=1
+    currString += ')'
+    
+    return currString
 #This just calls mcl in shell and runs the basic command for it, using the previously generated matrix as input.  
 #iValue is currently fixed! Small modification neede5d for it to produce iterant runs with different values.       
-def mcl(data, tabName):
-    iValue = 8 
-#     matrixName = matrixPrefix + ".mci"
-#    tabName = matrixPrefix + ".tab"
-#    while (iValue <= 4):    
-#     modName = "{}.{}.result".format(matrixName, iValue)
-#     dumpName = "{}.{}.dump".format(matrixName, iValue)
-    #was 3 for the Toxo stuff
+def mcl(data, tabName, iValue, piValue):
 
-    piValue = 20
     #ASSUMES IVALUE IS AN INT!!
     
     #lets use stdout
     
     p1 = subp.Popen(["echo", data], stdout = subp.PIPE)
-    p2 = subp.Popen(["mcl", "-", "-use-tab", tabName, "-I", "%d"%iValue, "-o", "-", "-pi", "%d"%piValue, "-q", "x", "-V", "all"], stdin = p1.stdout, stdout = subp.PIPE, close_fds=True) #The -I option is the inflation value. Play around with it. 
+    p2 = subp.Popen(["mcl", "-", "-use-tab", tabName, "-I", str(iValue), "-o", "-", "-pi", str(piValue), "-q", "x", "-V", "all"], stdin = p1.stdout, stdout = subp.PIPE, close_fds=True) #The -I option is the inflation value. Play around with it. 
     result = p2.stdout.read()
-    print(result)
-    
-#    call(["mcl", matrixName, "-use-tab", tabName, "-I", "%d"%iValue, "-o", modName, "-pi", "%d"%piValue, "-V", "all"]) #The -I option is the inflation value. Play around with it.  
-#     with open(matrixName, "r") as a, open(modName, "r") as b:
-#         data = a.read()
-#         result = b.read()
-#     os.remove("%s/%s"%(os.getcwd(), matrixName))
-#     os.remove("%s/%s"%(os.getcwd(), modName))
-#     os.remove("%s/%s"%(os.getcwd(), tabName))
     
     return result
 

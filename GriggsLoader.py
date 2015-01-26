@@ -9,7 +9,7 @@ import os
 import NexusEncoder
 from collections import Counter as counter
 
-def load(path, excludePath=None):
+def load(path, reference, excludePath=None):
     print("loading..")
     with open(path) as source:
         nameList = [_f.upper() for _f in re.split("\t",source.readline().replace("\r\n", "").replace("\n", ""))[3:] if _f] #gets names, split, filter for preceeding tabs. Name will be in order.
@@ -50,9 +50,12 @@ def load(path, excludePath=None):
 #                print "%s\t%s"%(samp, snp)
                 if not (exclude and samp in exclude):
                     posBranch[samp] = snp
+            
+            posBranch[reference] = lineSplit[2]
                 
             prevLineSplit = lineSplit
     
+    nameList.append(reference)
     if exclude:
         prunedNameList = [x for x in nameList if x not in exclude]
         return (tree, prunedNameList)
