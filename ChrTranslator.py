@@ -17,25 +17,27 @@ import re
 def translate(input):
     if re.search("M76611", input):
         return "Pf3D7_ChrM"
-#     inpattern = "(.+?)[_](.+?)[_].*" #for plasmodium
-#     inpattern = 'REF[\|](.+?)_(.+?)[\|]'
-    inpattern = 'TGME49_(.+)$'
-    mobject = re.search(inpattern, input.upper())
-
     
     try:
-#         #plasmodium way
-#         strain = mobject.group(1)
-#         number = int(mobject.group(2))
-#         roman = "CHR" + toRoman(number)
+        #plasmodium way
+        inpattern = "(.+?)[_](.+?)[_].*"
+        mobject = re.search(inpattern, input.upper()) 
+        strain = mobject.group(1)
+        number = int(mobject.group(2))
+        roman = "CHR" + toRoman(number)
 
-# #         yeast way
+#         #yeast way
+#         inpattern = 'REF[\|](.+?)_(.+?)[\|]'
+#         mobject = re.search(inpattern, input.upper())
 #         strain = mobject.group(1)
 #         roman = mobject.group(2)
 
         #Toxo
-        strain = 'TGME49'
-        roman = mobject.group(1)
+#         inpattern = 'TGME49_(.+)$'
+#         mobject = re.search(inpattern, input.upper())
+#         strain = 'TGME49'
+#         roman = mobject.group(1)
+
     except:
         print("Illegal Chr Name @ {}".format(input))
         return "unknown"

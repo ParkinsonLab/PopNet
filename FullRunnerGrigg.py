@@ -71,13 +71,6 @@ if __name__ == '__main__':
     print("calculating density")
    
     snps.snpDensity(dataTree,densitypath,sampleList)
-#    multiDensity(dataTree, "density.txt")
-             
-#    import DriftDetection as dd
-#     dataTree = dd.scan(dataTree)
-        
-#     print('filling data tree')
-#     dataTree = snps.fillDataTree(dataTree, sampleList, reference)
      
     print("generating matrix")     
     if not isdir(outputDirectory):    

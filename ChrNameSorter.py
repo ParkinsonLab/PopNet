@@ -17,9 +17,10 @@ romanNumeralMap = (('X',  10),
                    ('M',  0))
 
 def getValue(name):
-    
-    #current: tg snps
+
     pattern = '.+_CHR(.+)'
+    
+    
     endPattern = ".*[XIVM]$"
     
     tempValue = re.match(pattern, name.upper()).group(1)

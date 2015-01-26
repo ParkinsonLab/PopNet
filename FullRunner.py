@@ -33,7 +33,7 @@ if __name__ == '__main__':
     import re
 
 
-    baseDirectory = '/data/new/javi/plasmo/enaComplete/snps'
+    baseDirectory = '/data/new/javi/plasmo/pipeline/TEST'
     
     outputDirectory = baseDirectory + '/matrix/'
     cytoscapeDirectory = outputDirectory + '/cytoscape'
@@ -53,10 +53,11 @@ if __name__ == '__main__':
             os.mkdir(folder)
     
 #     #Grigg data
-#     os.chdir(outputDirectory)
-#     griggpath = baseDirectory + '/OrderedSNPV6.txt'
-#     excludepath = outputDirectory + '/exclude.txt'
-#     data = gl.load(griggpath, excludepath)
+#     os.chdir(baseDirectory)
+#     griggpath = baseDirectory + '/OrderedSNPV8.txt'
+#     data = gl.load(griggpath, reference)
+# #     excludepath = outputDirectory + '/exclude.txt'
+# #     data = gl.load(griggpath, excludepath)
 #     dataTree = data[0]
 #     sampleList = sorted(data[1])
 
@@ -105,10 +106,9 @@ if __name__ == '__main__':
     print("calculating density")
    
     snps.snpDensity(dataTree,densitypath,sampleList)
-#    multiDensity(dataTree, "density.txt")
              
     import DriftDetection as dd
-#     dataTree = dd.scan(dataTree)
+    dataTree = dd.scan(dataTree)
         
     print('filling data tree')
     dataTree = snps.fillDataTree(dataTree, sampleList, reference)
