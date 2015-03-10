@@ -34,6 +34,9 @@ if __name__ == '__main__':
 
 
     baseDirectory = '/data/new/javi/plasmo/pipeline/TEST'
+
+#     baseDirectory = '/scratch/j/jparkins/xescape/plasmo/pipeline'
+
     
     outputDirectory = baseDirectory + '/matrix/'
     cytoscapeDirectory = outputDirectory + '/cytoscape'
@@ -46,7 +49,7 @@ if __name__ == '__main__':
     densitypath = outputDirectory + "density.txt"
     countpath = outputDirectory + "counted.txt"  
     grouppath = outputDirectory + "groups.txt"
-    
+    mode = 'plasmodium'
     
     for folder in [outputDirectory, cytoscapeDirectory, matrixDirectory]:
         if not isdir(folder):  
@@ -89,10 +92,10 @@ if __name__ == '__main__':
         if sampleName not in sampleList: 
             if f.endswith("vcf"):
                 with open("%s_coverage.min"%(re.split("\.", f)[0]), "r") as minCoverage, open(f, "r") as data:
-                    dataTree = snps.addData(data, sampleName, dataTree, minCoverage, reference)
+                    dataTree = snps.addData(data, sampleName, dataTree, minCoverage, reference, mode)
             else:
                 with open(f, "r") as data:
-                    dataTree = snps.addData(data, sampleName, dataTree, None, reference)
+                    dataTree = snps.addData(data, sampleName, dataTree, None, reference, mode)
             sampleList.append(sampleName)
         else:
             print("Duplicate for {0}".format(sampleName))

@@ -13,6 +13,7 @@ import copy
 import subprocess as subp
 import itertools
 import ChrTranslator as ct
+import AutoGrouper as ag
 import logging
 import StringIO
 import numpy as np
@@ -21,7 +22,7 @@ import math
 #dataTree will be organized as  a nested dictionary:
 #dataTree{'Chromosome name':{'Nucleotide position':{'Sample name':'The SNP'}}}
 #Method inputs: File f, Dictionary dataTree. File f should end in either .snps or .vcf. 
-def addData(f, sampleName, dataTree, minCoverage, reference):
+def addData(f, sampleName, dataTree, minCoverage, reference, mode):
 #Add a failsafe for file type
     try:
         if not (f.name.endswith(".snps") or f.name.endswith(".vcf")):
@@ -60,7 +61,7 @@ def addData(f, sampleName, dataTree, minCoverage, reference):
     #Parsing lines
     for line in rawLines[:-1]:
         totalCount += 1
-        temp = organizeLine(line, sampleName, type, minCoverageData)
+        temp = organizeLine(line, sampleName, type, minCoverageData, mode)
         if temp is not None and re.search('CHR', temp[0]):
             parsed.append(temp)
         elif temp is None:
@@ -99,12 +100,12 @@ def fetchRegexPattern(name):
 #[1]Reference Nucleotide position
 #[2]Sample name
 #[3]Nucleotide value
-def organizeLine(rawLine, name, type, minCoverage):
+def organizeLine(rawLine, name, type, minCoverage, mode):
     
     lineSplit = re.split("\s+",rawLine)
     try:
         if type is 'snps':
-            chr = ct.translate(lineSplit[14].upper())#for plasmo aligned from 3D7
+            chr = ct.translate(lineSplit[14].upper(), mode=mode)#for plasmo aligned from 3D7
             ref = lineSplit[2].upper()
             snp = lineSplit[3].upper()
             indel = len(ref) > 1 or len(snp) > 1 or re.search('[^AGCT]', ref) or re.search('[^AGCT]', snp)
@@ -114,7 +115,7 @@ def organizeLine(rawLine, name, type, minCoverage):
             else:
                 return None
         else:
-            chr = ct.translate(lineSplit[0].upper()).upper()
+            chr = ct.translate(lineSplit[0].upper(), mode=mode).upper()
             indel = len(lineSplit[3]) > 1 or len(lineSplit[4]) > 1 or re.search('[^AGCT]', lineSplit[3]) or re.search('[^AGCT]', lineSplit[4])
             hetero = re.search("1/1", lineSplit[9])
             quality = float(lineSplit[5])
@@ -327,32 +328,30 @@ def calculateMatrix(dataTree, sampleList):
 def recordMatrix(matrixDict, sampleList):
     persistentMatrixName = "matrix/persistentMatrix.txt"
     persistentResultName = "matrix/persistentResult.txt"   
-    tabname = "matrix/persistentMatrix.tab"
+    tabpath = "matrix/persistentMatrix.tab"
     
     #writes the single tab file
-    with open(tabname, 'w') as persistentTab:
+    with open(tabpath, 'w') as persistentTab:
                 for index, key in enumerate(sampleList):
                     persistentTab.write("{0} {1}\n".format(str(index), key))
 
                         
     with open(persistentMatrixName, "w") as persistentFile, open(persistentResultName, "w") as persistentResult:
         
-        for chrName in matrixDict:
-            if re.search("(?i)chr", chrName): #Only real chromosomes allowed. 
-                chrBranch = matrixDict[chrName]
-                #calibration
-                iValues = []
-                piValues = []
-                for pindex in sorted(chrBranch)[::int(math.ceil(len(chrBranch)/100.))]:
-                    currString = buildMatrix(chrBranch[pindex], sampleList)
-                    iValue, piValue = optimizeIValue(currString, tabname)
-                    iValues.append(iValue)
-                    piValues.append(piValue)
+#         for chrName in matrixDict:
+#             if re.search("(?i)chr", chrName): #Only real chromosomes allowed. 
+#                 chrBranch = matrixDict[chrName]
+#                 #calibration
+#                 iValues = []
+#                 for pindex in sorted(chrBranch)[::int(math.ceil(len(chrBranch)/10.))]:
+#                     currString = buildMatrix(chrBranch[pindex], sampleList)
+#                     iValue = ag.analyzeClm(currString, tabpath)
+#                     if iValue > 0: iValues.append(iValue)
+#         iValue = sum(iValues) / float(len(iValues))
+        iValue = 8
+        piValue = 19
                 
-        iValue = sum(iValues) / float(len(iValues))
-        piValue = sum(piValues) / float(len(piValues))
-        print('Applied IValue is' + str(iValue))
-        print('Applied IValue is' + str(piValue))
+        print('SNPSorter: Applied I value is {}'.format(iValue))
                 
         for chrName in matrixDict:
             if re.search("(?i)chr", chrName): #Only real chromosomes allowed. 
@@ -363,47 +362,50 @@ def recordMatrix(matrixDict, sampleList):
                 for pindex in sorted(chrBranch):
                     currString = buildMatrix(chrBranch[pindex], sampleList)
 
-                    result = mcl(currString, tabname, iValue, piValue)
+                    result = ag.mcl(currString, tabpath, iValue, piValue, True)
                     
                     persistentFile.write("#%d\n%s\n"%(pindex, currString))
                     persistentResult.write("#%d\n%s\n"%(pindex, result))
 
     analyzeMatrix(persistentResultName)
 
-'''(string, string) -> (num, num)
-finds the best I and PI value according to some criteria. 
-Current Scheme:
-
-largest without singletons
-'''
-def optimizeIValue(currString, tabpath):
-    iMax = 8
-    piMax = 20
-    step = 0.2
-    
-    for x in reversed(np.arange(0, piMax, step)):
-        temp = mcl(currString, tabpath, iMax, x)
-        if not hasSingleton(temp): 
-#             print("I Value = {0}, pi Value = {1}".format(iMax, x))
-            return (iMax, x)
-        
-    for x in reversed(np.arange(1, iMax, step)):
-        temp = mcl(currString, tabpath, x, 0)
-        if not hasSingleton(temp): 
-#             print("I Value = {0}, pi Value = {1}".format(x, 0))
-            return (x, 0)
-    
-    print('Poor clustering during calibration! Defaulting to max values for this iteration.')
-    return (iMax, piMax)
-
-'''[[string]] -> bool
-Helper: see if this pattern has singletons
-'''
-def hasSingleton(pattern):
-    for line in re.split("\n", pattern)[:-1]:
-        if len(re.split("\t",line)) == 1:
-            return True
-    return False
+# '''(string, string) -> (num, num)
+# 
+# DEPRECATED
+# 
+# finds the best I and PI value according to some criteria. 
+# Current Scheme:
+# 
+# largest without singletons
+# '''
+# def optimizeIValue(currString, tabpath):
+#     iMax = 8
+#     piMax = 20
+#     step = 0.2
+#     
+#     for x in reversed(np.arange(0, piMax, step)):
+#         temp = mcl(currString, tabpath, iMax, x)
+#         if not hasSingleton(temp): 
+# #             print("I Value = {0}, pi Value = {1}".format(iMax, x))
+#             return (iMax, x)
+#         
+#     for x in reversed(np.arange(1, iMax, step)):
+#         temp = mcl(currString, tabpath, x, 0)
+#         if not hasSingleton(temp): 
+# #             print("I Value = {0}, pi Value = {1}".format(x, 0))
+#             return (x, 0)
+#     
+#     print('Poor clustering during calibration! Defaulting to max values for this iteration.')
+#     return (iMax, piMax)
+# 
+# '''[[string]] -> bool
+# Helper: see if this pattern has singletons
+# '''
+# def hasSingleton(pattern):
+#     for line in re.split("\n", pattern)[:-1]:
+#         if len(re.split("\t",line)) == 1:
+#             return True
+#     return False
 
 '''(dict, list) -> string
 builds the matrix (.mci) string to be used in mcl
@@ -440,19 +442,21 @@ def buildMatrix(tree, sampleList):
     currString += ')'
     
     return currString
-#This just calls mcl in shell and runs the basic command for it, using the previously generated matrix as input.  
-#iValue is currently fixed! Small modification neede5d for it to produce iterant runs with different values.       
-def mcl(data, tabName, iValue, piValue):
 
-    #ASSUMES IVALUE IS AN INT!!
-    
-    #lets use stdout
-    
-    p1 = subp.Popen(["echo", data], stdout = subp.PIPE)
-    p2 = subp.Popen(["mcl", "-", "-use-tab", tabName, "-I", str(iValue), "-o", "-", "-pi", str(piValue), "-q", "x", "-V", "all"], stdin = p1.stdout, stdout = subp.PIPE, close_fds=True) #The -I option is the inflation value. Play around with it. 
-    result = p2.stdout.read()
-    
-    return result
+# DEPRECATED, ALWAYS USE THE AUTOGROUPER ONE
+# #This just calls mcl in shell and runs the basic command for it, using the previously generated matrix as input.  
+# #iValue is currently fixed! Small modification neede5d for it to produce iterant runs with different values.       
+# def mcl(data, tabName, iValue, piValue):
+# 
+#     #ASSUMES IVALUE IS AN INT!!
+#     
+#     #lets use stdout
+#     
+#     p1 = subp.Popen(["echo", data], stdout = subp.PIPE)
+#     p2 = subp.Popen(["mcl", "-", "-use-tab", tabName, "-I", str(iValue), "-o", "-", "-pi", str(piValue), "-q", "x", "-V", "all"], stdin = p1.stdout, stdout = subp.PIPE, close_fds=True) #The -I option is the inflation value. Play around with it. 
+#     result = p2.stdout.read()
+#     
+#     return result
 
 #Reads a persistentResults file, parses it, and then interprets it. 
 #Input is the file name
@@ -460,8 +464,7 @@ def mcl(data, tabName, iValue, piValue):
 def analyzeMatrix(results):
     with open(results, "r") as data, open(results + ".analyzed", "w") as output:
         matrixStats = {}
-        
-        
+  
         for chr in re.findall("(?s)(@.*?)\n(.*?\n\n)(?=@|$)", data.read()):            
             output.write("%s\n"%chr[0])
             posData = re.findall("(?s)[#]([0-9]*?)\n(.*?)\n\n(?=#|$)", chr[1])#Pos data is a tuple in the form of (position, matrix) Matrixes are just evaluated as strings because we just
@@ -528,7 +531,7 @@ def remcl():
             for matrix in allMatrix:
                 with open("%s.mci"%matrixPrefix, "w") as currMatrixFile:
                     currMatrixFile.write(matrix[1])
-                result = mcl(matrixPrefix)
+                result = ag.mcl(matrixPrefix)
                 output.write(matrix[0] + result[1] + "\n")
 
 #records densities of all strains

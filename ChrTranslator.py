@@ -14,30 +14,36 @@ as things stand we might have to just rewrite this for every new dataset.
 import re
 
 #for the plasmodium one
-def translate(input):
+def translate(input, **kwargs):
     if re.search("M76611", input):
         return "Pf3D7_ChrM"
     
+    mode = kwargs['mode']
+    
     try:
+        if mode == 'plasmodium':
         #plasmodium way
-        inpattern = "(.+?)[_](.+?)[_].*"
-        mobject = re.search(inpattern, input.upper()) 
-        strain = mobject.group(1)
-        number = int(mobject.group(2))
-        roman = "CHR" + toRoman(number)
-
-#         #yeast way
-#         inpattern = 'REF[\|](.+?)_(.+?)[\|]'
-#         mobject = re.search(inpattern, input.upper())
-#         strain = mobject.group(1)
-#         roman = mobject.group(2)
-
+            inpattern = "(.+?)[_](.+?)[_].*"
+            mobject = re.search(inpattern, input.upper()) 
+            strain = mobject.group(1)
+            number = int(mobject.group(2))
+            roman = "CHR" + toRoman(number)
+        elif mode == 'yeast':
+        #yeast way
+            inpattern = 'REF[\|](.+?)_(.+?)[\|]'
+            mobject = re.search(inpattern, input.upper())
+            strain = mobject.group(1)
+            roman = mobject.group(2)
+        elif mode == 'toxoplasma':
         #Toxo
-#         inpattern = 'TGME49_(.+)$'
-#         mobject = re.search(inpattern, input.upper())
-#         strain = 'TGME49'
-#         roman = mobject.group(1)
-
+            inpattern = 'TGME49_(.+)$'
+            mobject = re.search(inpattern, input.upper())
+            strain = 'TGME49'
+            roman = mobject.group(1)
+        else:
+            raise RuntimeError('unknown mode specified')
+            import sys
+            sys.exit()
     except:
         print("Illegal Chr Name @ {}".format(input))
         return "unknown"

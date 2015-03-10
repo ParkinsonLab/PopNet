@@ -47,6 +47,7 @@ if __name__ == '__main__':
     countpath = outputDirectory + "counted.txt"  
     grouppath = outputDirectory + "groups.txt"
     reference = 'ME49'
+    mode = 'toxo'
     
     for folder in [outputDirectory, cytoscapeDirectory, matrixDirectory]:
         if not isdir(folder):  
@@ -58,7 +59,7 @@ if __name__ == '__main__':
     griggpath = baseDirectory + '/OrderedSNPV8.txt'
     data = gl.load(griggpath, reference)
 #     excludepath = outputDirectory + '/exclude.txt'
-#     data = gl.load(griggpath, excludepath)
+#     data = gl.load(griggpath, reference, excludepath)
     dataTree = data[0]
     sampleList = sorted(data[1])
 
@@ -96,7 +97,7 @@ if __name__ == '__main__':
     dataMatrix = mclc.toMatrix(dataTree[0])
     counted = mclc.count(dataTree, countpath)
     aggregateCount = mclc.aggregate(counted[0]).values()[0]
-    ag.group(aggregateCount, tabpath, grouppath)
+#    ag.group(aggregateCount, tabpath, grouppath)
     
     #to load groups        
     groups = gc.loadGroups(grouppath, "")
