@@ -33,7 +33,7 @@ if __name__ == '__main__':
     import re
 
 
-    baseDirectory = '/data/new/javi/plasmo/pipeline/TEST'
+    baseDirectory = '/data/new/javi/yeast/pipeline/WinVar'
 
 #     baseDirectory = '/scratch/j/jparkins/xescape/plasmo/pipeline'
 
@@ -49,7 +49,18 @@ if __name__ == '__main__':
     densitypath = outputDirectory + "density.txt"
     countpath = outputDirectory + "counted.txt"  
     grouppath = outputDirectory + "groups.txt"
-    mode = 'plasmodium'
+    groupmcipath = grouppath + ".mci"
+    
+    #Settings
+    mode = 'yeast'
+    blength = 1000
+    autogroup = True
+    iVal = 4
+    piVal = 1.5
+    
+    graph_filename = 'HeatMaps.pdf'
+    graph_title = 'Yeast-1K'
+    
     
     for folder in [outputDirectory, cytoscapeDirectory, matrixDirectory]:
         if not isdir(folder):  
@@ -68,24 +79,24 @@ if __name__ == '__main__':
     
     #Sequence data
     #Locates all vcf and snps files in the directory and adds them to the dataTree one by one.   
-      
+       
     #Set the sample name pattern here!
     #        pattern = '^(.+?)[_].*' #for the old plasmodium stuff
     pattern = '^(.+?)[\.].*'
-     
+      
     os.chdir(baseDirectory) 
     try:
         onlyfiles = [ f for f in listdir(baseDirectory) if (isfile(join(baseDirectory,f)) and (f.endswith(".snps") or f.endswith(".vcf"))) ]
     except Exception:
         print("\n%s is not a valid file." % f)
         sys.exit()
-      
+       
     dataTree = {}   #actually a dictionary
     sampleList = []
-         
-    reference = "3D7"
-    if reference not in sampleList: sampleList.append(reference)
           
+    reference = "S288C"
+    if reference not in sampleList: sampleList.append(reference)
+           
     for f in onlyfiles:
         print("\nProcessing %s ..." % f)           
         sampleName = re.match(pattern, f).group(1).upper()
@@ -101,27 +112,28 @@ if __name__ == '__main__':
             print("Duplicate for {0}".format(sampleName))
     sampleList = sorted(sampleList)
 #####################################################################################################   
-    
+     
     #Analysis
     with open(rawresultpath, "w") as results:
         snps.record(dataTree, results, sampleList)
- 
+  
     print("calculating density")
-   
-    snps.snpDensity(dataTree,densitypath,sampleList)
-             
+    
+    snps.snpDensity(dataTree,densitypath,sampleList, blength)
+              
     import DriftDetection as dd
     dataTree = dd.scan(dataTree)
-        
+         
     print('filling data tree')
     dataTree = snps.fillDataTree(dataTree, sampleList, reference)
-     
+      
     print("generating matrix")     
     if not isdir(outputDirectory):    
         os.mkdir(outputDirectory)
-    matrix = snps.calculateMatrix(dataTree, sampleList)
+    matrix = snps.calculateMatrix(dataTree, sampleList, blength)
     snps.recordMatrix(matrix, sampleList)
-        
+    
+    os.chdir(outputDirectory)
     print('encoding to nexus')     
     treetuple = (dataTree, sampleList)
     nex.nexusOutput(gl.aggregateForNexus(treetuple))
@@ -140,7 +152,9 @@ if __name__ == '__main__':
     dataMatrix = mclc.toMatrix(dataTree[0])
     counted = mclc.count(dataTree, countpath)
     aggregateCount = mclc.aggregate(counted[0]).values()[0]
-    ag.group(aggregateCount, tabpath, grouppath)
+    if autogroup:
+        ag.group(aggregateCount, tabpath, grouppath, groupmcipath, iVal, piVal)
+        ag.generateGraph(groupmcipath, tabpath, graph_filename, graph_title)
     
     #to load groups        
     groups = gc.loadGroups(grouppath, "")

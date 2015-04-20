@@ -7,13 +7,14 @@ import os
 import re
 
 def filter(filename, kw, val, outputname):
+    count=0
     with open(filename) as input, open(outputname, 'w') as output:
         for line in input:
             if line.startswith('#') or int(re.search('{}=([0-9]+?);'.format(kw), line).group(1)) > val:
                 output.write(line)
             else:
-                print(line)
-
+                count+=1
+    print('filtered {:d} SNPs'.format(count))
 if __name__ == '__main__':
     
     '''

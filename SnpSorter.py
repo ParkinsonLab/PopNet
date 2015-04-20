@@ -225,7 +225,7 @@ def calculateComposition(resortedData, sampleList, output):
                 currString += "\tNONE |"
         output.write("%s\n"%currString)
                 
-def snpDensity(dataTree, outpath, sampleList):
+def snpDensity(dataTree, outpath, sampleList, blength):
     with open(outpath, "w") as output:
         #Writes a header into the output file    
         headerString = "Chromosome\tRefPosition"
@@ -233,7 +233,7 @@ def snpDensity(dataTree, outpath, sampleList):
             headerString += "\t%s"%headerSample
         headerString += "\n"
         output.write(headerString)
-        
+
         #create a new tree, define branches
         posDict = {}
         for name in sampleList:
@@ -244,9 +244,9 @@ def snpDensity(dataTree, outpath, sampleList):
                 chrString = chrName
                 chrBranch = dataTree[chrName]
                 length = sorted(chrBranch.keys())[-1]
-                newList = [copy.deepcopy(posDict) for x in range(length/10000 + 1)] #snps per 1000 base pairs
+                newList = [copy.deepcopy(posDict) for x in range(length/blength + 1)] #snps per 1000 base pairs
                 for position in chrBranch:
-                    group = position/10000
+                    group = position/blength
                     posBranch = chrBranch[position]
                     newBranch = newList[group]
                     for sample in sampleList:
@@ -254,7 +254,7 @@ def snpDensity(dataTree, outpath, sampleList):
                             newBranch[sample] += 1
                 
                 for branch in newList:
-                    temppos = newList.index(branch)  * 10000
+                    temppos = newList.index(branch)  * blength
                     posString = chrString + "\t%d"% (temppos)
                     for sample in sampleList:
                         posString += "\t%d"%branch[sample]
@@ -265,13 +265,12 @@ def snpDensity(dataTree, outpath, sampleList):
 #uses the datatree and compared to all other results at that position
 #sampleList is modified to contain ME49 at position 0. 
 #Anything that                  
-def calculateMatrix(dataTree, sampleList):
+def calculateMatrix(dataTree, sampleList, blength):
     
     matrixDict = {}
     modSampleList = sampleList
     #Use only if having ME49 as part of the list!
 #    modSampleList.insert(0,"ME49")
-    
     for chrName in dataTree:
         if re.search("(?i)chr", chrName):
             chrBranch = dataTree[chrName]
@@ -282,13 +281,13 @@ def calculateMatrix(dataTree, sampleList):
                 for y in modSampleList:
                     simpleMatrix[x][y] = 0
             chrMatrix = {}
-            index = int(sorted(chrBranch.keys())[-1])/10000 #This values specifies 1 matrix per 10kb.  
+            index = int(sorted(chrBranch.keys())[-1])/blength #This values specifies 1 matrix per 10kb.  
             for x in range(index+1):
                 chrMatrix[x] = copy.deepcopy(simpleMatrix)
             
             
             for position in chrBranch:
-                chrMatrixBranch = chrMatrix[position/10000] #This one matches the above number. and the value from snpdensity
+                chrMatrixBranch = chrMatrix[position/blength] #This one matches the above number. and the value from snpdensity
                 posBranch = chrBranch[position]
                 for x in modSampleList:
                     for y in modSampleList:
@@ -535,8 +534,7 @@ def remcl():
                 output.write(matrix[0] + result[1] + "\n")
 
 #records densities of all strains
-def multiDensity(dataTree, outfile):
-    binSize = 10000
+def multiDensity(dataTree, outfile, blength):
     results = {}
     text = ""
     
@@ -544,7 +542,7 @@ def multiDensity(dataTree, outfile):
         text += "@{}\n".format(chrName)
         data = {}
         for position, posBranch in chr.items():
-            binNum = int(position / binSize)
+            binNum = int(position / blength)
             if binNum not in data: data[binNum] = 0
             data[binNum] += 1
             

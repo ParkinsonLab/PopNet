@@ -33,7 +33,7 @@ if __name__ == '__main__':
     import re
 
 
-    baseDirectory = '/data/new/javi/toxo/SNPSort20'
+    baseDirectory = '/data/new/javi/toxo/WinVar'
 #     baseDirectory = '/scratch/j/jparkins/xescape/SNPSort'
     outputDirectory = baseDirectory + '/matrix/'
     cytoscapeDirectory = outputDirectory + '/cytoscape'

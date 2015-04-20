@@ -180,7 +180,7 @@ def findContigsComposition(strain, dataTree, density, groupfile):
     minContinuePercent = 0.3 #min fraction members persent to continue contig
     minGroupPercent = 0.3 #min fraction of members present
     minDensity = 50 #min number of SNPs in this region for it to be relevant
-    penalty = 8 #Penalty for a mismatch to the current match
+    penalty = 2 #Penalty for a mismatch to the current match
     
     groups = getGroups(strain)
     revGroups = reverseGroups(getGroups(""))
