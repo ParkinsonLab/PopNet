@@ -111,7 +111,7 @@ if __name__ == '__main__':
     density = gc.loadMultiDensity(densitypath)   
             
             
-    composition = gc.cytoscapeComposition(strainList, dataMatrix, density, grouppath)  
+    composition = gc.cytoscapeComposition(strainList, dataMatrix, grouppath)  
     colorTable = {}
     for strain in expandedGroups:
         colorTable[strain[0]] = groupColors[frozenset([strain[1]])]
