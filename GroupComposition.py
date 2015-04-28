@@ -39,7 +39,7 @@ def getGroups(strain = None):
     global groups
     if len(groups) > 0:
         if strain:
-            return filter(lambda x: strain not in x, groups)
+            return {k:v for k, v in groups.items() if strain not in v}
         else:
             return groups
     else:
@@ -164,7 +164,7 @@ def matchToGroupFull(strain, groups, block):
     cluster = ''
     for line in block:
         if strain in line:
-            cluster = line
+            cluster = line #the strain must be in one of the lines. 
             break
     
     for name, group in groups.items():
@@ -175,13 +175,12 @@ def matchToGroupFull(strain, groups, block):
 
 '''(string, list, block) -> int
 counts how many of the strains in the group clusters together with
-the given strain'''
-def countMatches(strain, group, block):
-    for line in block:
-        if strain in line:
-            return set(group).intersection(line)
+the given strain within a line'''
+def countMatches(strain, group, line):
+    if strain in line:
+        return set(group).intersection(line)
 #             return len(set(group).intersection(line)) / float(len(group))
-    return 0
+    return set([])
 
 def findContigsComposition(strain, dataTree):
     
@@ -190,6 +189,8 @@ def findContigsComposition(strain, dataTree):
     PENALTY_CONST = 1000.
     penalty = reduce(lambda x, y: x+y, [len(e) for e in dataTree.values()]) / PENALTY_CONST #Penalty for a mismatch to the current match
     #set to 0.1% of total.
+#     penalty = 8
+    print('Gap Penalty used is {}'.format(penalty))
     all_groups = getGroups() 
     other_groups = getGroups(strain)
     revGroups = reverseGroups(getGroups(""))
@@ -220,7 +221,7 @@ def findContigsComposition(strain, dataTree):
         
     def backtrack(scores, tally, previous_matches, steps):
         for filtered_matches in previous_matches[-1 * steps :]:
-            scores = update(tally, filtered_matches)
+            scores = update(scores, filtered_matches)
             tally = update_tally(tally, scores)
         #clears the previous matches list, because we are done backtracking.
         previous_matches = previous_matches[-1 * steps:]
@@ -229,10 +230,11 @@ def findContigsComposition(strain, dataTree):
     
     def filter_match(match):
         #matchlist = (number of matches, name of group)
-        return float(match[0]) / len(groups(match[1])) >= minGroupPercent and match[0] >= 2
+        match_count = len(match[0])
+        return float(match_count) / len(groups[match[1]]) >= minGroupPercent and match_count >= 2
 
     def find_window_boundary(tally):
-        deltas = [tally[x] - tally[x-1] for x in range(1, len(tally))]
+        deltas = tally[0] + [tally[x] - tally[x-1] for x in range(1, len(tally))]
         for index, n in enumerate(deltas[::-1]):
             if n > 0:
                 return index
@@ -251,29 +253,29 @@ def findContigsComposition(strain, dataTree):
             while True:
                 block = blocks.next()
                 length += 1           
-                matches = matchToGroupFull(strain, groups, block)
+                matches = matchToGroupFull(strain, other_groups, block)
                 #Attempts a more sophisticated way to build the longest possible.
                 #by simulating a race
                 filtered_matches = [x[1] for x in matches if filter_match(x)]
                 if len(filtered_matches) < 1:
-                    filtered_matches.append(revGroups[strain]) #appends self
+                    filtered_matches.append(self_group) #appends self
                         
                 scores = update(scores, filtered_matches) #update score. Eliminate dropped racers unless no more positives
                 tally = update_tally(tally, scores)
                 previous_matches.append(filtered_matches)
                 if max(scores.values()) <= 0: #race finish when no more positives remain or end of chr.
-                    winner = sorted(scores.items(), key=lambda x:x[1], reverse=True) #The highest score at the end is the winner.
+                    winner = sorted(scores.items(), key=lambda x:x[1], reverse=True)[0][0] #The highest score at the end is the winner.
                     backtrack_steps = find_window_boundary(tally[winner]) #calculates steps needed to backtrack
                     for x in range(length - backtrack_steps): #write to results
-                        chrResults.append(frozenset([tally.keys()[0]]))
+                        chrResults.append(frozenset([winner]))
                     scores = copy.deepcopy(base_scores)
-                    tally = tally.deepcopy(base_tally)                   
+                    tally = copy.deepcopy(base_tally)                   
                     length = backtrack_steps
                     scores, tally, previous_matches = backtrack(scores, tally, previous_matches, backtrack_steps)
         except StopIteration:
-            winner = sorted(scores.items(), key=lambda x:x[1], reverse=True) #The highest score at the end is the winner.
+            winner = sorted(scores.items(), key=lambda x:x[1], reverse=True)[0][0] #The highest score at the end is the winner.
             for x in range(length): #write to results
-                chrResults.append(frozenset([tally.keys()[0]]))
+                chrResults.append(frozenset([winner]))
                     
     return results
 
@@ -388,15 +390,15 @@ if __name__ == '__main__':
     global groups
     groups = {'G1':[a,b,c,d], 'G2':[e,f,g,h,i], 'G3':[j,k], 'G4':[l,m,n]}
         
-    block1 = [[a,b,c,d], [e,f,g,h], [j,k], [l,m,n]]
-    block2 = [[a,b,c,d], [e,f,g,h,j], [l,m,n,k]]
-    block3 = [[a,b], [e,f,g,h,c,d], [j,k], [l,m,n]]
-    block4 = [[a,b,c,d], [e,f,g,h], [j,k,l,m,n]]
+    block1 = [[a,b,c,d], [e,f,g,h,i], [j,k], [l,m,n]]
+    block2 = [[a,b,c,d], [e,f,g,h,i,j], [l,m,n,k]]
+    block3 = [[a,b], [e,f,g,h,i,c,d], [j,k], [l,m,n]]
+    block4 = [[a,b,c,d], [e,f,g,h,i], [j,k,l,m,n]]
     
     typeI = [block1]*4 + [block2]*4 + [block3]*4 + [block4]*4
     typeII = [block1]*2 + [block2]*10 + [block3]*2 + [block4]*7
     
     data_tree = {'CHRI': typeI, 'CHRII': typeII}
-    result = {x:findContigsComposition(data_tree, x) for x in all_strains}
-    print('\n'.join(map(lambda x: '{0}:{1}'.format(x[0], x[1]), result.items())))
+    result = {x:findContigsComposition(x, data_tree) for x in all_strains}
+    print('\n'.join(map(lambda x: '{0}:{1}'.format(x[0], x[1]), sorted(result.items()))))
     

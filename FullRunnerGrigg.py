@@ -46,17 +46,29 @@ if __name__ == '__main__':
     densitypath = outputDirectory + "density.txt"
     countpath = outputDirectory + "counted.txt"  
     grouppath = outputDirectory + "groups.txt"
+    groupmcipath = grouppath + ".mci"
+    
+    
+    #Settings
     reference = 'ME49'
+    filename = 'Toxo20.txt'
     mode = 'toxo'
+    blength = 10000
+    autogroup = True
+    iVal = 4
+    piVal = 1.5
+    
+    graph_filename = 'HeatMaps.pdf'
+    graph_title = 'Toxo-10K'
+    
     
     for folder in [outputDirectory, cytoscapeDirectory, matrixDirectory]:
         if not isdir(folder):  
             os.mkdir(folder)
     
     #Grigg data
-    
     os.chdir(baseDirectory)
-    griggpath = baseDirectory + '/OrderedSNPV8.txt'
+    griggpath = baseDirectory + '/' + filename
     data = gl.load(griggpath, reference)
 #     excludepath = outputDirectory + '/exclude.txt'
 #     data = gl.load(griggpath, reference, excludepath)
@@ -71,14 +83,15 @@ if __name__ == '__main__':
  
     print("calculating density")
    
-    snps.snpDensity(dataTree,densitypath,sampleList)
+    snps.snpDensity(dataTree,densitypath,sampleList, blength)
      
     print("generating matrix")     
     if not isdir(outputDirectory):    
         os.mkdir(outputDirectory)
-    matrix = snps.calculateMatrix(dataTree, sampleList)
+    matrix = snps.calculateMatrix(dataTree, sampleList, blength)
     snps.recordMatrix(matrix, sampleList)
-        
+    
+    os.chdir(outputDirectory)
     print('encoding to nexus')     
     treetuple = (dataTree, sampleList)
     nex.nexusOutput(gl.aggregateForNexus(treetuple))
@@ -97,8 +110,10 @@ if __name__ == '__main__':
     dataMatrix = mclc.toMatrix(dataTree[0])
     counted = mclc.count(dataTree, countpath)
     aggregateCount = mclc.aggregate(counted[0]).values()[0]
-#    ag.group(aggregateCount, tabpath, grouppath)
-    
+    if autogroup:
+            ag.group(aggregateCount, tabpath, grouppath, groupmcipath, iVal, piVal)
+            ag.generateGraph(groupmcipath, tabpath, graph_filename, graph_title)
+        
     #to load groups        
     groups = gc.loadGroups(grouppath, "")
     expandedGroups = gc.expandGroups(groups)
