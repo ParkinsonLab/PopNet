@@ -64,7 +64,23 @@ def toRoman(number):
 
     return returnstring
 
+def reverseTranslate(numStr):
+    '''(str) -> str
+    gives a partially, but correctly formatted
+    chromosome name for matching purposes'''
+    
+    returnstring = 'CHR'
+    try:
+        lastchar = ''
+        number = int(numStr)
+    except TypeError:
+        lastchar = numStr[-1]
+        number = int(numStr[:-1])
+    
+    return returnstring + toRoman(number) + lastchar
+    
+    
 #testing purposes only
 if __name__ == '__main__':
-    chr = "TGME49_chrXII"
-    print(translate(chr))
+    chr = "TGME49_chrVIIA"
+    print(translate(chr, mode='toxoplasma'))

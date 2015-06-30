@@ -311,9 +311,7 @@ def loadMatrix(data, tab_file):
 
     noheader = re.search('(?s)mclmatrix\nbegin\n(.+)\n', data).group(1)
     
-    with open(tab_file, 'r') as tmp:
-        data = tmp.read()
-    tab = [re.match('^[0-9]+\s(.+)$', line).group(1) for line in re.split('\n', data) if line != '']
+    tab = loadTab(tab_file)
     
     matrix = {tab[int(line[0])] : {tab[int(x[0])] : float(x[1]) for x in map(splitEntry, line[1:-1])} for line in splitLine(noheader)}
 #     #-1 because there's a semicolon at the end of each line.
@@ -332,6 +330,16 @@ def stepList(start, end, step, reverse=False):
         return [x for x in reversed(list)]
     else:
         return list
+
+def loadTab(tabfile):
+    '''(str)->list
+    loads a tab file for mcl'''
+    with open(tabfile, 'r') as tmp:
+        data = tmp.read()
+        
+    tab = [re.match('^[0-9]+\s(.+)$', line).group(1) for line in re.split('\n', data) if line != '']
+    
+    return tab
     
 def analyzeDistance(currString, tab_file):
     '''string(path), string(path) -> [num]
