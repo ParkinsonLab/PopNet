@@ -234,7 +234,7 @@ def findContigsComposition(strain, dataTree):
         return float(match_count) / len(groups[match[1]]) >= minGroupPercent and match_count >= 2
 
     def find_window_boundary(tally):
-        deltas = tally[0] + [tally[x] - tally[x-1] for x in range(1, len(tally))]
+        deltas = [tally[0]] + [tally[x] - tally[x-1] for x in range(1, len(tally))]
         for index, n in enumerate(deltas[::-1]):
             if n > 0:
                 return index
