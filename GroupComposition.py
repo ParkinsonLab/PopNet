@@ -187,9 +187,10 @@ def findContigsComposition(strain, dataTree):
     minGroupPercent = 0.3 #min fraction of members present
     minDensity = 50 #min number of SNPs in this region for it to be relevant
     PENALTY_CONST = 1000.
-    penalty = reduce(lambda x, y: x+y, [len(e) for e in dataTree.values()]) / PENALTY_CONST #Penalty for a mismatch to the current match
-    #set to 0.1% of total.
-#     penalty = 8
+#     penalty = reduce(lambda x, y: x+y, [len(e) for e in dataTree.values()]) / PENALTY_CONST #Penalty for a mismatch to the current match
+#     #set to 0.1% of total.
+    penalty = 8
+    maxScore = 5 * penalty
     print('Gap Penalty used is {}'.format(penalty))
     all_groups = getGroups() 
     other_groups = getGroups(strain)
@@ -199,7 +200,8 @@ def findContigsComposition(strain, dataTree):
     def update(scores, filtered_matches):
         for racer in scores:
             if racer in filtered_matches:
-                scores[racer] += 1
+                if scores[racer] <= maxScore:
+                    scores[racer] += 1
             else:
                 scores[racer] -= penalty
         
@@ -319,13 +321,13 @@ def condense(list):
 
 '''list of matrices -> matrix
 condenses all the chrs into one, for the whole genome picture'''
-def aggregate(matrixList):
+def aggregate(matrixList, mode):
     import ChrNameSorter as cns
     strains = matrixList.values()[0].keys()
     results = {}
     for strain in strains:
         results[strain] = [(-30, 0, 'SPACER')]
-    for chrName, chr in sorted(matrixList.items(), key=lambda x: cns.getValue(x[0])):
+    for chrName, chr in sorted(matrixList.items(), key=lambda x: cns.getValue(x[0], mode)):
         for strain, data in chr.items():
             results[strain] += [(-10, 0, 'SPACER')]
             results[strain] += data

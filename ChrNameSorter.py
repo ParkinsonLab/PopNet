@@ -16,7 +16,7 @@ romanNumeralMap = (('X',  10),
                    ('I',  1),
                    ('M',  0))
 
-def getValue(name):
+def getValue(name, mode):
 
     pattern = '.+_CHR(.+)'
     
@@ -30,11 +30,10 @@ def getValue(name):
     else:
         lastchar = tempValue[-1]
         tempValue = tempValue[:-1]
-    
+        
     value = romanToNum(tempValue)
-    offset = getOffSet(value, lastchar)
-    
-    
+    offset = getOffSet(value, lastchar, mode)
+        
     return value + offset
 
 def romanToNum(roman):
@@ -47,14 +46,19 @@ def romanToNum(roman):
     return result
 
     
-def getOffSet(num, letter):
+def getOffSet(num, letter, mode):
 #     #for plasmo and yeast
 #     offsetList = {}
 #     letterValue = {}
-    
-    #for Toxo
-    offsetList = {1: 1, 7: 1}
-    letterValue = {"A": 0, "B": 1, "C": 2}
+
+    if mode == 'toxoplasma':
+        offsetList = {1: 1, 7: 1}
+        letterValue = {"A": 0, "B": 1, "C": 2}
+    elif mode == 'yeast' or mode == 'plasmodium':
+        offsetList = {}
+        letterValue = {}
+    else:
+        raise TypeError('Unknown type for chr translation')
     
     offset = 0
     for chr, value in offsetList.items():

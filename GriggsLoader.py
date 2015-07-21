@@ -12,7 +12,7 @@ from collections import Counter as counter
 def load(path, reference, excludePath=None):
     print("loading..")
     with open(path) as source:
-        nameList = [_f.upper() for _f in re.split("\t",source.readline().replace("\r\n", "").replace("\n", ""))[3:] if _f] #gets names, split, filter for preceeding tabs. Name will be in order.
+        nameList = [_f.upper() for _f in re.split("\t",source.readline().replace("\r\n", "").replace("\n", ""))[2:] if _f] #gets names, split, filter for preceeding tabs. Name will be in order.
         rawData = re.split("\n", source.read())
         tree = {}
         chrBranch = {}
@@ -25,7 +25,16 @@ def load(path, reference, excludePath=None):
         else:
             exclude = None
             
-        for line in rawData[:-1]:
+        if reference is not None:
+            nameList.pop(0)
+            nameList.insert(0,reference)
+
+        
+        for index, line in enumerate(rawData[:-1]):
+            
+            if index == 26263:
+                print('hi')
+                
             lineSplit = re.split("\t", line.replace("\n", "").replace("\r", ""))
             chr = lineSplit[0].upper()
             if chr not in tree:
@@ -36,8 +45,8 @@ def load(path, reference, excludePath=None):
                 posBranch = {}
                 chrBranch[int(lineSplit[1])] = posBranch
             
-            if isDrift(lineSplit):
-                continue
+#             if isDrift(lineSplit):
+#                 continue
             
 #             if hasDrift(lineSplit) and prevLineSplit:
 # #                 this bit determines what to do with "drift". continue to skip line. use the
@@ -45,17 +54,16 @@ def load(path, reference, excludePath=None):
 # #                 drift doesn't really happen at positions with real SNPs. 
 #                  
 #                 lineSplit = correctDrift(lineSplit, prevLineSplit)
+            
                 
-            for snp, samp in zip(lineSplit[3:], nameList):
+            for snp, samp in zip(lineSplit[2:], nameList):
 #                print "%s\t%s"%(samp, snp)
                 if not (exclude and samp in exclude):
                     posBranch[samp] = snp
             
-            posBranch[reference] = lineSplit[2]
                 
             prevLineSplit = lineSplit
     
-    nameList.append(reference)
     if exclude:
         prunedNameList = [x for x in nameList if x not in exclude]
         return (tree, prunedNameList)

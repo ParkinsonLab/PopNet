@@ -66,7 +66,7 @@ def toRoman(number):
 
 def reverseTranslate(numStr):
     '''(str) -> str
-    gives a partially, but correctly formatted
+    gives a partial, but correctly formatted
     chromosome name for matching purposes'''
     
     returnstring = 'CHR'

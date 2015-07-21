@@ -33,8 +33,9 @@ if __name__ == '__main__':
     import re
 
 
-    baseDirectory = '/data/new/javi/toxo/WinVar'
+#     baseDirectory = '/data/new/javi/toxo/WinVar'
 #     baseDirectory = '/scratch/j/jparkins/xescape/SNPSort'
+    baseDirectory = '/data/new/javi/toxo/simulations'
     outputDirectory = baseDirectory + '/matrix/'
     cytoscapeDirectory = outputDirectory + '/cytoscape'
     rawresultpath = outputDirectory + "results.txt"
@@ -50,13 +51,14 @@ if __name__ == '__main__':
     
     
     #Settings
-    reference = 'ME49'
-    filename = 'Toxo20.txt'
-    mode = 'toxo'
+    reference = None
+#     filename = 'Toxo20.txt'
+    filename = 'SimulatedToxo.txt'
+    mode = 'toxoplasma'
     blength = 10000
     autogroup = True
-    iVal = 4
-    piVal = 1.5
+    iVal = 5
+    piVal = 5
     
     graph_filename = 'HeatMaps.pdf'
     graph_title = 'Toxo-10K'
@@ -142,6 +144,6 @@ if __name__ == '__main__':
      
     mclc.printMatrix(aggregateCount, matrixoutpath.format("aggregate"))
      
-    aggregateComp = gc.aggregate(composition)
+    aggregateComp = gc.aggregate(composition, mode)
     ce.parse(aggregateCount, "Genome", counted[1], outpath.format("Genome"), colorTable, aggregateComp)
     print("Runner Completed")
