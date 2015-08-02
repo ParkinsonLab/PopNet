@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
 #     baseDirectory = '/data/new/javi/toxo/WinVar'
 #     baseDirectory = '/scratch/j/jparkins/xescape/SNPSort'
-    baseDirectory = '/data/new/javi/toxo/simulations'
+    baseDirectory = '/data/new/javi/toxo/simulations4'
     outputDirectory = baseDirectory + '/matrix/'
     cytoscapeDirectory = outputDirectory + '/cytoscape'
     rawresultpath = outputDirectory + "results.txt"

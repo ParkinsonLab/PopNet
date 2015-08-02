@@ -83,7 +83,7 @@ def addLists(x, y):
     
 def simulateBySimuPOP():
     #starting variables
-    directory = '/data/new/javi/toxo/simulations3/'
+    directory = '/data/new/javi/toxo/simulations4/'
     input_path = 'Toxo20.txt'
     output_path = 'SimulatedToxo.txt'
     
@@ -127,7 +127,7 @@ def simulateBySimuPOP():
     #Mutation prior to each round
     
     simulator = sp.Simulator(population)
-    rate_matrix = createRateMatrix(len(ancestor_names), 0.00000002)
+    rate_matrix = createRateMatrix(len(ancestor_names), 0.0002) #10,000 times the mutation rate.
     id_tagger = sp.IdTagger()
     ped_tagger = sp.PedigreeTagger(output='>>' + pedigree_path, outputFields=['name', 'ind_id'])
     inherit_tagger = sp.InheritTagger(infoFields = 'name')
@@ -146,7 +146,7 @@ def simulateBySimuPOP():
                                               ],
                                               subPopSize = expansion_pop_size)
     matingScheme2 = sp.RandomMating(ops = [
-                                           sp.Recombinator(intensity = 0.01 / 10500, convMode=(sp.GEOMETRIC_DISTRIBUTION, 0.001,0.01)), #10x normal
+                                           sp.Recombinator(intensity = 0.01 / 105000, convMode=(sp.GEOMETRIC_DISTRIBUTION, 0.001,0.01)), #10x normal
                                            sp.PyTagger(func = addNames),
                                            id_tagger,
                                            ped_tagger
@@ -200,7 +200,7 @@ def simulateBySimuPOP():
 def simulateByRecombinator():
     
     #starting variables
-    directory = '/data/new/javi/toxo/simulations3/'
+    directory = '/data/new/javi/toxo/simulations4/'
     input_path = 'Toxo20.txt'
     output_path = 'SimulatedToxo.txt'
     
@@ -244,8 +244,8 @@ def simulateByRecombinator():
 if __name__ == '__main__':
 #     print('Simulating by Recombinator')
 #     simulateByRecombinator()
-  print('Simulatioin by simuPOP')
-  simulateBySimuPOP()
+    print('Simulatioin by simuPOP')
+    simulateBySimuPOP()
     
     
     
