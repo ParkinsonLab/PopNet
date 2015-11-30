@@ -33,7 +33,7 @@ if __name__ == '__main__':
     import re
 
 
-    baseDirectory = '/data/new/javi/yeast/pipeline/WinVar'
+    baseDirectory = '/data/new/javi/plasmo/pheno_select'
 
 #     baseDirectory = '/scratch/j/jparkins/xescape/plasmo/pipeline'
 
@@ -52,14 +52,14 @@ if __name__ == '__main__':
     groupmcipath = grouppath + ".mci"
     
     #Settings
-    mode = 'yeast'
-    blength = 1000
+    mode = 'plasmodium'
+    blength = 4000
     autogroup = True
-    iVal = 4
-    piVal = 1.5
+    iVal = 6
+    piVal = 2
     
-    graph_filename = 'HeatMaps.pdf'
-    graph_title = 'Yeast-1K'
+    graph_filename = 'PHeatMaps.pdf'
+    graph_title = 'Plasmo-part'
     
     
     for folder in [outputDirectory, cytoscapeDirectory, matrixDirectory]:
@@ -184,6 +184,6 @@ if __name__ == '__main__':
      
     mclc.printMatrix(aggregateCount, matrixoutpath.format("aggregate"))
      
-    aggregateComp = gc.aggregate(composition)
+    aggregateComp = gc.aggregate(composition, mode)
     ce.parse(aggregateCount, "Genome", counted[1], outpath.format("Genome"), colorTable, aggregateComp)
     print("Runner Completed")

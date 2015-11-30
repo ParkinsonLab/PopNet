@@ -7,6 +7,7 @@ Created on Jul 30, 2015
 inf = float('inf')
 import collections as col
 import re
+import string
 Edge = col.namedtuple('Edge', 'start, end, cost')
 
 
@@ -27,9 +28,9 @@ def parseToGraph(filepath):
     
     #make a list of names and edges from weights
     for sample in samples:
-        parent_a, parent_b, name = re.split('_', sample)
+        parent_a, parent_b, name = findName(sample)
         nodes.append(name)
-        if parent_a is not '-':
+        if '-' not in parent_a:
             edges.append((parent_a, name))
             edges.append((parent_b, name))
     
@@ -45,16 +46,38 @@ def parseToGraph(filepath):
         
     weighted_edges = [(parent, child, matrix[parent][child]) for parent, child in edges]
     
-    return weighted_edges
+    return weighted_edges, matrix
             
+
+def findName(raw_name):
+    
+    result = tuple(re.split('_', string.lstrip(raw_name)))
+    return result
+
+def getDistance(matrix, path):
+    
+    if len(path) == 0:
+        return inf
+    
+    previous = path[0]
+    total = 0
+    while path:
+        step = path.pop()
+        total += matrix[previous][step]
+        previous = step 
+    
+    return total
 
 class GraphScore():
     
     def __init__(self, edges):
-        self.nodes = set(sum([[edge[0], edge[1]] for edge in edges]))
+        self.nodes = set(reduce(lambda x, y: x + y, [[edge[0], edge[1]] for edge in edges]))
         self.edges = edges
         
     def dijkstra(self, source, dest):
+        source = findName(source)[2]
+        dest = findName(dest)[2]
+        
         assert source in self.nodes
         dist = {node: inf for node in self.nodes}
         previous = {node: None for node in self.nodes}
@@ -75,16 +98,15 @@ class GraphScore():
                     dist[v] = alt
                     previous[v] = u
         
+        dist = 0
         s, u = col.deque(), dest
         while previous[u]:
-            s.pushleft(u)
+            s.appendleft(u)
             u = previous[u]
-        s.pushleft(u)
+        s.appendleft(u)
+        s.appendleft(source)
         return s
-                
-        
-    
-    
+
 
 if __name__ == '__main__':
     import GroupComposition as gc
@@ -99,24 +121,28 @@ if __name__ == '__main__':
     grouppath = directory + groupname
     
     groups = gc.loadGroups(grouppath, None)
-    edges = parseToGraph(filepath)
+    del groups['NONE']
+    
+    edges, matrix = parseToGraph(filepath)
     graph = GraphScore(edges)
     
     print('Starting test')
     
     for group in groups:
         self_strains = groups[group]
-        other_strains = sum([groups[other] for other in groups if other is not group])
-        
+        other_strains = reduce(lambda x, y: x + y, [groups[other] for other in groups if other is not group])        
         for strain in self_strains:
             self_dists = []
             other_dists = []
             for self_strain in self_strains:
-                self_dists.append(graph.dijkstra(strain, self_strain))
+                self_dists.append(getDistance(matrix, graph.dijkstra(strain, self_strain)))
             for other_strain in other_strains:
-                other_dists.append(graph.dijkstra(strain, other_strain))
+                other_dists.append(getDistance(matrix, graph.dijkstra(strain, other_strain)))
         
-            assert(max(self_dists) <= min(other_dists))
+            if not (max(self_dists) <= min(other_dists)):
+                print('Failed: {0}. Max self = {1}, Min Other = {2}'.format(strain, str(max(self_dists)), str(min(other_dists))))
+            else:
+                print('Passed: {0}. Max self = {1}, Min Other = {2}'.format(strain, str(max(self_dists)), str(min(other_dists))))
     
-    print('Passed!')
+    print('GraphScore Test Complete.')
     
