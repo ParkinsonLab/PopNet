@@ -33,7 +33,8 @@ if __name__ == '__main__':
     import re
 
 
-    baseDirectory = '/data/new/javi/plasmo/pheno_select'
+#     baseDirectory = '/data/new/javi/plasmo/pheno_select'
+    baseDirectory = '/data/new/javi/yeast/partial'
 
 #     baseDirectory = '/scratch/j/jparkins/xescape/plasmo/pipeline'
 
@@ -44,6 +45,7 @@ if __name__ == '__main__':
     perresultpath = outputDirectory + "persistentResult.txt"
     tabpath = outputDirectory + "persistentMatrix.tab"
     outpath = cytoscapeDirectory + "/cytoscape{0}.xgmml"
+    tab_networkpath = cytoscapeDirectory + "/tabNetwork.tsv"
     matrixDirectory = cytoscapeDirectory + "/countMatrices"
     matrixoutpath = matrixDirectory + "/{0}.txt"
     densitypath = outputDirectory + "density.txt"
@@ -52,14 +54,14 @@ if __name__ == '__main__':
     groupmcipath = grouppath + ".mci"
     
     #Settings
-    mode = 'plasmodium'
-    blength = 4000
+    mode = 'yeast'
+    blength = 8000
     autogroup = True
-    iVal = 6
-    piVal = 2
-    
-    graph_filename = 'PHeatMaps.pdf'
-    graph_title = 'Plasmo-part'
+    iVal = 5
+    piVal = 1.5
+    reference = "S288C"
+    graph_filename = 'YHeatMaps.pdf'
+    graph_title = 'Yeast-part'
     
     
     for folder in [outputDirectory, cytoscapeDirectory, matrixDirectory]:
@@ -94,7 +96,7 @@ if __name__ == '__main__':
     dataTree = {}   #actually a dictionary
     sampleList = []
           
-    reference = "S288C"
+
     if reference not in sampleList: sampleList.append(reference)
            
     for f in onlyfiles:
@@ -185,5 +187,6 @@ if __name__ == '__main__':
     mclc.printMatrix(aggregateCount, matrixoutpath.format("aggregate"))
      
     aggregateComp = gc.aggregate(composition, mode)
+    gc.tab_output(composition, sampleList, colorTable, blength, tab_networkpath)
     ce.parse(aggregateCount, "Genome", counted[1], outpath.format("Genome"), colorTable, aggregateComp)
     print("Runner Completed")

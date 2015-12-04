@@ -333,6 +333,40 @@ def aggregate(matrixList, mode):
             results[strain] += data
     return results
 
+
+'''matrix (condensed but not aggregate), output file -> None (output)
+outputs the whole graph to tabular format
+input should bear the format {chr: strain, [(start, end, group)]}'''
+def tab_output(composition, samplelist, colortable, blocksize, outpath):
+    import CytoscapeEncoder as ce
+    import copy
+    samplelist = sorted(samplelist)
+    matrix = copy.deepcopy(composition)
+    
+    #expansion step
+    for chr in matrix:
+        for sample in samplelist:
+            temp_result = []
+            for section in matrix[chr][sample]:
+                start = section[0]
+                end = section[1]
+                color = colortable[section[2]]
+                for x in range(end - start + 1):
+                    temp_result.append(ce.toHexColor(color))
+            matrix[chr][sample] = temp_result
+    
+    #output stepmatrix
+    with open(outpath, 'w') as output:
+        output.writelines(['\t'.join(['Chromosome', 'Position'] + samplelist)])
+        output.write('\n')
+        for chr in matrix:
+            for index, position in enumerate(zip(*[matrix[chr][sample] for sample in samplelist])):
+                num = str(index * blocksize)
+                output.write('\t'.join([chr, num] + list(position)))
+                output.write('\n')
+    return
+
+
 '''file -> {chr:[density of blocks]]}
 used to load the densities file'''
 def loadDensity(infile):
