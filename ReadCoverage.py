@@ -11,9 +11,9 @@ import numpy
 import matplotlib
 import traceback
 import copy
-import VCFChrTranslator as vct
+import ChrTranslator as ct
 
-def calcReadCoverage(file, output, minOutput):
+def calcReadCoverage(file, output, minOutput, mode):
     #dataparsing
     outputName = output.name
     noHeader = re.findall("(?m)^([^@].*)\n", file.read()) #removed header, divided into lines.
@@ -26,7 +26,7 @@ def calcReadCoverage(file, output, minOutput):
         currLine = noHeader[x]
         lineSegment = re.split("\t", currLine)
         #the chr name is translated using vct
-        info = [vct.translate(lineSegment[2]), int(lineSegment[3]), len(lineSegment[9])] #Info is: chromosome, leftmost position, length of the match.
+        info = [ct.translate(lineSegment[2], mode=mode), int(lineSegment[3]), len(lineSegment[9])] #Info is: chromosome, leftmost position, length of the match.
         
         if not info[0] in dataTree:
             dataTree[info[0]] = {}
@@ -91,7 +91,7 @@ def graphResults(results):
     chrList = re.findall("(?m)^[@](.*?)\n", allData)
     count = 1 
     for chrName in chrList:
-        chrData = re.findall("(?m)^%s\t([0-9.]*?)\t([0-9.]*?)\n"%chrName, allData)
+        chrData = re.findall("(?m) ^%s\t([0-9.]*?)\t([0-9.]*?)\n"%chrName, allData)
         positions = [x[0] for x in chrData]
         values = [x[1] for x in chrData]
         plt.figure(count)
@@ -113,6 +113,8 @@ if __name__ == '__main__':
     #modify these as needed
 #    directory = raw_input("Please specify working directory, in full \n")
     directory = "/data/new/javi/yeast/scinetDownload/sams"
+    mode = 'yeast'
+    
     #Do not modify
     os.chdir(directory)  
     
@@ -127,7 +129,7 @@ if __name__ == '__main__':
             namesplit = f.split(".")
             if namesplit[len(namesplit)-1] == "sam":
                 outputName = "%s_coverage"%namesplit[0]
-                calcReadCoverage(open(f, "r"), open("%s.txt"%outputName, "w+"), open("%s.min"%outputName, "w"))
+                calcReadCoverage(open(f, "r"), open("%s.txt"%outputName, "w+"), open("%s.min"%outputName, "w"), mode)
 #                 graphResults(open("%s.txt"%outputName, "r"))
         except Exception as e:
             print(traceback.print_exc())

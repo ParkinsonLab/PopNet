@@ -10,6 +10,7 @@ Use the createColorTable and calculateColor from ClusterPattern to visualize.'''
 '''Strain -> Dict
 number represents the group ID, as specified in this function'''
 import numpy as np
+import string
 import re
 import copy
 
@@ -20,10 +21,10 @@ def loadGroups(file, strain):
         data = input.read()
     global groups
     groups = {}
-    for section in re.split('@', data)[1:]:
+    for pos, section in enumerate(re.split('@', data)[1:]):
         lines = re.split('\n', section)
         lineSplit = re.split("\t", lines[1])
-        groups[lines[0]] = lineSplit
+        groups[getGroupID(pos)] = lineSplit
     groups['NONE'] = ['NONE']
     
     for name, group in groups.items():
@@ -44,6 +45,19 @@ def getGroups(strain = None):
             return groups
     else:
         print('Groups not loaded.')
+
+def getGroupID(number):
+    alph = string.ascii_uppercase
+    result = alph[number%26]
+    
+    multi = number // 26
+    while multi > 0:
+        result = alph[multi%26 - 1] + result
+        multi = multi // 26
+    
+    return result 
+        
+        
 
 #     #this function has changed. Now used solely for getting groups internally.
 #     #must call the loadGroups function first. They are separate because one is also used externally.
@@ -363,7 +377,8 @@ def tab_output(composition, samplelist, colortable, blocksize, outpath):
             for index, position in enumerate(zip(*[matrix[chr][sample] for sample in samplelist])):
                 num = str(index * blocksize)
                 output.write('\t'.join([chr, num] + list(position)))
-                output.write('\n')
+                output.write('\n')     
+    
     return
 
 

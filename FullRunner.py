@@ -52,6 +52,7 @@ if __name__ == '__main__':
     countpath = outputDirectory + "counted.txt"  
     grouppath = outputDirectory + "groups.txt"
     groupmcipath = grouppath + ".mci"
+    colorout_path = outputDirectory + "colors.txt"
     
     #Settings
     mode = 'yeast'
@@ -187,6 +188,7 @@ if __name__ == '__main__':
     mclc.printMatrix(aggregateCount, matrixoutpath.format("aggregate"))
      
     aggregateComp = gc.aggregate(composition, mode)
-    gc.tab_output(composition, sampleList, colorTable, blength, tab_networkpath)
-    ce.parse(aggregateCount, "Genome", counted[1], outpath.format("Genome"), colorTable, aggregateComp)
+    gc.tab_output(composition, sampleList, colorTable, blength, tab_networkpath, colorout_path)
+    rev_groups = gc.reverseGroups(groups)
+    ce.parse(aggregateCount, "Genome", counted[1], outpath.format("Genome"), colorTable, aggregateComp, rev_groups)
     print("Runner Completed")

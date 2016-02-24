@@ -31,9 +31,6 @@ def load(path, reference, excludePath=None):
 
         
         for index, line in enumerate(rawData[:-1]):
-            
-            if index == 26263:
-                print('hi')
                 
             lineSplit = re.split("\t", line.replace("\n", "").replace("\r", ""))
             chr = lineSplit[0].upper()

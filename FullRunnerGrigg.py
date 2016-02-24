@@ -31,24 +31,26 @@ if __name__ == '__main__':
     from os import listdir
     from os.path import isfile, join, isdir
     import re
-
+    import SupportModules.ColorSummary as cs
 
 #     baseDirectory = '/data/new/javi/toxo/WinVar'
 #     baseDirectory = '/scratch/j/jparkins/xescape/SNPSort'
-    baseDirectory = '/data/new/javi/toxo/simulations4'
+    baseDirectory = '/data/new/javi/toxo/test_simulation'
+    
     outputDirectory = baseDirectory + '/matrix/'
     cytoscapeDirectory = outputDirectory + '/cytoscape'
     rawresultpath = outputDirectory + "results.txt"
     perresultpath = outputDirectory + "persistentResult.txt"
     tabpath = outputDirectory + "persistentMatrix.tab"
     outpath = cytoscapeDirectory + "/cytoscape{0}.xgmml"
+    tab_networkpath = cytoscapeDirectory + "/tabNetwork.tsv"
     matrixDirectory = cytoscapeDirectory + "/countMatrices"
     matrixoutpath = matrixDirectory + "/{0}.txt"
     densitypath = outputDirectory + "density.txt"
     countpath = outputDirectory + "counted.txt"  
     grouppath = outputDirectory + "groups.txt"
     groupmcipath = grouppath + ".mci"
-    
+    color_outpath = outputDirectory + "colors.txt"
     
     #Settings
     reference = None
@@ -59,7 +61,7 @@ if __name__ == '__main__':
     autogroup = True
     iVal = 5
     piVal = 5
-    
+
     graph_filename = 'HeatMaps.pdf'
     graph_title = 'Toxo-10K'
     
@@ -137,7 +139,7 @@ if __name__ == '__main__':
                
     #enables the use of black spacer tiles
     colorTable['SPACER'] = 0
-    print(colorTable)
+    cs.outputColors(groups, colorTable, color_outpath)
        
 #    for the whole thing
 
@@ -145,5 +147,7 @@ if __name__ == '__main__':
     mclc.printMatrix(aggregateCount, matrixoutpath.format("aggregate"))
      
     aggregateComp = gc.aggregate(composition, mode)
-    ce.parse(aggregateCount, "Genome", counted[1], outpath.format("Genome"), colorTable, aggregateComp)
+    gc.tab_output(composition, sampleList, colorTable, blength, tab_networkpath)
+    rev_groups = gc.reverseGroups(groups)
+    ce.parse(aggregateCount, "Genome", counted[1], outpath.format("Genome"), colorTable, aggregateComp, rev_groups)
     print("Runner Completed")

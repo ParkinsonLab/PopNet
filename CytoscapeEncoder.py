@@ -141,7 +141,7 @@ def transformMatrix(npMatrix):
 takes a single matrix (2x nested dictionary) and converts it to a series of nodes and edges
 in accordance with the GML format, to be incorportated into a larger
 GML file for cytoscape.'''
-def fromMatrix(matrix, name, colorTable, composition):
+def fromMatrix(matrix, name, colorTable, composition, groups):
     print(name + " cutoff is:")
     sampleList = sorted(matrix.keys())
     #nodes are two-tuples consisting of id and label
@@ -170,7 +170,7 @@ def fromMatrix(matrix, name, colorTable, composition):
     directed=\"0\" >\n\
 {1}\n\
 {2}\n\
-    </graph>".format(name, "\n".join([getNodeText(node[0], node[1], colorTable, composition[node[1]]) for node in nodes]), \
+    </graph>".format(name, "\n".join([getNodeText(node[0], node[1], colorTable, composition[node[1]], groups[node[1]]) for node in nodes]), \
 "\n".join([getEdgeText(edge[0], edge[1], edge[2], colorTable) for edge in edges]))
     return text
 
@@ -180,9 +180,9 @@ def fromMatrix(matrix, name, colorTable, composition):
 primary function of this encoder, to be called by the outside source.
 Currently only accepts dataTree style input. Each parse call creates one file. 
 '''
-def parse(matrix, name, sampleList, outfile, colorTable, composition):
+def parse(matrix, name, sampleList, outfile, colorTable, composition, groups):
     with open(outfile, 'w') as output:
-        output.write(fromMatrix(matrix, name, colorTable, composition))
+        output.write(fromMatrix(matrix, name, colorTable, composition, groups))
 
 # '''for the sake of readability, the header info for the GML file will be
 # stored here'''
@@ -192,12 +192,12 @@ def parse(matrix, name, sampleList, outfile, colorTable, composition):
 
 '''(Int, String) -> String
 same idea for the node text.'''
-def getNodeText(ID, label, colorTable, composition):
-    try:
-        color = toHexColor(colorTable[label])
-    except KeyError:
-        print("KeyError!")
-        color = "000000"
+def getNodeText(ID, label, colorTable, composition, group):
+#     try:
+#         color = toHexColor(colorTable[label])
+#     except KeyError:
+#         print("KeyError!")
+#         color = "000000"
         
     circosText = calculateCircos(composition, colorTable)
 #     #hacked for importing!
@@ -209,7 +209,7 @@ def getNodeText(ID, label, colorTable, composition):
             <att name=\"Gradient\" type=\"string\" value=\"circoschart: arcstart=90 firstarc=.6 arcwidth=.3 outlineWidth=0.0 colorlist=&quot;{3}&quot; showlabels=false  attributelist=&quot;{4}&quot;\"/>\n\
 {5}\
             <graphics h=\"60\" w=\"60\" outline=\"{2}\" />\n\
-        </node>\n".format(ID, label, color, circosText[0], "values", circosText[1])
+        </node>\n".format(ID, label, group, circosText[0], "values", circosText[1])
     return text
 
 '''(Int) -> hex
