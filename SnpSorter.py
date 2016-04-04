@@ -245,7 +245,7 @@ def snpDensity(dataTree, outpath, sampleList, blength):
                 chrBranch = dataTree[chrName]
                 length = sorted(chrBranch.keys())[-1]
                 newList = [copy.deepcopy(posDict) for x in range(length/blength + 1)] #snps per 1000 base pairs
-                for position in chrBranch:
+                for position in sorted(chrBranch):
                     group = position/blength
                     posBranch = chrBranch[position]
                     newBranch = newList[group]
@@ -253,8 +253,8 @@ def snpDensity(dataTree, outpath, sampleList, blength):
                         if sample in posBranch:
                             newBranch[sample] += 1
                 
-                for branch in newList:
-                    temppos = newList.index(branch)  * blength
+                for index, branch in enumerate(newList):
+                    temppos = index  * blength
                     posString = chrString + "\t%d"% (temppos)
                     for sample in sampleList:
                         posString += "\t%d"%branch[sample]
@@ -347,6 +347,7 @@ def recordMatrix(matrixDict, sampleList):
 #                     iValue = ag.analyzeClm(currString, tabpath)
 #                     if iValue > 0: iValues.append(iValue)
 #         iValue = sum(iValues) / float(len(iValues))
+
         iValue = 8
         piValue = 19
                 

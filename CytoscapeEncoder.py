@@ -193,11 +193,11 @@ def parse(matrix, name, sampleList, outfile, colorTable, composition, groups):
 '''(Int, String) -> String
 same idea for the node text.'''
 def getNodeText(ID, label, colorTable, composition, group):
-#     try:
-#         color = toHexColor(colorTable[label])
-#     except KeyError:
-#         print("KeyError!")
-#         color = "000000"
+    try:
+        color = toHexColor(colorTable[label])
+    except KeyError:
+        print("KeyError!")
+        color = "000000"
         
     circosText = calculateCircos(composition, colorTable)
 #     #hacked for importing!
@@ -206,10 +206,11 @@ def getNodeText(ID, label, colorTable, composition, group):
         <node label=\"{1}\" id=\"{0}\" >\n\
             <att name=\"name\" type=\"string\" value=\"{1}\"/>\n\
             <att name=\"group\" type=\"string\" value=\"{2}\"/>\n\
+            <att name=\"color\" type=\"string\" value=\"{5}\"/>\n\
             <att name=\"Gradient\" type=\"string\" value=\"circoschart: arcstart=90 firstarc=.6 arcwidth=.3 outlineWidth=0.0 colorlist=&quot;{3}&quot; showlabels=false  attributelist=&quot;{4}&quot;\"/>\n\
 {5}\
             <graphics h=\"60\" w=\"60\" outline=\"{2}\" />\n\
-        </node>\n".format(ID, label, group, circosText[0], "values", circosText[1])
+        </node>\n".format(ID, label, group, circosText[0], "values", circosText[1], color)
     return text
 
 '''(Int) -> hex

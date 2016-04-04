@@ -11,6 +11,8 @@ import re
 import math
 import numpy as np
 import os
+import random
+import SnpSorter
 
 iMin = 2
 iMax = 8
@@ -22,15 +24,15 @@ istep = 0.2
 pistep = 0.5
 
 
-def group(mclcTree, tabpath, outpath, mcipath, iVal, piVal):
+def group(mclcTree, tabpath, outpath, mcipath, S2iVal, S2piVal):
     import MCLCounter as mclc
     sampleList = sorted(mclc.loadSampleList(tabpath))
     
     currString = buildMatrix(mclcTree, sampleList)
 
 #     #MCL
-#     iVal = analyzeClm(currString, tabpath)
-#     if iVal == 0:
+#     S2iVal = analyzeClm(currString, tabpath)
+#     if S2iVal == 0:
 #         raise RuntimeError('No suitable iValue found!')
 #         import sys
 #         sys.exit()
@@ -38,7 +40,7 @@ def group(mclcTree, tabpath, outpath, mcipath, iVal, piVal):
     with open(mcipath, 'w') as moutpath:
         moutpath.write(currString)
            
-    result = mcl(currString, tabpath, iVal, piVal)
+    result = mcl(currString, tabpath, S2iVal, S2piVal)
         
      
     with open(outpath, 'w') as output:
@@ -125,12 +127,12 @@ def clminfo(currString, tabpath):
     iVals = stepList(iMin, iMax, istep, reverse=True)
     piVals = stepList(piMin, piMax, pistep)
     
-    for iVal in iVals:
-        for piVal in piVals:
-            filename = namePattern.format('{i:0>2d}{pi:0>3d}'.format(i=int(iVal * 10), pi=int(piVal * 10)))
+    for S2iVal in iVals:
+        for S2piVal in piVals:
+            filename = namePattern.format('{i:0>2d}{pi:0>3d}'.format(i=int(S2iVal * 10), pi=int(S2piVal * 10)))
             files.append(filename)
             with open(filename, 'w') as tmp:
-                tmp.write(mcl(currString, None, iVal, piVal, raw=True))
+                tmp.write(mcl(currString, None, S2iVal, S2piVal, raw=True))
 
         
     result = subp.check_output(['clm', 'info', matrixName] + files, close_fds=True)
@@ -453,7 +455,43 @@ def generateGraph(datapath, tabpath, output_name, graph_title):
     names = ['Number of Clusters', 'Efficiency', 'Inter-cluster Distance', 'Intra-cluster Distance']
 
     graphHeatMap(output_name, matricies, extents, names, graph_title)
-        
+
+def findS1(matrix_dict, iMax, iMin, iStep, piMax, piMin, piStep):
+    
+    
+    #Attempts to run a number of sample matrices in order to estimate optimal I and pi vales
+    temp_filename = 'temp.mci'
+    temp_output = 'out.temp.mci'
+    all_matrices = []
+    for chr in matrix_dict:
+        all_matrices += matrix_dict[chr].values()
+    
+    n = len(all_matrices)
+    samples = random.sample(range(n), n / 10)
+    results = []
+    
+    for i in np.arange(iMin, iMax, iStep):
+        for pi in np.arange(piMin, piMax, piStep):
+            temp_results = 0
+            for sample in samples:
+                currString = SnpSorter.buildMatrix(all_matrices[sample], all_matrices[sample].keys())
+                with open(temp_filename, 'w') as input:
+                    input.write(currString)
+                with open(temp_output, 'w') as output:
+                    output.write(mcl(currString, None, i, pi, raw = True))
+                clm_result = subp.check_output(['clm', 'info', temp_filename, temp_output], close_fds=True)
+                
+                eff = float(re.search('efficiency=(.+?)\s', clm_result).group(1))
+                
+                temp_results += eff
+                
+            results.append((i, pi, temp_results / len(samples)))
+    
+    results = sorted(results, key = lambda x: x[2], reverse = True)
+    return (results[0][0], results[0][1])
+                
+
+
 if __name__ == "__main__":
 #     workingDir = '/data/new/javi/plasmo/pipeline/matrix'
     workingDir = '/data/new/javi/yeast/pipeline/WinVar/matrix'

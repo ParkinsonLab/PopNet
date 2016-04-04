@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
 #     baseDirectory = '/data/new/javi/toxo/WinVar'
 #     baseDirectory = '/scratch/j/jparkins/xescape/SNPSort'
-    baseDirectory = '/data/new/javi/toxo/test_simulation'
+    baseDirectory = '/data/new/javi/toxo/SNPSort20'
     
     outputDirectory = baseDirectory + '/matrix/'
     cytoscapeDirectory = outputDirectory + '/cytoscape'
@@ -54,13 +54,13 @@ if __name__ == '__main__':
     
     #Settings
     reference = None
-#     filename = 'Toxo20.txt'
-    filename = 'SimulatedToxo.txt'
+    filename = 'OrderedSNPV8.txt'
+#     filename = 'SimulatedToxo.txt'
     mode = 'toxoplasma'
     blength = 10000
     autogroup = True
-    iVal = 5
-    piVal = 5
+    S2iVal = 4
+    S2piVal = 1.5
 
     graph_filename = 'HeatMaps.pdf'
     graph_title = 'Toxo-10K'
@@ -115,7 +115,7 @@ if __name__ == '__main__':
     counted = mclc.count(dataTree, countpath)
     aggregateCount = mclc.aggregate(counted[0]).values()[0]
     if autogroup:
-            ag.group(aggregateCount, tabpath, grouppath, groupmcipath, iVal, piVal)
+            ag.group(aggregateCount, tabpath, grouppath, groupmcipath, S2iVal, S2piVal)
             ag.generateGraph(groupmcipath, tabpath, graph_filename, graph_title)
         
     #to load groups        
