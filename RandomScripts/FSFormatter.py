@@ -30,24 +30,24 @@ def rearrangeTree(dataTree, sampleList):
     
     return newTree
 
-def recordFS(dataTree, outpath, sampleList, mode):
+def recordFS(dataTree, outpath, sampleList, organism):
     '''records structure formatted files. One line per sample with one header line'''
     suffix = '.phase'
     sampleListFileName = 'samplelist.ids'
     fileListFileName = 'filelist.txt'
     sampleList = sorted(sampleList)
     newTree = rearrangeTree(dataTree, sampleList)
-    chrs = sorted(dataTree.keys(), key = lambda x: ct.translate(x, mode = mode))
+    chrs = sorted(dataTree.keys(), key = lambda x: ct.translate(x, organism = organism))
     
         
     
     fileList = []
     for chr in chrs:
-        filename = chr + suffix
-        fileList.append(filename)
+        file_name = chr + suffix
+        fileList.append(file_name)
         headerString = '\n'.join([str(len(sampleList)), str(len(dataTree[chr]))])
         posNames = ' '.join(['P'] + sorted([str(position) for position in dataTree[chr]])) #each element is a string including all the positions in a chr
-        with open('/'.join([outpath, filename]), 'w') as output:
+        with open('/'.join([outpath, file_name]), 'w') as output:
             output.write(headerString + '\n')
             output.write(posNames + '\n')
             for sample in sampleList:
@@ -63,19 +63,19 @@ def recordFS(dataTree, outpath, sampleList, mode):
 
 
 
-def formatToFS(directory, outpath, mode):
+def formatToFS(directory, outpath, organism):
     '''main runner method, directory contains all necessary files
     currently supports: toxoplasma, yeast, plasmodium
     outpath is a directory where all the times are to be stored'''
     
     #load the data like in FullRunner
-    if mode == 'toxoplasma':
+    if organism == 'toxoplasma':
             #Grigg data
         import GriggsLoader as gl
-        filename = 'SortedSNPs.txt'
+        file_name = 'SortedSNPs.txt'
         reference = None
         os.chdir(directory)
-        griggpath = directory + '/' + filename
+        griggpath = directory + '/' + file_name
         data = gl.load(griggpath, reference)
 #         excludepath = outputDirectory + '/exclude.txt'
 #         data = gl.load(griggpath, reference, excludepath)
@@ -102,21 +102,21 @@ def formatToFS(directory, outpath, mode):
             if sampleName not in sampleList: 
                 if f.endswith("vcf"):
                     with open("%s_coverage.min"%(re.split("\.", f)[0]), "r") as minCoverage, open(f, "r") as data:
-                        dataTree = snps.addData(data, sampleName, dataTree, minCoverage, reference, mode)
+                        dataTree = snps.addData(data, sampleName, dataTree, minCoverage, reference, organism)
                 else:
                     with open(f, "r") as data:
-                        dataTree = snps.addData(data, sampleName, dataTree, None, reference, mode)
+                        dataTree = snps.addData(data, sampleName, dataTree, None, reference, organism)
                 sampleList.append(sampleName)
             else:
                 print("Duplicate for {0}".format(sampleName))
         sampleList = sorted(sampleList)
     
-    recordFS(dataTree, outpath, sampleList, mode)
+    recordFS(dataTree, outpath, sampleList, organism)
     
 if __name__ == '__main__':
     directory = '/data/new/javi/toxo/structure-toxo'
-    mode = 'toxoplasma'
+    organism = 'toxoplasma'
     outpath = directory
     print('Initiating...')
-    formatToFS(directory, outpath, mode)
+    formatToFS(directory, outpath, organism)
     print('fineStructure Output Complete.')

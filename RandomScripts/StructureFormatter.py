@@ -31,11 +31,11 @@ def rearrangeTree(dataTree, sampleList):
     
     return newTree
 
-def record(dataTree, outpath, sampleList, mode):
+def record(dataTree, outpath, sampleList, organism):
     '''records structure formatted files. One line per sample with one header line'''
     newTree = rearrangeTree(dataTree, sampleList)
     
-    chrs = sorted(dataTree.keys(), key = lambda x: ct.translate(x, mode = mode))
+    chrs = sorted(dataTree.keys(), key = lambda x: ct.translate(x, organism = organism))
     
     posNames = ['\t'.join(sorted([chr + str(position) for position in dataTree[chr]])) for chr in chrs] #each element is a string including all the positions in a chr
     headerString = '\t'.join(posNames)
@@ -58,18 +58,18 @@ def record(dataTree, outpath, sampleList, mode):
 
 
 
-def formatToStructure(directory, outpath, mode):
+def formatToStructure(directory, outpath, organism):
     '''main runner method, directory contains all necessary files
     currently supports: toxoplasma, yeast, plasmodium'''
     
     #load the data like in FullRunner
-    if mode == 'toxoplasma':
+    if organism == 'toxoplasma':
             #Grigg data
         import GriggsLoader as gl
-        filename = 'SortedSNPs.txt'
+        file_name = 'SortedSNPs.txt'
         reference = None
         os.chdir(directory)
-        griggpath = directory + '/' + filename
+        griggpath = directory + '/' + file_name
         data = gl.load(griggpath, reference)
 #         excludepath = outputDirectory + '/exclude.txt'
 #         data = gl.load(griggpath, reference, excludepath)
@@ -96,21 +96,21 @@ def formatToStructure(directory, outpath, mode):
             if sampleName not in sampleList: 
                 if f.endswith("vcf"):
                     with open("%s_coverage.min"%(re.split("\.", f)[0]), "r") as minCoverage, open(f, "r") as data:
-                        dataTree = snps.addData(data, sampleName, dataTree, minCoverage, reference, mode)
+                        dataTree = snps.addData(data, sampleName, dataTree, minCoverage, reference, organism)
                 else:
                     with open(f, "r") as data:
-                        dataTree = snps.addData(data, sampleName, dataTree, None, reference, mode)
+                        dataTree = snps.addData(data, sampleName, dataTree, None, reference, organism)
                 sampleList.append(sampleName)
             else:
                 print("Duplicate for {0}".format(sampleName))
         sampleList = sorted(sampleList)
     
-    record(dataTree, outpath, sampleList, mode)
+    record(dataTree, outpath, sampleList, organism)
     
 if __name__ == '__main__':
     directory = '/data/new/javi/toxo/structure-test'
-    mode = 'toxoplasma'
+    organism = 'toxoplasma'
     outpath = directory + '/structure_data.txt'
     print('Initiating...')
-    formatToStructure(directory, outpath, mode)
+    formatToStructure(directory, outpath, organism)
     print('Structure Output Complete.')

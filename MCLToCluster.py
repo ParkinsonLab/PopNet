@@ -78,10 +78,10 @@ def findMatrices(locs, data):
     
     return matrixList
 
-def loadLocationTable(filename):
+def loadLocationTable(file_name):
     delimiter = ','
     
-    with open(filename, 'r') as infile:
+    with open(file_name, 'r') as infile:
         data = infile.read()
     
     results = {}
@@ -113,8 +113,8 @@ def addInfoToOutput(output, loctable, grouptable, sampleList):
         
 if __name__ == '__main__':
     folder = '/data/new/javi/plasmo/pipeline/matrix/'
-#     filename = 'groups.txt.mci'
-    filename = 'persistentMatrix.txt'
+#     file_name = 'groups.txt.mci'
+    file_name = 'persistentMatrix.txt'
     tabname = 'persistentMatrix.tab'
     groupsname = 'groups.txt'
     locname = 'locTable.csv'
@@ -123,7 +123,7 @@ if __name__ == '__main__':
     
     
     os.chdir(folder)
-    with open(filename, 'r') as infile:
+    with open(file_name, 'r') as infile:
         data = infile.read()
     
 

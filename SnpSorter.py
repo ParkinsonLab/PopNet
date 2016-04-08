@@ -18,11 +18,12 @@ import logging
 import StringIO
 import numpy as np
 import math
+from multiprocessing import Pool
 
 #dataTree will be organized as  a nested dictionary:
 #dataTree{'Chromosome name':{'Nucleotide position':{'Sample name':'The SNP'}}}
 #Method inputs: File f, Dictionary dataTree. File f should end in either .snps or .vcf. 
-def addData(f, sampleName, dataTree, minCoverage, reference, mode):
+def addData(f, sampleName, dataTree, minCoverage, reference, organism):
 #Add a failsafe for file type
     try:
         if not (f.name.endswith(".snps") or f.name.endswith(".vcf")):
@@ -61,7 +62,7 @@ def addData(f, sampleName, dataTree, minCoverage, reference, mode):
     #Parsing lines
     for line in rawLines[:-1]:
         totalCount += 1
-        temp = organizeLine(line, sampleName, type, minCoverageData, mode)
+        temp = organizeLine(line, sampleName, type, minCoverageData, organism)
         if temp is not None and re.search('CHR', temp[0]):
             parsed.append(temp)
         elif temp is None:
@@ -100,12 +101,12 @@ def fetchRegexPattern(name):
 #[1]Reference Nucleotide position
 #[2]Sample name
 #[3]Nucleotide value
-def organizeLine(rawLine, name, type, minCoverage, mode):
+def organizeLine(rawLine, name, type, minCoverage, organism):
     
     lineSplit = re.split("\s+",rawLine)
     try:
         if type is 'snps':
-            chr = ct.translate(lineSplit[14].upper(), mode=mode)#for plasmo aligned from 3D7
+            chr = ct.translate(lineSplit[14].upper(), organism=organism)#for plasmo aligned from 3D7
             ref = lineSplit[2].upper()
             snp = lineSplit[3].upper()
             indel = len(ref) > 1 or len(snp) > 1 or re.search('[^AGCT]', ref) or re.search('[^AGCT]', snp)
@@ -115,7 +116,7 @@ def organizeLine(rawLine, name, type, minCoverage, mode):
             else:
                 return None
         else:
-            chr = ct.translate(lineSplit[0].upper(), mode=mode).upper()
+            chr = ct.translate(lineSplit[0].upper(), organism=organism).upper()
             indel = len(lineSplit[3]) > 1 or len(lineSplit[4]) > 1 or re.search('[^AGCT]', lineSplit[3]) or re.search('[^AGCT]', lineSplit[4])
             hetero = re.search("1/1", lineSplit[9])
             quality = float(lineSplit[5])
@@ -225,7 +226,7 @@ def calculateComposition(resortedData, sampleList, output):
                 currString += "\tNONE |"
         output.write("%s\n"%currString)
                 
-def snpDensity(dataTree, outpath, sampleList, blength):
+def snpDensity(dataTree, outpath, sampleList, section_length):
     with open(outpath, "w") as output:
         #Writes a header into the output file    
         headerString = "Chromosome\tRefPosition"
@@ -244,9 +245,9 @@ def snpDensity(dataTree, outpath, sampleList, blength):
                 chrString = chrName
                 chrBranch = dataTree[chrName]
                 length = sorted(chrBranch.keys())[-1]
-                newList = [copy.deepcopy(posDict) for x in range(length/blength + 1)] #snps per 1000 base pairs
+                newList = [copy.deepcopy(posDict) for x in range(length/section_length + 1)] #snps per 1000 base pairs
                 for position in sorted(chrBranch):
-                    group = position/blength
+                    group = position/section_length
                     posBranch = chrBranch[position]
                     newBranch = newList[group]
                     for sample in sampleList:
@@ -254,7 +255,7 @@ def snpDensity(dataTree, outpath, sampleList, blength):
                             newBranch[sample] += 1
                 
                 for index, branch in enumerate(newList):
-                    temppos = index  * blength
+                    temppos = index  * section_length
                     posString = chrString + "\t%d"% (temppos)
                     for sample in sampleList:
                         posString += "\t%d"%branch[sample]
@@ -265,7 +266,7 @@ def snpDensity(dataTree, outpath, sampleList, blength):
 #uses the datatree and compared to all other results at that position
 #sampleList is modified to contain ME49 at position 0. 
 #Anything that                  
-def calculateMatrix(dataTree, sampleList, blength):
+def calculateMatrix(dataTree, sampleList, section_length):
     
     matrixDict = {}
     modSampleList = sampleList
@@ -281,13 +282,13 @@ def calculateMatrix(dataTree, sampleList, blength):
                 for y in modSampleList:
                     simpleMatrix[x][y] = 0
             chrMatrix = {}
-            index = int(sorted(chrBranch.keys())[-1])/blength #This values specifies 1 matrix per 10kb.  
+            index = int(sorted(chrBranch.keys())[-1])/section_length #This values specifies 1 matrix per 10kb.  
             for x in range(index+1):
                 chrMatrix[x] = copy.deepcopy(simpleMatrix)
             
             
             for position in chrBranch:
-                chrMatrixBranch = chrMatrix[position/blength] #This one matches the above number. and the value from snpdensity
+                chrMatrixBranch = chrMatrix[position/section_length] #This one matches the above number. and the value from snpdensity
                 posBranch = chrBranch[position]
                 for x in modSampleList:
                     for y in modSampleList:
@@ -317,6 +318,22 @@ def calculateMatrix(dataTree, sampleList, blength):
             matrixDict[chrName] = chrMatrix
     return matrixDict
 
+
+def recordTab(sampleList, tabpath):
+    #writes the single tab file
+    with open(tabpath, 'w') as persistentTab:
+        for index, key in enumerate(sampleList):
+            persistentTab.write("{0} {1}\n".format(str(index), key))
+                    
+###helper for recordMatrix
+def mcl_unpack(param_tuple):
+    currString = param_tuple[0]
+    tabpath = param_tuple[1]
+    i = param_tuple[2]
+    pi = param_tuple[3]
+    
+    return currString, ag.mcl(currString, tabpath, i, pi, True)
+
 #This method converts the raw data into the mcl matrix specifications.
 #The input is a datatree containing all the information for building the matricies. 
 #The matrix is always going to be square
@@ -324,88 +341,33 @@ def calculateMatrix(dataTree, sampleList, blength):
 #So now we have a matrix file for every 10kb of the chromosome. In order to preserve the sanity of the folder,
 #the scheme is to create a tempfile containing each matrix, send that one off to be analyzed, and the deleted.
 #a separate persistent file will be created containing all the information in a single file, from the entire thing. 
-def recordMatrix(matrixDict, sampleList):
-    persistentMatrixName = "matrix/persistentMatrix.txt"
-    persistentResultName = "matrix/persistentResult.txt"   
-    tabpath = "matrix/persistentMatrix.tab"
+def recordMatrix(matrixDict, sampleList, tabpath, persistentMatrixName, persistentResultName, i, pi):
     
-    #writes the single tab file
-    with open(tabpath, 'w') as persistentTab:
-                for index, key in enumerate(sampleList):
-                    persistentTab.write("{0} {1}\n".format(str(index), key))
-
-                        
-    with open(persistentMatrixName, "w") as persistentFile, open(persistentResultName, "w") as persistentResult:
+    ##helpers
+    def generateParams(currString_list, tabpath, i, pi):
         
-#         for chrName in matrixDict:
-#             if re.search("(?i)chr", chrName): #Only real chromosomes allowed. 
-#                 chrBranch = matrixDict[chrName]
-#                 #calibration
-#                 iValues = []
-#                 for pindex in sorted(chrBranch)[::int(math.ceil(len(chrBranch)/10.))]:
-#                     currString = buildMatrix(chrBranch[pindex], sampleList)
-#                     iValue = ag.analyzeClm(currString, tabpath)
-#                     if iValue > 0: iValues.append(iValue)
-#         iValue = sum(iValues) / float(len(iValues))
-
-        iValue = 8
-        piValue = 19
-                
-        print('SNPSorter: Applied I value is {}'.format(iValue))
-                
+        return [(currString, tabpath, i, pi) for currString in currString_list]   
+    ###
+                  
+    with open(persistentMatrixName, "w") as persistentFile, open(persistentResultName, "w") as persistentResult:
+        print('SNPSorter: Applied I value is {}'.format(i))       
         for chrName in matrixDict:
             if re.search("(?i)chr", chrName): #Only real chromosomes allowed. 
                 persistentFile.write("@%s\n"%chrName)
                 persistentResult.write("@%s\n"%chrName)
                 chrBranch = matrixDict[chrName]
-            
-                for pindex in sorted(chrBranch):
-                    currString = buildMatrix(chrBranch[pindex], sampleList)
-
-                    result = ag.mcl(currString, tabpath, iValue, piValue, True)
+                currString_list = [buildMatrix(chrBranch[pindex], sampleList) for pindex in sorted(chrBranch)]
+                param_list = generateParams(currString_list, tabpath, i, pi)
+                
+                pool = Pool()
+                results_list = pool.map(mcl_unpack, param_list)
                     
-                    persistentFile.write("#%d\n%s\n"%(pindex, currString))
-                    persistentResult.write("#%d\n%s\n"%(pindex, result))
+            for index, (currString, result) in enumerate(results_list):            
+                persistentFile.write("#%d\n%s\n"%(index, currString))
+                persistentResult.write("#%d\n%s\n"%(index, result))
 
     analyzeMatrix(persistentResultName)
 
-# '''(string, string) -> (num, num)
-# 
-# DEPRECATED
-# 
-# finds the best I and PI value according to some criteria. 
-# Current Scheme:
-# 
-# largest without singletons
-# '''
-# def optimizeIValue(currString, tabpath):
-#     iMax = 8
-#     piMax = 20
-#     step = 0.2
-#     
-#     for x in reversed(np.arange(0, piMax, step)):
-#         temp = mcl(currString, tabpath, iMax, x)
-#         if not hasSingleton(temp): 
-# #             print("I Value = {0}, pi Value = {1}".format(iMax, x))
-#             return (iMax, x)
-#         
-#     for x in reversed(np.arange(1, iMax, step)):
-#         temp = mcl(currString, tabpath, x, 0)
-#         if not hasSingleton(temp): 
-# #             print("I Value = {0}, pi Value = {1}".format(x, 0))
-#             return (x, 0)
-#     
-#     print('Poor clustering during calibration! Defaulting to max values for this iteration.')
-#     return (iMax, piMax)
-# 
-# '''[[string]] -> bool
-# Helper: see if this pattern has singletons
-# '''
-# def hasSingleton(pattern):
-#     for line in re.split("\n", pattern)[:-1]:
-#         if len(re.split("\t",line)) == 1:
-#             return True
-#     return False
 
 '''(dict, list) -> string
 builds the matrix (.mci) string to be used in mcl
@@ -442,21 +404,6 @@ def buildMatrix(tree, sampleList):
     currString += ')'
     
     return currString
-
-# DEPRECATED, ALWAYS USE THE AUTOGROUPER ONE
-# #This just calls mcl in shell and runs the basic command for it, using the previously generated matrix as input.  
-# #iValue is currently fixed! Small modification neede5d for it to produce iterant runs with different values.       
-# def mcl(data, tabName, iValue, piValue):
-# 
-#     #ASSUMES IVALUE IS AN INT!!
-#     
-#     #lets use stdout
-#     
-#     p1 = subp.Popen(["echo", data], stdout = subp.PIPE)
-#     p2 = subp.Popen(["mcl", "-", "-use-tab", tabName, "-I", str(iValue), "-o", "-", "-pi", str(piValue), "-q", "x", "-V", "all"], stdin = p1.stdout, stdout = subp.PIPE, close_fds=True) #The -I option is the inflation value. Play around with it. 
-#     result = p2.stdout.read()
-#     
-#     return result
 
 #Reads a persistentResults file, parses it, and then interprets it. 
 #Input is the file name
@@ -535,7 +482,7 @@ def remcl():
                 output.write(matrix[0] + result[1] + "\n")
 
 #records densities of all strains
-def multiDensity(dataTree, outfile, blength):
+def multiDensity(dataTree, outfile, section_length):
     results = {}
     text = ""
     
@@ -543,7 +490,7 @@ def multiDensity(dataTree, outfile, blength):
         text += "@{}\n".format(chrName)
         data = {}
         for position, posBranch in chr.items():
-            binNum = int(position / blength)
+            binNum = int(position / section_length)
             if binNum not in data: data[binNum] = 0
             data[binNum] += 1
             
@@ -564,7 +511,7 @@ def fillDataTree(dataTree, sampleList, reference):
 
     
     for name, chr in dataTree.items():
-        print("filling data for chromosome {}".format(name))
+#         print("filling data for chromosome {}".format(name))
         for position in chr.values():
             for sample in sampleList:
                 if sample not in position:
@@ -705,7 +652,7 @@ if __name__ == '__main__':
 #     analyzeMatrix("persistentResult.txt")
          
 #       for griggsloader
-    import GriggsLoader as gl
+    import TabularLoader as gl
     import NexusEncoder as ne
     os.chdir('/data/javi/Toxo/64Genomes/Filtered/matrix')
     data = gl.load("/data/javi/Toxo/64Genomes/OrderedSNPV6.txt", '/data/javi/Toxo/64Genomes/Filtered/matrix/exclude.txt')

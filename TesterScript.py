@@ -13,82 +13,60 @@ import time
 import random
 import csv
 import SimilarityContigs as simcon
-import ContigIterator as conitr
 import Proteins.HMMParser as hmp
 import Proteins.DomainFamily as dmf
 import Proteins.SequenceSelect as ss
 import Proteins.SRSCytoscape as srsce
+import multiprocessing as mp
+
+
+def list_maker():
+    return [1,2,3,4,5], [6,7,8,9,0]
+
+def c(w, x, y, z):
+    print((w, x, y, z))
+    return x
+    
+def b(var_tuple):
+    
+    var_a = var_tuple[0]
+    var_b = var_tuple[1]
+    var_c = var_tuple[2]
+
+#     var_a = 1
+#     var_b = 2
+#     var_c = 3
+
+    var_d = 99
+    
+    return c(var_a, var_b, var_c, var_d)
+
+def a(i):
+    
+    def list_maker2(var_c, list_1, list_2):
+#         return [(var_c, x, list_2) for x in list_1]
+        return [(var_c, i, list_2) for i in list_1]
+    
+    n = 3
+    m = 4
+    o = 5
+    list_a, list_b = list_maker()
+
+    pool = mp.Pool()
+    param_list = list_maker2(n, list_a, list_b)
+    
+    results = pool.map(b, param_list)
+    print(results)
 
 if __name__ == '__main__':
     
-#     datatype = np.dtype([('name', tuple), ('data', list)])
-#      
-#     c = np.array([('name1', [1,2,3]),
-#                   ('name2', [1,2,3]),
-#                   ('name3', [1,2,3]),
-#                   ('name4', [1,2,3]),
-#                   ('name5', [1,2,3])],dtype=datatype )
-#     z = [[[1, 10],
-#           [1, 11],
-#           [2, 10],
-#           [20, 100],
-#           [41, 105]],
-#          [[1, 12],
-#           [8, 13],
-#           [2, 9],
-#           [22, 101],
-#           [19, 100]]]
-#     a = np.array(z)
-#     tolerance = 15
-#     element = [20, 100]
-#      
-#     mask1 = np.abs(a[:,:,0] - element[0]) < tolerance
-#     mask2 = np.abs(a[:,:,1] - element[1]) < tolerance
-#     des = np.where(mask1 * mask2)        
-#     print(mask1)
-#     print(mask2)
-#     print(des)
-
-#     import ClusterSimulations as cs
-#     import MCLCounter
-#     filepath = r"F:\Documents\ProjectData\64Genomes\Counting\persistentResult.txt"
-#     tabpath = r"F:\Documents\ProjectData\64Genomes\Counting\persistentMatrix.tab"
-#     outpath = r"F:\Documents\ProjectData\64Genomes\Counting\keyblocks-simple.txt"
-#      
-#     clusterTree = MCLCounter.toMatrix(MCLCounter.loadClusters(filepath, tabpath)[0])['@TGME49_chrXI']
-#     sampleList = ['TgCat_PRC2', 'COUG']
-#     print(cs.strainPairComparison(clusterTree, sampleList))
-#     sampleList = ['G662M', 'COUG']
-#     print(cs.strainPairComparison(clusterTree, sampleList))
-#     sampleList = ['G662M', 'TgCat_PRC2']
-#     print(cs.strainPairComparison(clusterTree, sampleList))
+    directory = '/data/new/javi/'
+    os.chdir(directory)
+    tempname = 'zzz.txt'
+    with open(tempname, 'w') as input_type:
+        input_type.write('hi')
+    os.remove(tempname)
     
-    
-    directory = "/home/javi/testzone/proteins/hmmr"
-    resultPath = "/home/javi/testzone/proteins/hmmrresolved"
-    try:
-        os.mkdir(resultPath)
-    except:
-        pass
-        
-    print("reading data")
-    data = {}
-    for dir in os.walk(directory).next()[1]:
-        family = dir
-        path = "/".join([directory, dir])
-        files = [ x for x in os.listdir(path) if os.path.isfile("/".join([path,x]))]
-        for file in files:
-            strain = re.split("\.",file)[0]
-            if strain not in data:
-                data[strain] = []
-            data[strain].append(hmp.read("/".join([path, file]), family))
-        
-    print("analyzing")
-    results = {}
-    for strain, info in data.items():
-        print("resolving strain: " + strain)
-        results[strain] = dmf.choose(info)
-        dmf.printTree(results[strain], "{0}/{1}.hmmr".format(resultPath, strain))
 
 
 

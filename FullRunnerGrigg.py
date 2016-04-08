@@ -33,11 +33,11 @@ if __name__ == '__main__':
     import re
     import SupportModules.ColorSummary as cs
 
-#     baseDirectory = '/data/new/javi/toxo/WinVar'
-#     baseDirectory = '/scratch/j/jparkins/xescape/SNPSort'
-    baseDirectory = '/data/new/javi/toxo/SNPSort20'
+#     base_directory = '/data/new/javi/toxo/WinVar'
+#     base_directory = '/scratch/j/jparkins/xescape/SNPSort'
+    base_directory = '/data/new/javi/toxo/SNPSort20'
     
-    outputDirectory = baseDirectory + '/matrix/'
+    outputDirectory = base_directory + '/matrix/'
     cytoscapeDirectory = outputDirectory + '/cytoscape'
     rawresultpath = outputDirectory + "results.txt"
     perresultpath = outputDirectory + "persistentResult.txt"
@@ -54,13 +54,13 @@ if __name__ == '__main__':
     
     #Settings
     reference = None
-    filename = 'OrderedSNPV8.txt'
-#     filename = 'SimulatedToxo.txt'
-    mode = 'toxoplasma'
-    blength = 10000
+    file_name = 'OrderedSNPV8.txt'
+#     file_name = 'SimulatedToxo.txt'
+    organism = 'toxoplasma'
+    section_length = 10000
     autogroup = True
-    S2iVal = 4
-    S2piVal = 1.5
+    S2_iVal = 4
+    S2_piVal = 1.5
 
     graph_filename = 'HeatMaps.pdf'
     graph_title = 'Toxo-10K'
@@ -71,8 +71,8 @@ if __name__ == '__main__':
             os.mkdir(folder)
     
     #Grigg data
-    os.chdir(baseDirectory)
-    griggpath = baseDirectory + '/' + filename
+    os.chdir(base_directory)
+    griggpath = base_directory + '/' + file_name
     data = gl.load(griggpath, reference)
 #     excludepath = outputDirectory + '/exclude.txt'
 #     data = gl.load(griggpath, reference, excludepath)
@@ -87,12 +87,12 @@ if __name__ == '__main__':
  
     print("calculating density")
    
-    snps.snpDensity(dataTree,densitypath,sampleList, blength)
+    snps.snpDensity(dataTree,densitypath,sampleList, section_length)
      
     print("generating matrix")     
     if not isdir(outputDirectory):    
         os.mkdir(outputDirectory)
-    matrix = snps.calculateMatrix(dataTree, sampleList, blength)
+    matrix = snps.calculateMatrix(dataTree, sampleList, section_length)
     snps.recordMatrix(matrix, sampleList)
     
     os.chdir(outputDirectory)
@@ -115,7 +115,7 @@ if __name__ == '__main__':
     counted = mclc.count(dataTree, countpath)
     aggregateCount = mclc.aggregate(counted[0]).values()[0]
     if autogroup:
-            ag.group(aggregateCount, tabpath, grouppath, groupmcipath, S2iVal, S2piVal)
+            ag.group(aggregateCount, tabpath, grouppath, groupmcipath, S2_iVal, S2_piVal)
             ag.generateGraph(groupmcipath, tabpath, graph_filename, graph_title)
         
     #to load groups        
@@ -146,8 +146,8 @@ if __name__ == '__main__':
      
     mclc.printMatrix(aggregateCount, matrixoutpath.format("aggregate"))
      
-    aggregateComp = gc.aggregate(composition, mode)
-    gc.tab_output(composition, sampleList, colorTable, blength, tab_networkpath)
+    aggregateComp = gc.aggregate(composition, organism)
+    gc.tab_output(composition, sampleList, colorTable, section_length, tab_networkpath)
     rev_groups = gc.reverseGroups(groups)
     ce.parse(aggregateCount, "Genome", counted[1], outpath.format("Genome"), colorTable, aggregateComp, rev_groups)
     print("Runner Completed")

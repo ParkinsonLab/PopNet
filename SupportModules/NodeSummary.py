@@ -82,8 +82,8 @@ def loadColorTable(color_path, reverse = False):
     Normal = name: color
     '''
     
-    with open(color_path) as input:
-        data = input.read()
+    with open(color_path) as input_type:
+        data = input_type.read()
     
     results = {}
     
@@ -103,8 +103,8 @@ def makeSummary(input_path, group_path, color_path, out_path):
     rev_groups = gc.reverseGroups(groups)
     colors = loadColorTable(color_path)
     
-    with open(input_path) as input:
-        data = parseXGMML(input.read(), groups)
+    with open(input_path) as input_type:
+        data = parseXGMML(input_type.read(), groups)
         
     with open(out_path, 'w') as output:
         

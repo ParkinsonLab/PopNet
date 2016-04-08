@@ -13,26 +13,27 @@ import numpy as np
 import os
 import random
 import SnpSorter
-
-iMin = 2
-iMax = 8
-piMin = 0
-piMax = 10
+import time
+import multiprocessing as mp
+from shutil import copyfile
 
 
-istep = 0.2
-pistep = 0.5
 
+import matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.figure as figure
+from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
-def group(mclcTree, tabpath, outpath, mcipath, S2iVal, S2piVal):
+def group(mclcTree, tabpath, outpath, mcipath, S2_iVal, S2_piVal):
     import MCLCounter as mclc
     sampleList = sorted(mclc.loadSampleList(tabpath))
     
     currString = buildMatrix(mclcTree, sampleList)
 
 #     #MCL
-#     S2iVal = analyzeClm(currString, tabpath)
-#     if S2iVal == 0:
+#     S2_iVal = analyzeClm(currString, tabpath)
+#     if S2_iVal == 0:
 #         raise RuntimeError('No suitable iValue found!')
 #         import sys
 #         sys.exit()
@@ -40,7 +41,7 @@ def group(mclcTree, tabpath, outpath, mcipath, S2iVal, S2piVal):
     with open(mcipath, 'w') as moutpath:
         moutpath.write(currString)
            
-    result = mcl(currString, tabpath, S2iVal, S2piVal)
+    result = mcl(currString, tabpath, S2_iVal, S2_piVal)
         
      
     with open(outpath, 'w') as output:
@@ -82,18 +83,19 @@ helper function for repeatedly running mcl over an array of I and PI values.
 def mcl(currString, tabpath, iValue, piValue, raw=False):
     
     def mcl_pi():
-        return subp.check_output(["mcl", tempname, "-use-tab", tabpath, "-I", str(iValue), "-o", "-", "-pi", str(piValue), "-q", "x", "-V", "all", '-te', '8'])
+        return subp.check_output(["mcl", tempname, "-use-tab", tabpath, "-I", str(iValue), "-o", "-", "-pi", str(piValue), "-q", "x", "-V", "all", '-te', '1'])
     
     def mcl_nopi():
-        return subp.check_output(["mcl", tempname, "-use-tab", tabpath, "-I", str(iValue), "-o", "-", "-q", "x", "-V", "all", '-te', '8'])
+        return subp.check_output(["mcl", tempname, "-use-tab", tabpath, "-I", str(iValue), "-o", "-", "-q", "x", "-V", "all", '-te', '1'])
     
     def mcl_notab_pi():
-        return  subp.check_output(["mcl", tempname, "-I", str(iValue), "-o", "-", "-pi", str(piValue), "-q", "x", "-V", "all", '-te', '8'])
+        return  subp.check_output(["mcl", tempname, "-I", str(iValue), "-o", "-", "-pi", str(piValue), "-q", "x", "-V", "all", '-te', '1'])
     
     def mcl_notab_nopi():
-        return subp.check_output(["mcl", tempname, "-I", str(iValue), "-o", "-", "-q", "x", "-V", "all", '-te', '8'])
+        return subp.check_output(["mcl", tempname, "-I", str(iValue), "-o", "-", "-q", "x", "-V", "all", '-te', '1'])
     
-    tempname = 'temp.mci'
+    tempname = 'temp{}.mci'.format(random.randint(1, 10000000000))
+    
     with open(tempname, 'w') as temp:
         temp.write(currString)
     
@@ -101,52 +103,96 @@ def mcl(currString, tabpath, iValue, piValue, raw=False):
         result = mcl_notab_pi()
     elif tabpath is None:
         result = mcl_notab_nopi()
-    elif piValue > 0:
-        result = mcl_pi()
     else:
-        result = mcl_nopi()
+        if piValue > 0:
+            result = mcl_pi()
+        else:
+            result = mcl_nopi()
+
+    os.remove(tempname)
 
     if raw:
         return result
     
     results = [re.split("\t", line) for line in re.split("\n",result.rstrip('\n'))]
+    
+    
     return results
 
 
-def clminfo(currString, tabpath):
+#helper functions for clmInfo
+def generateMclName(i, pi):
+    
+    name_pattern = 'out.{}'
+    file_name = name_pattern.format('{i:0>2d}{pi:0>3d}'.format(i=int(i * 10), pi=int(pi * 10)))
+    
+    return file_name
+
+def write_mcl(currString, i, pi, file_name):
+    
+    with open(file_name, 'w') as tmp:
+        tmp.write(mcl(currString, None, i, pi, raw=True))
+
+def setupClm(currString, i, pi_list):
+    
+    file_list = []
+    for pi in pi_list:
+        file_name = generateMclName(i, pi)
+        write_mcl(currString, i, pi, file_name)
+        file_list.append(file_name)
+    
+    return file_list
+
+def setupClm_unpack(param_tuple):
+    '''wrapper for calling by pool'''
+    
+    currString = param_tuple[0]
+    i = param_tuple[1]
+    pi_list = param_tuple[2]
+    return setupClm(currString, i, pi_list)
+###
+    
+def clminfo(currString, tabpath, params):
     '''runs clminfo in with a range of values, and finds the pattern with the least amount of change over time.'''
     
+    #helper functions
+    def generateParams(currString, i_list, pi_list):
+        '''
+        generates the parameter list needed for running setupClm using a pool
+        '''
+        
+        return ((currString, i, pi_list) for i in i_list)
+    ###
     
-    namePattern = 'out.{}'
     matrixName = 'in.mci'
-    files = []
-    
     with open(matrixName, 'w') as tmp:
         tmp.write(currString)
         
-    iVals = stepList(iMin, iMax, istep, reverse=True)
-    piVals = stepList(piMin, piMax, pistep)
-    
-    for S2iVal in iVals:
-        for S2piVal in piVals:
-            filename = namePattern.format('{i:0>2d}{pi:0>3d}'.format(i=int(S2iVal * 10), pi=int(S2piVal * 10)))
-            files.append(filename)
-            with open(filename, 'w') as tmp:
-                tmp.write(mcl(currString, None, S2iVal, S2piVal, raw=True))
+    iVals = stepList(params.getIMin(),params.getIMax(),params.getIStep(), reverse=True)
+    piVals = stepList(params.getPiMin(),params.getPiMax(),params.getPiStep())
 
-        
+    pool = mp.Pool()
+    pool_params = generateParams(currString, iVals, piVals)
+    
+    files = pool.map(setupClm_unpack, pool_params)
+    pool.close()
+    pool.join()
+    
+    files = reduce(lambda x, y: x + y, files) #make 2d list flat
+    
     result = subp.check_output(['clm', 'info', matrixName] + files, close_fds=True)
     
     #returns the clm dist (variance of information) but not using that atm.
-#    dresult = subp.check_output(['clm', 'dist', '-mode', 'sj', '--chain'] + files, close_fds=True)
+#    result = subp.check_output(['clm', 'dist', '-mode', 'sj', '--chain'] + files, close_fds=True)
     
     for file in files:
         os.remove(file)
+    os.remove(matrixName)
         
     return result
 
 
-def analyzeClm(currString, tabpath):
+def analyzeClm(currString, tabpath, params):
     
     '''returns the optimal I value from 2 - 8, and pI value from 1 - 20 based on the stability, then based on efficiency.
     The maximum values are avoided in favor of any stable clustering patterns in the middle, but if it can't be helped then go for
@@ -161,15 +207,15 @@ def analyzeClm(currString, tabpath):
     clusPattern = 'clusters=(.+?)\s'
     namePattern= 'source=out\.(.+?)\s'
     
-    data = clminfo(currString, tabpath)
+    data = clminfo(currString, tabpath, params)
     lines = re.split('===', data)
     #first position is efficiency, then the # of clusters, then the iValue, then the piValue used
     parsedLines = [(float(re.search(effPattern, line).group(1)), int(re.search(clusPattern, line).group(1)), float(re.search(namePattern, line).group(1)[:-3]) / 10, float(re.search(namePattern, line).group(1)[-3:]) / 10) for line in lines]
     clusNums = [x[1] for x in parsedLines]
     
     
-    iVals = stepList(iMin,iMax,istep, reverse=True)
-    piVals = stepList(piMin,piMax,pistep)
+    iVals = stepList(params.getIMin(),params.getIMax(),params.getIStep(), reverse=True)
+    piVals = stepList(params.getPiMin(),params.getPiMax(),params.getPiStep())
     heat_cluster_matrix = np.zeros((len(iVals), len(piVals)))
     heat_eff_matrix = np.zeros_like(heat_cluster_matrix)
     
@@ -239,7 +285,7 @@ def buildMatrix(mclcTree, sampleList):
     xcount = 0
     
     #This parts allows the matrix to divide by the first value,
-    #thus normalizing all input to between zero and 1
+    #thus normalizing all input_type to between zero and 1
     for xindex, x in enumerate(sampleList):
         currString += "%d\t"%xindex
         for yindex, y in enumerate(sampleList):
@@ -263,7 +309,15 @@ def hasSingleton(pattern):
             return True
     return False
 
-
+def notAllZeroes(matrix):
+    '''checks a nested dictionary whether it's all zeroes'''
+    for x in matrix.values():
+        for y in x.values():
+            if y > 0:
+                return True
+    return False
+    
+    
 def interDistance(clusters, matrix):
     '''([[str]], {str{str:int}}) -> int
     computes the average of the average distances between all strains in each cluster to all other strains
@@ -273,8 +327,11 @@ def interDistance(clusters, matrix):
     def avg(list):
         return sum(list) / len(list)
     
-    if len(clusters) == 1:
-        return float('nan')
+    if len(clusters) <= 1:
+        return float(0)
+    
+    if not notAllZeroes(matrix):
+        return float(0)
     
     avg_dists = []
     for cluster in clusters:
@@ -290,9 +347,12 @@ def intraDistance(clusters, matrix):
     def avg(list):
         return sum(list) / len(list)
     
+    if not notAllZeroes(matrix):
+        return float(0)
+    
     avg_dists = []
     for cluster in clusters:
-        if len(cluster) == 1:
+        if len(cluster) <= 1:
             continue
         clus_avgs = []
         for strain in cluster:
@@ -342,12 +402,35 @@ def loadTab(tabfile):
     tab = [re.match('^[0-9]+\s(.+)$', line).group(1) for line in re.split('\n', data) if line != '']
     
     return tab
+
+#Helpers for analyze distance
+def calcDistValues(currString, matrix, tab_file, i, pi_list):
     
-def analyzeDistance(currString, tab_file):
+    results = []
+    for pi in pi_list:
+        clusters = mcl(currString, tab_file, i, pi)
+        inter_value = interDistance(clusters, matrix)
+        intra_value = intraDistance(clusters, matrix)
+        results.append((i, pi, inter_value, intra_value))
+    
+    return results
+        
+def calcDistValues_unpack(param_tuple):
+    
+    currString = param_tuple[0]
+    matrix = param_tuple[1]
+    tab_file = param_tuple[2]
+    i = param_tuple[3]
+    pi_list = param_tuple[4]
+    
+    return calcDistValues(currString, matrix, tab_file, i, pi_list)
+        
+def analyzeDistance(currString, tab_file, params):
     '''string(path), string(path) -> [num]
     analyze the avg distance measure at a range of i values to see if there's a good one
     '''
-    
+    #helper functions
+      
     def findMax(dictionary):
         max = 0
         for e in dictionary.values():
@@ -361,23 +444,30 @@ def analyzeDistance(currString, tab_file):
         for ind, ele in enumerate(values[1:]):
             results.append((ele[0], (ele[1] - values[ind][1]) / max(1,values[ind][1]), (ele[2] - values[ind][2]) / max(1,values[ind][2])))
         return results
-
+    
+    def generateDistParams(currString, matrix, tab_file, i_list, pi_list):
+        '''generates params for the pool-based multiprocessing'''
+        
+        return [(currString, matrix, tab_file, i, pi_list) for i in i_list]
+    ###
         
     matrix = loadMatrix(currString, tab_file)
     
-    results = []
-    iVals = stepList(iMin, iMax, istep, reverse=True)
-    piVals = stepList(piMin, piMax, pistep)
-    for i in iVals:
-        for pi in piVals:
-            clusters = mcl(currString, tab_file, i, pi)
-            inter_value = interDistance(clusters, matrix)
-            intra_value = intraDistance(clusters, matrix)
-            #results order: i, pi, inter, intra
-            results.append((i, pi, inter_value, intra_value))
+    iVals = stepList(params.getIMin(),params.getIMax(),params.getIStep(), reverse=True)
+    piVals = stepList(params.getPiMin(),params.getPiMax(),params.getPiStep())
+
+    param_list = generateDistParams(currString, matrix, tab_file, iVals, piVals)
+    pool = mp.Pool()
+    
+    results = pool.map(calcDistValues_unpack, param_list)
+    pool.close()
+    pool.join()
+    
+    results = reduce(lambda x, y: x + y, results) #make flat
     
     heat_inter_matrix = np.zeros((len(iVals), len(piVals)))
     heat_intra_matrix = np.zeros_like(heat_inter_matrix)
+    
     for result in results:
         heat_inter_matrix[iVals.index(result[0]), piVals.index(result[1])] = result[2]
         heat_intra_matrix[iVals.index(result[0]), piVals.index(result[1])] = result[3]
@@ -387,9 +477,15 @@ def analyzeDistance(currString, tab_file):
     heat_inter_matrix = max - heat_inter_matrix
     heat_intra_matrix = max - heat_intra_matrix
     
+    result_matrix = heat_inter_matrix / heat_intra_matrix
     
-    return heat_inter_matrix, heat_intra_matrix
-
+    #gets rid of NaN values, as they don't equal themselves.
+    result_matrix[result_matrix != result_matrix] = 0
+    #gets rid of infs.
+    result_matrix[np.isinf(result_matrix)] = 0
+                               
+    
+    return result_matrix
     
     
     
@@ -418,80 +514,182 @@ def analyzeDistance(currString, tab_file):
     return results
 
 
-def graphHeatMap(filename, matricies, extents, names, title):
-    import matplotlib
-    matplotlib.use('pdf')
-    import matplotlib.pyplot as plt
-    from matplotlib.backends.backend_pdf import PdfPages
-    
-    plt.summer()
-    plt.subplots_adjust(wspace = 0.3, hspace = 0.3)
-    plt.suptitle(title)
-    length = len(matricies) / 2
+def graphHeatMap(file_name, matrices, extents, names, title):
+    '''current style only gens 2x2 heat maps! change length, width to make
+    different kinds'''
+
+    length = 2
     width = 2
     axes = []
     
-    for matrix, extent, name, ind in zip(matricies, extents, names, range(len(matricies))):
-        ax = plt.subplot2grid((width, length), (ind // 2, ind % 2))
+    fig = figure.Figure()
+    canvas = FigureCanvas(fig)
+    fig.subplots_adjust(wspace = 0.3, hspace = 0.3)
+    fig.suptitle(title)
+    
+    for matrix, extent, name, ind in zip(matrices, extents, names, range(len(matrices))):
+#         ax = plt.subplot2grid((width, length), (ind // 2, ind % 2))
+        ax = fig.add_subplot(width, length, ind + 1)
         ax.set_title(name)
-        img = ax.imshow(matrix, extent = extent, interpolation = 'none')
-        plt.colorbar(img)
+        img = ax.imshow(matrix, extent = extent, interpolation = 'none', vmin = 0, vmax = np.nanmax(matrix))
+        fig.colorbar(img)
     
     
-    pdf = PdfPages(filename)
-    pdf.savefig()
+    pdf = PdfPages(file_name)
+    pdf.savefig(fig)
     pdf.close()
     
-def generateGraph(datapath, tabpath, output_name, graph_title):
+def generateGraph(datapath, tabpath, params):
+    
+    output_name = 'Heatmaps.pdf'
+    graph_title = 'S2 Clustering Metrics'
     
     with open(datapath) as f:
         data = f.read()
     
-    cln_matrix, eff_matrix = analyzeClm(data, tabpath)
-    inter_matrix, intra_matrix = analyzeDistance(data, tabpath)
+    cln_matrix, eff_matrix = analyzeClm(data, tabpath, params)
+    dist_matrix = analyzeDistance(data, tabpath, params)
     
-    matricies = [cln_matrix, eff_matrix, inter_matrix, intra_matrix]
-    extents = [[piMin,piMax,iMin,iMax]]*4
-    names = ['Number of Clusters', 'Efficiency', 'Inter-cluster Distance', 'Intra-cluster Distance']
+    matricies = [cln_matrix, eff_matrix, dist_matrix]
+    extents = [[params.getPiMin(),params.getPiMax(),params.getIMin(),params.getIMax()]]*3
+    names = ['Number of Clusters', 'Efficiency', 'Inter/Intra-Cluster Distance']
 
     graphHeatMap(output_name, matricies, extents, names, graph_title)
 
-def findS1(matrix_dict, iMax, iMin, iStep, piMax, piMin, piStep):
+
+#helpers for optimization
+def findOptimalValue(matrix, params):
+    '''for S1 and S2'''
+    highest_location = np.where(matrix == np.nanmax(matrix))
+    maxes = matrix.shape #the size of the whole thing
+    optimal_i = params.getIMin() + params.getIStep() * (maxes[1] - highest_location[0][0] - 1)
+    optimal_pi = params.getPiMin() + params.getPiStep() * highest_location[1][0]
     
+    return optimal_i, optimal_pi
+
+def loadPersistentGroups(file_path):
+    '''for S3'''
+    
+    block_pattern = '(?s)#[0-9]+\n(.+?)\n\n'
+    
+    with open(file_path, 'r') as input_type:
+        blocks = re.findall(block_pattern, input_type.read())
+    
+    temp_result = 0
+    
+    for block in blocks:
+        lines = re.split('\n', block)
+        temp_result += len(lines)
+    
+    return float(temp_result) / len(blocks)
+
+#####    
+def findS1(matrix_dict, tab_path, params, section_length):
+    '''
+    Searches for the optimal I and pi values for phase 1 clustering.
+    Randomly samples 0.1% (flexible) of all sections.
+    Takes efficiency and inter/intra cluster dist into consideration.
+    '''   
+    
+    #helper functions
+    def S1Recursive(samples):
+        '''
+        the samples are just index, to be extrated from all_matrices
+        depends on analyzeClm and analyzeDist to return 3 matrices:
+        # of clusters, efficiency, and inter/intra distance
+        '''
+        sample = samples[0]
+        currString = SnpSorter.buildMatrix(all_matrices[sample], all_matrices[sample].keys())
+        clm_result = analyzeClm(currString, tab_path, params)
+        
+        clus_matrix = clm_result[0]
+        eff_matrix = clm_result[1]
+        
+        dist_matrix = analyzeDistance(currString, tab_path, params)
+        
+        if len(samples) == 1:
+            return clus_matrix, eff_matrix, dist_matrix
+        else:
+            prev_result = S1Recursive(samples[1:])
+            return clus_matrix + prev_result[0], eff_matrix + prev_result[1], dist_matrix + prev_result[2]
     
     #Attempts to run a number of sample matrices in order to estimate optimal I and pi vales
-    temp_filename = 'temp.mci'
-    temp_output = 'out.temp.mci'
+    S1_start_time = time.time() 
     all_matrices = []
     for chr in matrix_dict:
         all_matrices += matrix_dict[chr].values()
-    
     n = len(all_matrices)
-    samples = random.sample(range(n), n / 10)
-    results = []
+    if n < 1000:
+        m = n / 10
+    else:
+        m = n / 1000
+
+    samples = random.sample(range(n), m)
     
-    for i in np.arange(iMin, iMax, iStep):
-        for pi in np.arange(piMin, piMax, piStep):
-            temp_results = 0
-            for sample in samples:
-                currString = SnpSorter.buildMatrix(all_matrices[sample], all_matrices[sample].keys())
-                with open(temp_filename, 'w') as input:
-                    input.write(currString)
-                with open(temp_output, 'w') as output:
-                    output.write(mcl(currString, None, i, pi, raw = True))
-                clm_result = subp.check_output(['clm', 'info', temp_filename, temp_output], close_fds=True)
-                
-                eff = float(re.search('efficiency=(.+?)\s', clm_result).group(1))
-                
-                temp_results += eff
-                
-            results.append((i, pi, temp_results / len(samples)))
+#     print('S1 test for i = {}, pi = {}'.format(str(params.get), str(pi)))
     
-    results = sorted(results, key = lambda x: x[2], reverse = True)
-    return (results[0][0], results[0][1])
+    clus_matrix, eff_matrix, dist_matrix = S1Recursive(samples)
+    
+    #get the average. the recursive func doesn't do this.
+    clus_matrix = clus_matrix / m
+    eff_matrix = eff_matrix / m
+    dist_matrix = dist_matrix / m
+    
+    
+    #Auto selection prioritize larger I and smaller pi
+    consensus_matrix = eff_matrix * dist_matrix
+    optimal_i, optimal_pi = findOptimalValue(consensus_matrix, params)
+    
+    #Graph results
+    output_folder = params.getOutputFolder()
+    graph_title = 'Phase 1 Clustering Parameter Optimization for Section Length {}'.format(section_length)
+    matricies = [clus_matrix, eff_matrix, dist_matrix]
+    extents = [[params.getPiMin(),params.getPiMax(),params.getIMin(),params.getIMax()]]*3
+    names = ['Number of Clusters', 'Efficiency', 'Inter/Intra-Cluster Distance']
+
+    graphHeatMap(output_folder + "S1 Optimization for {}".format(section_length), matricies, extents, names, graph_title)
+    
+    print('S1 Optimization took {} seconds'.format(str(time.time() - S1_start_time)))  
+    return optimal_i, optimal_pi
                 
+def findS2(aggregateCount, tabfile, params, section_length):
+    #finds the parameters for the second step (global) clustering
+    S2_start_time = time.time()
+    tab = loadTab(tabfile)
+    currString = buildMatrix(aggregateCount, tab)
+    
+    dist_matrix = analyzeDistance(currString, tabfile, params)
+    clus_matrix, eff_matrix = analyzeClm(currString, tabfile, params) #returns a tuple! (# of clusters, efficiency)
+    
+    clus_matrix = clus_matrix / len(clus_matrix)
+    eff_matrix = eff_matrix / len(eff_matrix)
+    dist_matrix = dist_matrix / len(dist_matrix)
+    
+    consensus_matrix = eff_matrix * dist_matrix
+    optimal_i, optimal_pi = findOptimalValue(consensus_matrix, params)
+    
+    #Graph results
+    output_folder = params.getOutputFolder()
+    graph_title = 'Phase 2 Clustering Parameter Optimization for Section Length of {}'.format(section_length)
+    matricies = [clus_matrix, eff_matrix, dist_matrix]
+    extents = [[params.getPiMin(),params.getPiMax(),params.getIMin(),params.getIMax()]]*3
+    names = ['Number of Clusters', 'Efficiency', 'Inter/Intra-Cluster Distance']
+    
+    graphHeatMap(output_folder + "S2 Optimization for {}".format(section_length), matricies, extents, names, graph_title)
+    
+    print(consensus_matrix)
+    print('S2 Optimization took {} seconds'.format(str(time.time() - S2_start_time))) 
+    return optimal_i, optimal_pi
+
+ 
+def findS3(persistentGroups_path):
+    #returns the load groups function results
+    
+    return loadPersistentGroups(persistentGroups_path)
 
 
+    
+    
 if __name__ == "__main__":
 #     workingDir = '/data/new/javi/plasmo/pipeline/matrix'
     workingDir = '/data/new/javi/yeast/pipeline/WinVar/matrix'

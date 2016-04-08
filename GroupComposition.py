@@ -17,8 +17,8 @@ import copy
 groups = {}
 
 def loadGroups(file, strain):
-    with open(file, 'r') as input:
-        data = input.read()
+    with open(file, 'r') as input_type:
+        data = input_type.read()
     global groups
     groups = {}
     for pos, section in enumerate(re.split('@', data)[1:]):
@@ -205,7 +205,7 @@ def findContigsComposition(strain, dataTree):
 #     #set to 0.1% of total.
     penalty = 8
     maxScore = 5 * penalty
-    print('Gap Penalty used is {}'.format(penalty))
+#     print('Gap Penalty used is {}'.format(penalty))
     all_groups = getGroups() 
     other_groups = getGroups(strain)
     revGroups = reverseGroups(getGroups(""))
@@ -335,13 +335,13 @@ def condense(list):
 
 '''list of matrices -> matrix
 condenses all the chrs into one, for the whole genome picture'''
-def aggregate(matrixList, mode):
+def aggregate(matrixList, organism):
     import ChrNameSorter as cns
     strains = matrixList.values()[0].keys()
     results = {}
     for strain in strains:
         results[strain] = [(-30, 0, 'SPACER')]
-    for chrName, chr in sorted(matrixList.items(), key=lambda x: cns.getValue(x[0], mode)):
+    for chrName, chr in sorted(matrixList.items(), key=lambda x: cns.getValue(x[0], organism)):
         for strain, data in chr.items():
             results[strain] += [(-10, 0, 'SPACER')]
             results[strain] += data
@@ -350,7 +350,7 @@ def aggregate(matrixList, mode):
 
 '''matrix (condensed but not aggregate), output file -> None (output)
 outputs the whole graph to tabular format
-input should bear the format {chr: strain, [(start, end, group)]}'''
+input_type should bear the format {chr: strain, [(start, end, group)]}'''
 def tab_output(composition, samplelist, colortable, blocksize, outpath):
     import CytoscapeEncoder as ce
     import copy
@@ -387,8 +387,8 @@ used to load the densities file'''
 def loadDensity(infile):
     results = {}
     
-    with open(infile, 'r') as input:
-        data = input.read()
+    with open(infile, 'r') as input_type:
+        data = input_type.read()
         chrs = re.split("@", data)[1:] #first one will be empty for the first symbol.
         for chr in chrs:
             chrSplit = re.split("\n", chr)[:-1] #the last one will be empty for the ending newline
@@ -406,8 +406,8 @@ def loadMultiDensity(infile):
     
     results = {}
     
-    with open(infile, 'r') as input:
-        data = input.read()
+    with open(infile, 'r') as input_type:
+        data = input_type.read()
         lines = re.split("\n", data)
         columns = {}
         for index, element in enumerate(re.split("\t", lines[0])[2:]):
