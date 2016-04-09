@@ -106,7 +106,7 @@ def organizeLine(rawLine, name, type, minCoverage, organism):
     lineSplit = re.split("\s+",rawLine)
     try:
         if type is 'snps':
-            chr = ct.translate(lineSplit[14].upper(), organism=organism)#for plasmo aligned from 3D7
+            chr = ct.translate(lineSplit[14].upper(), mode=organism)#for plasmo aligned from 3D7
             ref = lineSplit[2].upper()
             snp = lineSplit[3].upper()
             indel = len(ref) > 1 or len(snp) > 1 or re.search('[^AGCT]', ref) or re.search('[^AGCT]', snp)
@@ -116,7 +116,7 @@ def organizeLine(rawLine, name, type, minCoverage, organism):
             else:
                 return None
         else:
-            chr = ct.translate(lineSplit[0].upper(), organism=organism).upper()
+            chr = ct.translate(lineSplit[0].upper(), mode=organism).upper()
             indel = len(lineSplit[3]) > 1 or len(lineSplit[4]) > 1 or re.search('[^AGCT]', lineSplit[3]) or re.search('[^AGCT]', lineSplit[4])
             hetero = re.search("1/1", lineSplit[9])
             quality = float(lineSplit[5])

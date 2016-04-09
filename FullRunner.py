@@ -68,7 +68,8 @@ if __name__ == '__main__':
     
     if input_type == 'tabular':
         file_name = config.get('Settings', 'file_name') #for tabular file only
-    
+    else:
+        file_name = 'Not Used.'
     #set these according to optimize info
     section_length = config.getint('Settings', 'section_length')
     
