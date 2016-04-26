@@ -57,3 +57,22 @@ class ParamWrapper:
     
     def getOutputFolder(self):
         return self.outfolder
+    
+    def setIVal(self, iVal):
+        self.iVal = iVal
+        
+    def getIVal(self):
+        return self.iVal
+    
+    def setPiVal(self, piVal):
+        self.piVal = piVal
+    
+    def getPiVal(self):
+        return self.piVal
+    
+    def setSectionLength(self, sect_length):
+        self.sect_length = sect_length
+    
+    def getSectionLength(self):
+        return self.sect_length
+    

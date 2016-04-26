@@ -42,7 +42,9 @@ if __name__ == '__main__':
     import time
     import ParamWrapper as pw
     import ConfigParser
-
+    import resource
+    import cPickle
+    
 
 #config loading    
     var_list = ['base_directory', 'organism', 'input_type', 'file_name', 'section_length', 'S1_iVal', 'S1_piVal', 'S2_iVal', 'S2_piVal', \
@@ -60,7 +62,7 @@ if __name__ == '__main__':
     #Settings
     base_directory = config.get('Settings', 'base_directory')
     try:
-        outputDirectory = config.get('Settings', 'output_directory')
+        outputDirectory = config.get('Settings', 'output_directory') + '/'
     except:
         outputDirectory = base_directory + '/matrix/'
     
@@ -125,7 +127,7 @@ if __name__ == '__main__':
     perresultpath = outputDirectory + "persistentResult.txt"
     permatrixpath = outputDirectory + "persistentMatrix.txt"
     tabpath = outputDirectory + "persistentMatrix.tab"
-    outpath = cytoscapeDirectory + "/cytoscape{0}.xgmml"
+    outpath = cytoscapeDirectory + "/I{0}PI{1}S{2}.xgmml"
     tab_networkpath = cytoscapeDirectory + "/tabNetwork.tsv"
     matrixDirectory = cytoscapeDirectory + "/countMatrices"
     matrixoutpath = matrixDirectory + "/{0}.txt"
@@ -136,7 +138,9 @@ if __name__ == '__main__':
     colorout_path = outputDirectory + "colors.txt"
     logpath = outputDirectory + "log.txt"
     S1_directory = outputDirectory + "/S1_optimization/"
-    S2_directory = outputDirectory + "/S2_optimization/"   
+    S2_directory = outputDirectory + "/S2_optimization/"
+    opti_result_path = outputDirectory + '/opti_result.txt'
+    pickle_path = outputDirectory + '/temp.pickle'   
 ################################################################################################
 #Setup
     start_time = time.time()
@@ -148,13 +152,16 @@ if __name__ == '__main__':
     if optimize == True and optimize_level >= 1:
         S1params = pw.ParamWrapper()
         
-        S1params.setIMax(S1_iVal_max)
-        S1params.setIMin(S1_iVal_min)
-        S1params.setIStep(S1_iVal_step)
-        S1params.setPiMax(S1_piVal_max)
-        S1params.setPiMin(S1_piVal_min)
-        S1params.setPiStep(S1_piVal_step)
+        S1params.setIMax(S2_iVal_max)
+        S1params.setIMin(S2_iVal_min)
+        S1params.setIStep(S2_iVal_step)
+        S1params.setPiMax(S2_piVal_max)
+        S1params.setPiMin(S2_piVal_min)
+        S1params.setPiStep(S2_piVal_step)
         S1params.setOutputFolder(S1_directory)
+        S1params.setIVal(S1_iVal)
+        S1params.setPiVal(S1_piVal)
+
         if not isdir(S1_directory):
             os.mkdir(S1_directory)
     
@@ -247,9 +254,10 @@ if __name__ == '__main__':
     #Analysis
     loop = True 
     if optimize == True and optimize_level >= 3:
-        section_length = section_length_min
+        #section_length = section_length_min
         blength_list = []
-    
+        section_length_list = [20000,10000,8000,6000,4000,2000]
+#     S1params.setSectionLength(section_length)
     os.chdir(outputDirectory)
       
     print("calculating density")    
@@ -260,43 +268,60 @@ if __name__ == '__main__':
          
     print('filling data tree')
     dataTree = snps.fillDataTree(dataTree, sampleList, reference)
+    
+    opti_result = ['[results]']
+    
+    print("generating matrix")     
+    if not isdir(outputDirectory):    
+        os.mkdir(outputDirectory)
+            
+#     while loop:
+    for section_length in section_length_list:
         
-    while loop: 
-        print("generating matrix")     
-        if not isdir(outputDirectory):    
-            os.mkdir(outputDirectory)
+        S1params.setSectionLength(section_length)
+        
+        print('Begin loop with section length {}'.format(section_length))
+        a_time = time.time() 
         matrix = snps.calculateMatrix(dataTree, sampleList, section_length)
         snps.recordTab(sampleList, tabpath)
         
-        if optimize == True and optimize_level >= 1 and S1_set == False:
-            print('Step 1 Optimization')
-            S1_iVal, S1_piVal = ag.findS1(matrix, tabpath, S1params, section_length)
-            log.append('Step 1 Optimization for section_length of {0}:\ni = {1}\npi = {2}'.format(str(section_length), str(S1_iVal), str(S1_piVal)))
-            log.append('Search range was i between {0} and {1}, pi between {2} and {3}\n'.format(str(S1_iVal_max), str(S1_iVal_min), str(S1_piVal_max), str(S1_piVal_min)))
-         
+#         if optimize == True and optimize_level >= 1 and S1_set == False:
+#             print('Optimizing')
+#             clus, eff, dist = ag.findS1(matrix, tabpath, S1params, section_length)
+#             
+#             opti_result.append('section_length={0}\ni_val={1}\npi_val={2}\nclus={3}\neff={4}\ndist={5}\n'.format(section_length, S1_iVal_min, S1_piVal_min, clus, eff, dist))
+            
+#             log.append('Step 1 Optimization for section_length of {0}:\ni = {1}\npi = {2}'.format(str(section_length), str(S1_iVal), str(S1_piVal)))
+#             log.append('Search range was i between {0} and {1}, pi between {2} and {3}\n'.format(str(S1_iVal_max), str(S1_iVal_min), str(S1_piVal_max), str(S1_piVal_min)))
+#          
         print('Cluster step 1')
         snps.recordMatrix(matrix, sampleList, tabpath, permatrixpath, perresultpath, S1_iVal, S1_piVal)
         
-        
-        print('encoding to nexus')     
-        treetuple = (dataTree, sampleList)
-        nex.nexusOutput(tl.aggregateForNexus(treetuple))
-            
+         
+#         print('encoding to nexus')     
+#         treetuple = (dataTree, sampleList)
+#         nex.nexusOutput(tl.aggregateForNexus(treetuple))
+             
         reloaded_dataTree = mclc.loadClusters(perresultpath, tabpath)
         sampleList = reloaded_dataTree[1]
         dataMatrix = mclc.toMatrix(reloaded_dataTree[0])
         counted = mclc.count(reloaded_dataTree, countpath)
         aggregateCount = mclc.aggregate(counted[0]).values()[0]
+        print('Analysis step took {} seconds'.format(time.time() - a_time))
         
-        if optimize == True and optimize_level >= 2:
-            print('Step 2 Optimization')
-            S2_iVal, S2_piVal = ag.findS2(aggregateCount, tabpath, S2params, section_length)
-            log.append('Step 2 Optimization for section_length of {0}:\ni = {1}\npi = {2}'.format(str(section_length), str(S2_iVal), str(S2_piVal)))
-            log.append('Search range was i between {0} and {1}, pi between {2} and {3}\n'.format(str(S2_iVal_max), str(S2_iVal_min), str(S2_piVal_max), str(S2_piVal_min)))
-            
+        print('S1 Optimization with section length {}'.format(section_length))
+        ag.findS1(aggregateCount, tabpath, S1params)
+
+#         
+#         if optimize == True and optimize_level >= 2:
+#             print('Step 2 Optimization')
+#             S2_iVal, S2_piVal = ag.findS2(aggregateCount, tabpath, S2params, section_length)
+#             log.append('Step 2 Optimization for section_length of {0}:\ni = {1}\npi = {2}'.format(str(section_length), str(S2_iVal), str(S2_piVal)))
+#             log.append('Search range was i between {0} and {1}, pi between {2} and {3}\n'.format(str(S2_iVal_max), str(S2_iVal_min), str(S2_piVal_max), str(S2_piVal_min)))
+#             
         ag.group(aggregateCount, tabpath, grouppath, groupmcipath, S2_iVal, S2_piVal)
-        ag.generateGraph(groupmcipath, tabpath, S2params)
-        
+#         ag.generateGraph(groupmcipath, tabpath, S2params)
+         
         #to load groups        
         groups = gc.loadGroups(grouppath, "")
         expandedGroups = gc.expandGroups(groups)
@@ -304,47 +329,54 @@ if __name__ == '__main__':
         groupColors = cp.createColorTable({"everything" : groups.keys()}, groups.keys())
     #    for 64 genomes
     #     density = gc.loadDensity(densityPath) 
-          
+           
         #8genomes doesn't use density! The loadMultiDensity function is currently hacked, and sets everything to 100!!!!
         density = gc.loadMultiDensity(densitypath)   
-                
-                
+                 
+                 
         composition = gc.cytoscapeComposition(strainList, dataMatrix, grouppath)  
         colorTable = {}
         for strain in expandedGroups:
             colorTable[strain[0]] = groupColors[frozenset([strain[1]])]
         for group in groups.keys():
             colorTable[group] = groupColors[frozenset([group])]
-                   
+                    
         #enables the use of black spacer tiles
         colorTable['SPACER'] = 0
         print(colorTable)
         with open(colorout_path, 'w') as color_out:
             color_out.write(cp.printColorTable(colorTable))
-           
+            
     #    for the whole thing
         mclc.printMatrix(aggregateCount, matrixoutpath.format("aggregate"))
-         
+          
         aggregateComp = gc.aggregate(composition, organism)
         gc.tab_output(composition, sampleList, colorTable, section_length, tab_networkpath)
         rev_groups = gc.reverseGroups(groups)
-        ce.parse(aggregateCount, "Genome", counted[1], outpath.format("Genome"), colorTable, aggregateComp, rev_groups)
+        ce.parse(aggregateCount, "Genome", counted[1], outpath.format(int(S1_iVal * 10), int(S1_piVal * 10), section_length), colorTable, aggregateComp, rev_groups)
+#         
+        os.chdir(outputDirectory)
         
-        os.chdir(base_directory)
+        print('EoS Resource usage: {}Mb'.format(getattr(resource.getrusage(resource.RUSAGE_SELF), 'ru_maxrss') / 1000))
+        
         if optimize == True and optimize_level >= 3:
             blength_list.append((section_length, ag.findS3(perresultpath)))   
-            section_length += section_length_step
-            if section_length > section_length_max:
-                loop = False 
-                log.append('Step 3 Optimization results:\nblength\tAverage number of clusters')
-                for entry in blength_list:
-                    log.append('{0}\t{1}'.format(entry[0], entry[1]))
-                print(blength_list)
-        else:
-            loop = False
-        
+#             section_length += section_length_step
+#             S1params.setSectionLength(section_length)
+#             if section_length > section_length_max:
+#                 loop = False 
+    log.append('Step 3 Optimization results:\nblength\tAverage number of clusters')
+    for entry in blength_list:
+        log.append('{0}\t{1}'.format(entry[0], entry[1]))
+    print(blength_list)
+#         else:
+#             loop = False
+         
     with open(logpath, 'w') as log_output:
         log_output.write('\n'.join(log))
     
-    print("Runner Completed")
+    with open(opti_result_path, 'w') as opti_output:
+        opti_output.write('\n'.join(opti_result))
+        
+    print("OptiRunner Completed")
     print('Run time was {0} seconds'.format(time.time() - start_time))

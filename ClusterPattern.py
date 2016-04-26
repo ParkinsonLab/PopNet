@@ -132,7 +132,7 @@ def printColorTable(table):
     print(maxKeyLength, maxValueLength)
     rowFormat = "{:<{klen}}\t{:<{vlen}}"
     result = "\n".join([rowFormat.format(x[0], hex(x[1]), klen=maxKeyLength, vlen=maxValueLength) for x in table.items()])
-    print(result)
+    return result
     
 '''(dict) -> display
 Displays the color table in a readable format, with group names

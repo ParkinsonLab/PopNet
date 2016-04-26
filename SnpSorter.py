@@ -356,15 +356,21 @@ def recordMatrix(matrixDict, sampleList, tabpath, persistentMatrixName, persiste
                 persistentFile.write("@%s\n"%chrName)
                 persistentResult.write("@%s\n"%chrName)
                 chrBranch = matrixDict[chrName]
-                currString_list = [buildMatrix(chrBranch[pindex], sampleList) for pindex in sorted(chrBranch)]
-                param_list = generateParams(currString_list, tabpath, i, pi)
-                
-                pool = Pool()
-                results_list = pool.map(mcl_unpack, param_list)
+                for pindex in sorted(chrBranch):
+                    currString = buildMatrix(chrBranch[pindex], sampleList)
+                    result = ag.mcl(currString, tabpath, i, pi, True)
                     
-            for index, (currString, result) in enumerate(results_list):            
-                persistentFile.write("#%d\n%s\n"%(index, currString))
-                persistentResult.write("#%d\n%s\n"%(index, result))
+                    persistentFile.write("#%d\n%s\n"%(pindex, currString))
+                    persistentResult.write("#%d\n%s\n"%(pindex, result))
+#                 currString_list = [buildMatrix(chrBranch[pindex], sampleList) for pindex in sorted(chrBranch)]
+#                 param_list = generateParams(currString_list, tabpath, i, pi)
+#                 
+#                 pool = Pool(4)
+#                 results_list = pool.map(mcl_unpack, param_list)
+                    
+#             for index, (currString, result) in enumerate(results_list):            
+#                 persistentFile.write("#%d\n%s\n"%(index, currString))
+#                 persistentResult.write("#%d\n%s\n"%(index, result))
 
     analyzeMatrix(persistentResultName)
 
@@ -441,10 +447,10 @@ def analyzeMatrix(results):
             output.write("@@%s--\n%d\n"%(pattern, count))
             
             #calculate some statistics!
-            total += 1
-            n = len(re.split("\n", pattern))
+            total += count
+            n = len(re.split("\n", pattern)) * count
             total_clusters += n  
-            if n == 1: single_sections += 1
+            if n == count: single_sections += 1
         import decimal as dc
         dc.getcontext().prec = 2
         print("Analysis Results:\n Average {0} clusters over {1} sections.\n{2} unclustered region detected, representing {3}% of total".format(\
