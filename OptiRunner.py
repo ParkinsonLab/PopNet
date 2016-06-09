@@ -34,7 +34,7 @@ if __name__ == '__main__':
     import ClusterPattern as cp
     import ParentFinder as pf
     import AutoGrouper as ag
-    import SupportModules.NodeSummary as ns
+    import NodeSummary as ns
     import sys
     from os import listdir
     from os.path import isfile, join, isdir
@@ -123,20 +123,20 @@ if __name__ == '__main__':
     #Do Not Change
     
     cytoscapeDirectory = outputDirectory + '/cytoscape'
-    rawresultpath = outputDirectory + "results.txt"
-    perresultpath = outputDirectory + "persistentResult.txt"
-    permatrixpath = outputDirectory + "persistentMatrix.txt"
-    tabpath = outputDirectory + "persistentMatrix.tab"
+    rawresultpath = outputDirectory + "/results.txt"
+    perresultpath = outputDirectory + "/persistentResult.txt"
+    permatrixpath = outputDirectory + "/persistentMatrix.txt"
+    tabpath = outputDirectory + "/persistentMatrix.tab"
     outpath = cytoscapeDirectory + "/I{0}PI{1}S{2}.xgmml"
     tab_networkpath = cytoscapeDirectory + "/tabNetwork.tsv"
     matrixDirectory = cytoscapeDirectory + "/countMatrices"
     matrixoutpath = matrixDirectory + "/{0}.txt"
-    densitypath = outputDirectory + "density.txt"
-    countpath = outputDirectory + "counted.txt"  
-    grouppath = outputDirectory + "groups.txt"
+    densitypath = outputDirectory + "/density.txt"
+    countpath = outputDirectory + "/counted.txt"  
+    grouppath = outputDirectory + "/groups.txt"
     groupmcipath = grouppath + ".mci"
-    colorout_path = outputDirectory + "colors.txt"
-    logpath = outputDirectory + "log.txt"
+    colorout_path = outputDirectory + "/colors.txt"
+    logpath = outputDirectory + "/log.txt"
     S1_directory = outputDirectory + "/S1_optimization/"
     S2_directory = outputDirectory + "/S2_optimization/"
     opti_result_path = outputDirectory + '/opti_result.txt'
@@ -256,7 +256,8 @@ if __name__ == '__main__':
     if optimize == True and optimize_level >= 3:
         #section_length = section_length_min
         blength_list = []
-        section_length_list = [20000,10000,8000,6000,4000,2000]
+        section_length_list = [12000, 14000, 16000, 18000]
+    
 #     S1params.setSectionLength(section_length)
     os.chdir(outputDirectory)
       

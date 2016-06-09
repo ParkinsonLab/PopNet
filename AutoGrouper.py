@@ -592,6 +592,7 @@ def analyzeDistance(currString, tab_file, params):
             inter_value = interDistance(clusters, matrix)
             intra_value = intraDistance(clusters, matrix)
             results.append((i, pi, inter_value, intra_value))
+            
     heat_inter_matrix = np.zeros((len(iVals), len(piVals)))
     heat_intra_matrix = np.zeros_like(heat_inter_matrix)
      
@@ -599,10 +600,10 @@ def analyzeDistance(currString, tab_file, params):
         heat_inter_matrix[iVals.index(result[0]), piVals.index(result[1])] = result[2]
         heat_intra_matrix[iVals.index(result[0]), piVals.index(result[1])] = result[3]
      
-#     max = findMax(matrix)
-     
-#     heat_inter_matrix = max - heat_inter_matrix
-#     heat_intra_matrix = max - heat_intra_matrix
+    max = findMax(matrix)
+      
+    heat_inter_matrix = max - heat_inter_matrix
+    heat_intra_matrix = max - heat_intra_matrix
      
     result_matrix = heat_inter_matrix / heat_intra_matrix
      
@@ -713,7 +714,7 @@ def graphHeatMap(file_name, matrices, extents, names, title):
 #         ax = plt.subplot2grid((width, length), (ind // 2, ind % 2))
         ax = fig.add_subplot(width, length, ind + 1)
         ax.set_title(name)
-        img = ax.imshow(matrix, extent = extent, interpolation = 'none', vmin = 0, vmax = np.nanmax(matrix))
+        img = ax.imshow(matrix, extent = extent, interpolation = 'none', vmin = np.nanmin(matrix), vmax = np.nanmax(matrix))
         fig.colorbar(img)
     
     

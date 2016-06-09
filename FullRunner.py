@@ -34,7 +34,7 @@ if __name__ == '__main__':
     import ClusterPattern as cp
     import ParentFinder as pf
     import AutoGrouper as ag
-    import SupportModules.NodeSummary as ns
+    import NodeSummary as ns
     import sys
     from os import listdir
     from os.path import isfile, join, isdir
@@ -53,7 +53,7 @@ if __name__ == '__main__':
                       'S2_iVal_min', 'S2_iVal_step'] 
     
     config_file_path = sys.argv[1]
-    config = ConfigParser.SafeConfigParser()
+    config = ConfigParser.SafeConfigParser({'autogroup': True})
     config.read(config_file_path)
     
     
@@ -85,7 +85,7 @@ if __name__ == '__main__':
     
     reference = config.get('Settings', 'reference')
     optimize = config.getboolean('Settings', 'optimize')
-        
+    autogroup = config.getboolean('Settings', 'autogroup')
 
     
 ################################################################################################
@@ -121,20 +121,21 @@ if __name__ == '__main__':
     #Do Not Change
     
     cytoscapeDirectory = outputDirectory + '/cytoscape'
-    rawresultpath = outputDirectory + "results.txt"
-    perresultpath = outputDirectory + "persistentResult.txt"
-    permatrixpath = outputDirectory + "persistentMatrix.txt"
-    tabpath = outputDirectory + "persistentMatrix.tab"
+    rawresultpath = outputDirectory + "/results.txt"
+    perresultpath = outputDirectory + "/persistentResult.txt"
+    permatrixpath = outputDirectory + "/persistentMatrix.txt"
+    tabpath = outputDirectory + "/persistentMatrix.tab"
     outpath = cytoscapeDirectory + "/cytoscape{0}.xgmml"
     tab_networkpath = cytoscapeDirectory + "/tabNetwork.tsv"
     matrixDirectory = cytoscapeDirectory + "/countMatrices"
     matrixoutpath = matrixDirectory + "/{0}.txt"
-    densitypath = outputDirectory + "density.txt"
-    countpath = outputDirectory + "counted.txt"  
-    grouppath = outputDirectory + "groups.txt"
+    densitypath = outputDirectory + "/density.txt"
+    countpath = outputDirectory + "/counted.txt"  
+    grouppath = outputDirectory + "/groups.txt"
     groupmcipath = grouppath + ".mci"
-    colorout_path = outputDirectory + "colors.txt"
-    logpath = outputDirectory + "log.txt"
+    colorout_path = outputDirectory + "/colors.txt"
+    logpath = outputDirectory + "/log.txt"
+    matrix_density_path = outputDirectory + '/matrix_density.tsv'
     S1_directory = outputDirectory + "/S1_optimization/"
     S2_directory = outputDirectory + "/S2_optimization/"   
 ################################################################################################
@@ -170,6 +171,16 @@ if __name__ == '__main__':
         S2params.setOutputFolder(S2_directory)
         if not isdir(S2_directory):
             os.mkdir(S2_directory)
+    
+    default_params = pw.ParamWrapper()
+    
+    default_params.setIMax(10)
+    default_params.setIMin(2)
+    default_params.setIStep(0.5)
+    default_params.setPiMax(10)
+    default_params.setPiMin(1)
+    default_params.setPiStep(0.5)
+    
             
     S1_set = False
     S2_set = False
@@ -266,6 +277,10 @@ if __name__ == '__main__':
         if not isdir(outputDirectory):    
             os.mkdir(outputDirectory)
         matrix = snps.calculateMatrix(dataTree, sampleList, section_length)
+        snps.outputMatrixDensity(matrix, matrix_density_path)
+        
+        
+        snps.normalizeMatrix(matrix)
         snps.recordTab(sampleList, tabpath)
         
         if optimize == True and optimize_level >= 1 and S1_set == False:
@@ -293,9 +308,10 @@ if __name__ == '__main__':
             S2_iVal, S2_piVal = ag.findS2(aggregateCount, tabpath, S2params, section_length)
             log.append('Step 2 Optimization for section_length of {0}:\ni = {1}\npi = {2}'.format(str(section_length), str(S2_iVal), str(S2_piVal)))
             log.append('Search range was i between {0} and {1}, pi between {2} and {3}\n'.format(str(S2_iVal_max), str(S2_iVal_min), str(S2_piVal_max), str(S2_piVal_min)))
-            
-        ag.group(aggregateCount, tabpath, grouppath, groupmcipath, S2_iVal, S2_piVal)
-        ag.generateGraph(groupmcipath, tabpath, S2params)
+        
+        if autogroup == True:   
+            ag.group(aggregateCount, tabpath, grouppath, groupmcipath, S2_iVal, S2_piVal)
+            ag.generateGraph(groupmcipath, tabpath, default_params)
         
         #to load groups        
         groups = gc.loadGroups(grouppath, "")

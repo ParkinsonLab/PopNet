@@ -269,6 +269,7 @@ def snpDensity(dataTree, outpath, sampleList, section_length):
 def calculateMatrix(dataTree, sampleList, section_length):
     
     matrixDict = {}
+    
     modSampleList = sampleList
     #Use only if having ME49 as part of the list!
 #    modSampleList.insert(0,"ME49")
@@ -297,28 +298,33 @@ def calculateMatrix(dataTree, sampleList, section_length):
                                 chrMatrixBranch[x][y] += 1
                         elif x not in posBranch and y not in posBranch:
                                 chrMatrixBranch[x][y] += 1
-                                
-#Transform Matrix
-#Put the lowest value as 0 and the highest as 1, rescale all values. 
-            for index, branch in chrMatrix.items():
-                sampleKey = branch.keys()[0]
-                highest = max(branch[sampleKey][sampleKey], 1)
-                templist = []
-                for x in branch.values():
-                    templist += x.values()
-                lowest = min(templist)
-                if highest == lowest:
-                    print("bad matrix at {0} {1}".format(chrName, str(index)))
-                for x in branch.keys():
-                    for y in branch[x].keys():
-                        if branch[x][y] > highest:
-                            print("Over limit at {0} {1} {2} {3}".format(chrName, str(index), x, y))
-                        branch[x][y] = float(branch[x][y] - lowest) / float(max(highest - lowest, 1))
-    
+
             matrixDict[chrName] = chrMatrix
+            
     return matrixDict
 
+def normalizeMatrix(matrix_dict):
 
+#Transform Matrix
+#Put the lowest value as 0 and the highest as 1, rescale all values. 
+
+    for chr in matrix_dict:
+        chr_branch = matrix_dict[chr]
+        for index, branch in chr_branch.items():
+            sampleKey = branch.keys()[0]
+            highest = max(branch[sampleKey][sampleKey], 1)
+            templist = []
+            for x in branch.values():
+                templist += x.values()
+            lowest = min(templist)
+            if highest == lowest:
+                print("bad matrix at {0} {1}".format(chr, str(index)))
+            for x in branch.keys():
+                for y in branch[x].keys():
+                    if branch[x][y] > highest:
+                        print("Over limit at {0} {1} {2} {3}".format(chr, str(index), x, y))
+                    branch[x][y] = float(branch[x][y] - lowest) / float(max(highest - lowest, 1))
+    
 def recordTab(sampleList, tabpath):
     #writes the single tab file
     with open(tabpath, 'w') as persistentTab:
@@ -524,6 +530,19 @@ def fillDataTree(dataTree, sampleList, reference):
                     position[sample] = position[reference]
                     
     return dataTree
+
+
+def outputMatrixDensity(matrix_dict, output_path):
+    '''
+    input: not normalized matrix dictionary. output: a file listing the max of every matrix
+    '''
+    with open(output_path, 'w') as output:
+        for chr in matrix_dict:
+            for index, matrix in matrix_dict[chr].items():
+                k = matrix.keys()[0]
+                v = matrix[k][k]
+                output.write('{0}\t{1}\t{2}\n'.format(chr, index, v))
+    
 
             
 if __name__ == '__main__':

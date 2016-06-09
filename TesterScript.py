@@ -60,15 +60,53 @@ def a(i):
 
 if __name__ == '__main__':
     
-    directory = '/data/new/javi/'
-    os.chdir(directory)
-    tempname = 'zzz.txt'
-    with open(tempname, 'w') as input_type:
-        input_type.write('hi')
-    os.remove(tempname)
+    output = '/data/new/javi/test_graph.pdf'
     
+    import matplotlib as mpl
+    from matplotlib.backends.backend_pdf import PdfPages
+    from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+    from matplotlib.colors import LinearSegmentedColormap
+    from matplotlib.colors import Normalize
+    from matplotlib.cm import ScalarMappable
+    
+    bar_width = 0.2
+    step = 2000
+    inds = np.arange(5)
+    
+    title = 'test'
+    
+    fig = mpl.figure.Figure(figsize=(15,10))
+    canvas = FigureCanvas(fig)
+    fig.suptitle(title)
+    fig.subplots_adjust(wspace = 0.5, hspace = 0.5)
 
+    ax = fig.add_subplot(1,1,1)
+    ax.set_xlabel('xaxis')
+    ax.set_ylabel('yaxis')
 
+#     bars = []
+#     bottom = np.zeros((len(coords_list[0][1]),))
+#     for i, (coords, stack_label) in enumerate(zip(coords_list, stack_label_list)):
+# #         if i == 0:
+# #             bar = ax.bar(inds, coords[1], color=colorTable[colorRange.index(coords[0])], align='center', linewidth=0)
+# #         else:
+# #             bar = ax.bar(inds, coords[1], color=colorTable[colorRange.index(coords[0])], align='center', bottom = bottom, linewidth=0)
+#         
+#         if i == 0:
+#             bar = ax.bar(inds, coords[1], color=colorTable[i], align='center', linewidth=0)
+#         else:
+#             bar = ax.bar(inds, coords[1], color=colorTable[i], align='center', bottom = bottom, linewidth=0)
+#             
+#         bars.append(bar)
+#         bottom = bottom + np.array(coords[1])    
+    
+    ax.set_xticks(inds)       
+    ax.set_xticklabels([1,5,8,13,15], rotation=45, ha='right', fontsize=24)
+#     ax.legend(bars, stack_label_list, loc=1, bbox_to_anchor=(1.0, 1), ncol=1, markerscale=0.2, fontsize=6)
+#     fig.colorbar(sm)
+    pdf = PdfPages(output)
+    pdf.savefig(fig)
+    pdf.close()
 
 
 

@@ -233,12 +233,12 @@ def count(treeTuple, outputPath):
             results[name] = resultMatrix
                         
         #return/outputs the result
-            output.write(chr[0])
-            output.write("\n")
-            output.write(repr(sampleList))
-            output.write("\n")
-            output.write(repr(resultMatrix))
-            output.write("\n")
+#             output.write(chr[0])
+#             output.write("\n")
+#             output.write(repr(sampleList))
+#             output.write("\n")
+#             output.write(repr(resultMatrix))
+#             output.write("\n")
 #             for x in resultMatrix:
 #                 output.write(str(resultMatrix[x]))
 #                 output.write("\n")

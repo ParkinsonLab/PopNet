@@ -14,19 +14,19 @@ import string
 import os
 import Simulation.Recombinator as rec
 
-def generateAncestors(n, num_chrs, snp_per_chr):
+def generateAncestors(num_chrs, snp_per_chr):
     '''
     generates some dummy ancestors. Super fake. 
     '''
     
     ancestors = {}
-    nucs = ['A', 'T']
-    for x in range(n):
-        temp = ancestors[rec.formatName(str(x))] = {}
+    nucs = ['A', 'T', 'C', 'G']
+    for nuc in nucs:
+        temp = ancestors[rec.formatName(nuc)] = {}
         for n in range(num_chrs):
-            temp[chrName(n + 1)] = [rand.choice(nucs) * snp_per_chr]
+            temp[chrName(n + 1)] = nuc * snp_per_chr
     
-    pos_tree = {chr:[x for x in range(0,snp_per_chr * 50, 50)] for chr in temp}
+    pos_tree = {chr:[x for x in range(0,snp_per_chr * 500, 500)] for chr in temp}
     
     return ancestors, pos_tree
 
@@ -200,7 +200,7 @@ def simulateBySimuPOP():
 def simulateByRecombinator():
     
     #starting variables
-    directory = '/data/new/javi/toxo/simulations5/'
+    directory = '/data/new/javi/toxo/simulations4/'
     input_path = 'Toxo20.txt'
     output_path = 'SimulatedToxo.txt'
     
@@ -209,13 +209,13 @@ def simulateByRecombinator():
     events_path = directory + 'events.txt'
 
     number_of_chrs = 14
-    snps_per_chr = 30000
+    snps_per_chr = 3000
     expansion_pop_size = 15
     translate_mode = 'toxoplasma'
     structure_mode = 'generated'
     
     #parsing input
-    init_info = generateAncestors(4, number_of_chrs, snps_per_chr)
+    init_info = generateAncestors(number_of_chrs, snps_per_chr)
     population = init_info[0]
     ancestor_names = population.keys()
     pos_tree = init_info[1]
