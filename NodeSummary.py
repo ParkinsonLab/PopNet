@@ -267,7 +267,7 @@ def makeStackedBarGraph(coords_list, bar_labels_list, stack_label_list, title, a
     colorRange, colorTable = orr.generateColors(stack_label_list, [0], step=step)
     
     ax = fig.add_subplot(2,2,1)
-    ax.set_title(title, size=28)
+    ax.set_title(title, fontsize=28)
     ax.set_xlabel(axis_labels[0], fontsize=24)
     ax.set_ylabel(axis_labels[1], fontsize=24)
 

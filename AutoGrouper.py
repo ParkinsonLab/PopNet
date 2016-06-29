@@ -554,7 +554,7 @@ def calcDistValues_unpack(param_tuple):
 #                                 
 #     print('analyzeDist took {} seconds'.format(time.time() - start_time))
 #     return result_matrix        
-def analyzeDistance(currString, tab_file, params):
+def analyzeDistance(currString, tab_file, params, separate=False):
     '''string(path), string(path) -> [num]
     analyze the avg distance measure at a range of i values to see if there's a good one
     '''
@@ -602,18 +602,27 @@ def analyzeDistance(currString, tab_file, params):
      
     max = findMax(matrix)
       
-    heat_inter_matrix = max - heat_inter_matrix
-    heat_intra_matrix = max - heat_intra_matrix
-     
-    result_matrix = heat_inter_matrix / heat_intra_matrix
-     
+    heat_inter_matrix = 1 - heat_inter_matrix
+    heat_intra_matrix = 1 - heat_intra_matrix
+    
+    #Standard Operation
+    if not separate: 
+        result_matrix = heat_inter_matrix / heat_intra_matrix
+        result_matrix = heat_intra_matrix
     #gets rid of NaN values, as they don't equal themselves.
-    result_matrix[result_matrix != result_matrix] = 0
+        result_matrix[result_matrix != result_matrix] = 0
     #gets rid of infs.
-    result_matrix[np.isinf(result_matrix)] = 0
-                                
+        result_matrix[np.isinf(result_matrix)] = 0
+        return result_matrix
+    else:
+    #Separate Inter and Intra, for when you're not optimizing
+        return heat_inter_matrix, heat_intra_matrix
+
+                           
     print('analyzeDist took {} seconds'.format(time.time() - start_time))
-    return result_matrix
+
+
+    
     
 # def analyzeDistance(currString, tab_file, params):
 #     '''string(path), string(path) -> [num]
@@ -697,7 +706,7 @@ def analyzeDistance(currString, tab_file, params):
     return results
 
 
-def graphHeatMap(file_name, matrices, extents, names, title):
+def graphHeatMap(file_name, matrices, extents, names, axis_labels, title):
     '''current style only gens 2x2 heat maps! change length, width to make
     different kinds'''
 
@@ -705,16 +714,19 @@ def graphHeatMap(file_name, matrices, extents, names, title):
     width = 2
     axes = []
     
-    fig = figure.Figure()
+    fig = figure.Figure(figsize = (15, 15))
     canvas = FigureCanvas(fig)
-    fig.subplots_adjust(wspace = 0.3, hspace = 0.3)
+    fig.subplots_adjust(wspace = 0.45, hspace = 0.45)
     fig.suptitle(title)
     
-    for matrix, extent, name, ind in zip(matrices, extents, names, xrange(len(matrices))):
+    for matrix, extent, name, ind, axis_label in zip(matrices, extents, names, xrange(len(matrices)), axis_labels):
 #         ax = plt.subplot2grid((width, length), (ind // 2, ind % 2))
         ax = fig.add_subplot(width, length, ind + 1)
-        ax.set_title(name)
-        img = ax.imshow(matrix, extent = extent, interpolation = 'none', vmin = np.nanmin(matrix), vmax = np.nanmax(matrix))
+        ax.set_title(name, fontsize=24)
+        ax.set_xlabel(axis_label[0], fontsize=24)
+        ax.set_ylabel(axis_label[1], fontsize=24)
+        img = ax.imshow(matrix, extent = extent, interpolation = 'none', vmin = np.nanmin(matrix), vmax = np.nanmax(matrix), cmap='bwr')
+        ax.tick_params(axis='both', which='both', labelsize=18)
         fig.colorbar(img)
     
     
@@ -731,13 +743,13 @@ def generateGraph(datapath, tabpath, params):
         data = f.read()
     
     cln_matrix, eff_matrix = analyzeClm(data, tabpath, params)
-    dist_matrix = analyzeDistance(data, tabpath, params)
+    inter_matrix, intra_matrix = analyzeDistance(data, tabpath, params, separate=True)
     
-    matricies = [cln_matrix, eff_matrix, dist_matrix]
-    extents = [[params.getPiMin(),params.getPiMax(),params.getIMin(),params.getIMax()]]*3
-    names = ['Number of Clusters', 'Efficiency', 'Inter/Intra-Cluster Distance']
-
-    graphHeatMap(output_name, matricies, extents, names, graph_title)
+    matricies = [cln_matrix, eff_matrix, inter_matrix, intra_matrix]
+    extents = [[params.getPiMin(),params.getPiMax() + params.getPiStep(),params.getIMin(),params.getIMax() + params.getIStep()]]*4
+    names = ['Number of Clusters', 'Efficiency', 'Inter-Cluster Distance', 'Intra-Cluster Distance']
+    axis_labels = [('pI value', 'I value')] * 4
+    graphHeatMap(output_name, matricies, extents, names, axis_labels, graph_title)
 
 
 #helpers for optimization
