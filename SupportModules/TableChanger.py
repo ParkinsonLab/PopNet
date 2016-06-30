@@ -61,7 +61,7 @@ def changeColor(input_path, color_dict):
         data = input.read()
     
     for color in color_dict:
-        re.sub(color, colrep, data)
+        data = re.sub(color, colrep, data)
     
     return data
         
@@ -69,10 +69,11 @@ def changeColor(input_path, color_dict):
 
 
 if __name__ == '__main__':
-    
+
+    ## To Reverse Order
     directory = '/data/new/javi/reshape'
-    file_name = 'plasmo_partial.csv'
-    output_name = 'rev_plasmo_partial.csv'
+    file_name = 'toxo.csv'
+    output_name = 'rev_toxo.csv'
     
     path = '/'.join([directory, file_name])
     output_path = '/'.join([directory, output_name])
@@ -80,3 +81,20 @@ if __name__ == '__main__':
     with open(output_path, 'w') as output:
         header, body = reverseOrder(readTable(path))
         output.write('\n'.join([header] + body))
+        
+    ## To change color
+    directory = '/data/new/javi/reshape'
+    file_name = 'rev_toxo.csv'
+    output_name = 'rev_toxo_rc.csv'
+    
+    path = '/'.join([directory, file_name])
+    output_path = '/'.join([directory, output_name])
+    
+    color_dict = {'#FF9900' : '#0000FF',
+                  '#32FF00' : '#FF0000',
+                  '#3200FF' : '#00FF00',
+                  '#00FEFF' : '#FFa500'}
+    
+    with open(output_path, 'w') as output:
+        output.write(changeColor(path, color_dict))
+    
