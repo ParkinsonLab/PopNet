@@ -42,7 +42,7 @@ def recombine(parent_a, parent_b, pos_tree):
         counter = 0
         for ind, position in enumerate(chr):
             if position > last_position:
-                if doesRecombine(last_position, position, rate):
+
                     offspring[chr_name] += parents[counter%2][1][chr_name][last_index:ind]
                     last_position = position
                     last_index = ind

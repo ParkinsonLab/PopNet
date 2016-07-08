@@ -15,7 +15,7 @@ import itertools
 import ChrTranslator as ct
 import AutoGrouper as ag
 import logging
-import StringIO
+from io import StringIO
 import numpy as np
 import math
 from multiprocessing import Pool
@@ -245,9 +245,9 @@ def snpDensity(dataTree, outpath, sampleList, section_length):
                 chrString = chrName
                 chrBranch = dataTree[chrName]
                 length = sorted(chrBranch.keys())[-1]
-                newList = [copy.deepcopy(posDict) for x in range(length/section_length + 1)] #snps per 1000 base pairs
+                newList = [copy.deepcopy(posDict) for x in range(length//section_length + 1)] #snps per 1000 base pairs
                 for position in sorted(chrBranch):
-                    group = position/section_length
+                    group = position//section_length
                     posBranch = chrBranch[position]
                     newBranch = newList[group]
                     for sample in sampleList:
@@ -289,7 +289,7 @@ def calculateMatrix(dataTree, sampleList, section_length):
             
             
             for position in chrBranch:
-                chrMatrixBranch = chrMatrix[position/section_length] #This one matches the above number. and the value from snpdensity
+                chrMatrixBranch = chrMatrix[position//section_length] #This one matches the above number. and the value from snpdensity
                 posBranch = chrBranch[position]
                 for x in modSampleList:
                     for y in modSampleList:

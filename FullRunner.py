@@ -41,7 +41,7 @@ if __name__ == '__main__':
     import re
     import time
     import ParamWrapper as pw
-    import ConfigParser
+    import configparser
 
 
 #config loading    
@@ -53,7 +53,7 @@ if __name__ == '__main__':
                       'S2_iVal_min', 'S2_iVal_step'] 
     
     config_file_path = sys.argv[1]
-    config = ConfigParser.SafeConfigParser({'autogroup': True})
+    config = configparser.SafeConfigParser({'autogroup': True})
     config.read(config_file_path)
     
     
