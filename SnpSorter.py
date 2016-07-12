@@ -283,7 +283,7 @@ def calculateMatrix(dataTree, sampleList, section_length):
                 for y in modSampleList:
                     simpleMatrix[x][y] = 0
             chrMatrix = {}
-            index = int(sorted(chrBranch.keys())[-1])/section_length #This values specifies 1 matrix per 10kb.  
+            index = sorted(chrBranch.keys())[-1]//section_length #This values specifies 1 matrix per 10kb.  
             for x in range(index+1):
                 chrMatrix[x] = copy.deepcopy(simpleMatrix)
             
@@ -311,7 +311,7 @@ def normalizeMatrix(matrix_dict):
     for chr in matrix_dict:
         chr_branch = matrix_dict[chr]
         for index, branch in chr_branch.items():
-            sampleKey = branch.keys()[0]
+            sampleKey = list(branch.keys())[0]
             highest = max(branch[sampleKey][sampleKey], 1)
             templist = []
             for x in branch.values():
@@ -421,10 +421,10 @@ def buildMatrix(tree, sampleList):
 #Input is the file name
 #Output is a summary of the types of clutering present in the results
 def analyzeMatrix(results):
-    with open(results, "r") as data, open(results + ".analyzed", "w") as output:
+    with open(results, "r") as input, open(results + ".analyzed", "w") as output:
         matrixStats = {}
-  
-        for chr in re.findall("(?s)(@.*?)\n(.*?\n\n)(?=@|$)", data.read()):            
+        data = input.read()
+        for chr in re.findall("(?s)(@.*?)\n(.*?\n\n)(?=@|$)", data):            
             output.write("%s\n"%chr[0])
             posData = re.findall("(?s)[#]([0-9]*?)\n(.*?)\n\n(?=#|$)", chr[1])#Pos data is a tuple in the form of (position, matrix) Matrixes are just evaluated as strings because we just
             tree = {}                                                       #need to know whether they are the same or not. 
@@ -460,7 +460,7 @@ def analyzeMatrix(results):
         import decimal as dc
         dc.getcontext().prec = 2
         print("Analysis Results:\n Average {0} clusters over {1} sections.\n{2} unclustered region detected, representing {3}% of total".format(\
-str(dc.Decimal(total_clusters)/dc.Decimal(total)), str(total), str(single_sections), str(dc.Decimal(single_sections)/dc.Decimal(total))))
+str(round(total_clusters / total, 1)), str(total), str(single_sections), str(round(single_sections / total, 1))))
             
                                 
         
@@ -539,7 +539,7 @@ def outputMatrixDensity(matrix_dict, output_path):
     with open(output_path, 'w') as output:
         for chr in matrix_dict:
             for index, matrix in matrix_dict[chr].items():
-                k = matrix.keys()[0]
+                k = list(matrix.keys())[0]
                 v = matrix[k][k]
                 output.write('{0}\t{1}\t{2}\n'.format(chr, index, v))
     

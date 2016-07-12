@@ -24,7 +24,7 @@ def generateAncestors(n, num_chrs, snp_per_chr):
     for x in range(n):
         temp = ancestors[rec.formatName(str(x))] = {}
         for n in range(num_chrs):
-            temp[chrName(n + 1)] = [rand.choice(nucs) * snp_per_chr]
+            temp[chrName(n + 1)] = [rand.choice(nucs) for x in range(snp_per_chr)]
     
     pos_tree = {chr:[x for x in range(0,snp_per_chr * 50, 50)] for chr in temp}
     
@@ -210,7 +210,7 @@ def simulateByRecombinator():
 
     number_of_chrs = 14
     snps_per_chr = 30000
-    expansion_pop_size = 15
+    expansion_pop_size = 50
     translate_mode = 'toxoplasma'
     structure_mode = 'generated'
     
@@ -242,10 +242,10 @@ def simulateByRecombinator():
 
         
 if __name__ == '__main__':
-#     print('Simulating by Recombinator')
-#     simulateByRecombinator()
-    print('Simulatioin by simuPOP')
-    simulateBySimuPOP()
+    print('Simulating by Recombinator')
+    simulateByRecombinator()
+#     print('Simulatioin by simuPOP')
+#     simulateBySimuPOP()
     
     
     

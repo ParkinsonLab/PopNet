@@ -21,7 +21,7 @@ def recombine(parent_a, parent_b, pos_tree):
     events = []
     
     #adjustable parameters
-    rate = 0.01 / 104 #100 times less than experimental
+    rate = 0.005 / 104000 #100 times less than experimental
     conversion_rate = 0.5
     conversion_mean = 100000
     conversion_sigma = 10000 #range: 70 - 130kb
@@ -41,15 +41,20 @@ def recombine(parent_a, parent_b, pos_tree):
         deadzone = 0
         counter = 0
         for ind, position in enumerate(chr):
+            try:
+                dist = chr[ind + 1] - position
+            except:
+                pass
+            
             if position > last_position:
-
+                if doesRecombine(dist, rate):
                     offspring[chr_name] += parents[counter%2][1][chr_name][last_index:ind]
                     last_position = position
                     last_index = ind
                     counter += 1
                     if doesConvert(conversion_rate):
                         convert_distance = int(random.gauss(conversion_mean, conversion_sigma))
-                        convert_pos = sorted(chr, cmp = lambda x, y: abs(x - last_position - convert_distance) - abs(y - last_position - convert_distance))[0]
+                        convert_pos = sorted(chr, key = lambda x: abs(x - last_position - convert_distance))[0]
                         convert_ind = chr.index(convert_pos)
                         offspring[chr_name] += parents[counter%2][1][chr_name][last_index:convert_ind] 
                         counter += 1
@@ -90,9 +95,9 @@ def select(strain_list):
     '''
     return tuple(random.sample(strain_list, 2))
 
-def doesRecombine(first, last, rate):
+def doesRecombine(dist, rate):
     a = random.random()
-    b = rate
+    b = rate * dist
     return a < b
 
 def doesConvert(rate):
