@@ -56,7 +56,7 @@ def generateColors(numColors):
     if numColors >= max_h_interval: hInterval = max_h_interval
     else: hInterval = numColors
     
-    lInterval = (numColors-1)/max_h_interval + 1 
+    lInterval = (numColors-1)//max_h_interval + 1 
     
     colorList = []
     for x in range(1,lInterval+1):
@@ -98,7 +98,7 @@ def createColorTable(patternTree, groups):
     results = {}
     colorIter = generateColors(len(groups))
     for group in groups:
-        results[frozenset([group])] = colorIter.next()
+        results[frozenset([group])] = next(colorIter)
     
 #     allPatterns = set()
 #     maxVal = 16777215
@@ -130,8 +130,8 @@ def printColorTable(table):
     maxKeyLength = max([len(x) for x in table.keys()])
     maxValueLength = max([len(str(x)) for x in table.values()])
     print(maxKeyLength, maxValueLength)
-    rowFormat = "{:<{klen}}\t{:<{vlen}}"
-    result = "\n".join([rowFormat.format(x[0], hex(x[1]), klen=maxKeyLength, vlen=maxValueLength) for x in table.items()])
+    rowFormat = '{:<{klen}}\t{:<{vlen}}'
+    result = "\n".join([rowFormat.format(next(iter(x[0])), hex(x[1]), klen=maxKeyLength, vlen=maxValueLength) for x in table.items()])
     return result
     
 '''(dict) -> display

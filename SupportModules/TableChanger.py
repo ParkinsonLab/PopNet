@@ -72,8 +72,8 @@ if __name__ == '__main__':
 
     ## To Reverse Order
     directory = '/data/new/javi/reshape'
-    file_name = 'yeast.csv'
-    output_name = 'rev_yeast.csv'
+    file_name = 'plasmo_partial.csv'
+    output_name = 'rev_plasmo_partial.csv'
     
     path = '/'.join([directory, file_name])
     output_path = '/'.join([directory, output_name])

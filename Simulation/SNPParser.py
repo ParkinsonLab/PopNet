@@ -95,7 +95,7 @@ def outputGriggFormat(data_tree, file_path):
     '''
     prints a file that looks like what grigg gave us
     '''
-    sample_list = sorted(data_tree.values()[0].values()[0].keys())
+    sample_list = sorted(list(list(list(data_tree.values())[0].values())[0].keys()))
     
     with open(file_path, 'w') as output:
         

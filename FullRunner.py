@@ -301,7 +301,7 @@ if __name__ == '__main__':
         sampleList = reloaded_dataTree[1]
         dataMatrix = mclc.toMatrix(reloaded_dataTree[0])
         counted = mclc.count(reloaded_dataTree, countpath)
-        aggregateCount = mclc.aggregate(counted[0]).values()[0]
+        aggregateCount = list(mclc.aggregate(counted[0]).values())[0]
         
         if optimize == True and optimize_level >= 2:
             print('Step 2 Optimization')

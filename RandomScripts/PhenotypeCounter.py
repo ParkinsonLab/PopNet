@@ -12,6 +12,7 @@ from matplotlib import mlab
 import itertools as it
 from scipy.cluster import vq
 import GroupComposition as gc
+import functools as ft
     
 def parseGroups(file):
     '''
@@ -54,9 +55,9 @@ def filter(data_tree):
     filters out tests that have missing data
     '''
     
-    for test, test_data in data_tree.items():
-        for group_data in test_data.values():
-            if 0 in group_data.values():
+    for test, test_data in list(data_tree.items()):
+        for group_data in list(test_data.values()):
+            if 0 in list(group_data.values()):
                 print('0 detected in {}'.format(test))
                 del data_tree[test]
                 break
@@ -136,7 +137,7 @@ def normalize(matrix):
         
         
         if head == 0.: head = 1
-        avg = (head - tail) / 2
+        avg = np.average(matrix[:,col_num])
         
         for ind, row in enumerate(matrix):
             result[ind, col_num] = (matrix[ind,col_num] - tail) / (avg - tail)
@@ -146,11 +147,11 @@ def normalize(matrix):
 
 def formatToMatrix(data_tree):
     
-    sample_info = data_tree.values()[0]
+    sample_info = list(data_tree.values())[0]
     
     tests = sorted(data_tree.keys())
     groups = sorted(sample_info.keys())
-    samples = sorted(reduce(lambda x, y: x + y, [sample_info[group].keys() for group in groups]))
+    samples = sorted(ft.reduce(lambda x, y: x + y, [list(sample_info[group].keys()) for group in groups]))
     
     result = np.zeros((len(samples), len(tests)))
     
@@ -366,7 +367,7 @@ def performCluster():
     directory = '/data/new/javi/yeast/phenotypes/'
     input_name = 'phenotypes.csv'
     groups_name = 'PhenoGroups2.txt'
-    output_name = 'clus3.txt'
+    output_name = 'clus5.txt'
     
     input_path = directory + input_name
     groups_path = directory + groups_name
@@ -378,7 +379,7 @@ def performCluster():
     #filtering
     data_tree = filter(data_tree)
     
-    sample_info = data_tree.values()[0]
+    sample_info = list(data_tree.values())[0]
     
     tests, samples, result = formatToMatrix(data_tree)  
     
@@ -393,11 +394,12 @@ def performCluster():
     
     pre_clusters = translateToIndex(group_dict.values(), samples)
      
-    best_tests = cluster(result, pre_clusters)[:100]
-     
+#     No longer taking only the top 100!
+#     best_tests = cluster(result, pre_clusters)[:100]
+    best_tests = cluster(result, pre_clusters)
     best_test_info = [(tests[id[1]], id[0], id[2]) for id in best_tests]
      
-    printResults(best_test_info, samples)
+#     printResults(best_test_info, samples)
     
     best_test_names = [x[0] for x in best_test_info]
     filtered_result = np.zeros((len(samples), len(best_tests)))

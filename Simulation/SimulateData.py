@@ -13,6 +13,7 @@ import random as rand
 import string
 import os
 import Simulation.Recombinator as rec
+import functools as fc
 
 def generateAncestors(n, num_chrs, snp_per_chr):
     '''
@@ -108,7 +109,7 @@ def simulateBySimuPOP():
     loci_positions = init_info[1]
     chromosome_names = sorted(loci_positions.keys(), key = lambda x: cns.getValue(x, translate_mode))
     list_of_loci = [len(loci_positions[chr]) for chr in chromosome_names]
-    lociPos = reduce(lambda x, y: x + y, [loci_positions[x] for x in chromosome_names])
+    lociPos = fc.reduce(lambda x, y: x + y, [loci_positions[x] for x in chromosome_names])
     
     sp.turnOnDebug(code = "DBG_GENERAL")
     
@@ -210,7 +211,7 @@ def simulateByRecombinator():
 
     number_of_chrs = 14
     snps_per_chr = 30000
-    expansion_pop_size = 50
+    expansion_pop_size = 15
     translate_mode = 'toxoplasma'
     structure_mode = 'generated'
     

@@ -17,7 +17,7 @@ import time
 import multiprocessing as mp
 from shutil import copyfile
 import resource
-
+import functools as ft
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -89,7 +89,7 @@ def mcl(currString, tabpath, iValue, piValue, raw=False):
         return subp.check_output(["mcl", tempname, "-use-tab", tabpath, "-I", str(iValue), "-o", "-", "-q", "x", "-V", "all", '-te', '1'])
     
     def mcl_notab_pi():
-        return  subp.check_output(["mcl", tempname, "-I", str(iValue), "-o", "-", "-pi", str(piValue), "-q", "x", "-V", "all", '-te', '1'])
+        return subp.check_output(["mcl", tempname, "-I", str(iValue), "-o", "-", "-pi", str(piValue), "-q", "x", "-V", "all", '-te', '1'])
     
     def mcl_notab_nopi():
         return subp.check_output(["mcl", tempname, "-I", str(iValue), "-o", "-", "-q", "x", "-V", "all", '-te', '1'])
@@ -108,7 +108,8 @@ def mcl(currString, tabpath, iValue, piValue, raw=False):
             result = mcl_pi()
         else:
             result = mcl_nopi()
-
+            
+    result = bytes.decode(result)
     os.remove(tempname)
 
     if raw:
@@ -210,7 +211,7 @@ def clminfo(currString, tabpath, params):
 #     files = reduce(lambda x, y: x + y, files) #make 2d list flat
     
     result = subp.check_output(['clm', 'info', matrixName] + files, close_fds=True)
-    
+    result = bytes.decode(result)
     #returns the clm dist (variance of information) but not using that atm.
 #    result = subp.check_output(['clm', 'dist', '-mode', 'sj', '--chain'] + files, close_fds=True)
     
@@ -321,7 +322,7 @@ def buildMatrix(mclcTree, sampleList):
     
     
     def normalize(mclcTree):
-        arr = np.array([x.values() for x in mclcTree.values()])
+        arr = np.array([list(x.values()) for x in mclcTree.values()])
         max = np.max(arr)
         min = np.min(arr)
         
@@ -402,8 +403,8 @@ def interDistance(clusters, matrix):
     
     avg_dists = []
     for cluster in clusters:
-        other_strains = reduce(add, [x for x in clusters if x != cluster], [])
-        avg_dists.append(avg([avg(map(lambda x: matrix[x][strain], other_strains)) for strain in cluster]))
+        other_strains = ft.reduce(add, [x for x in clusters if x != cluster], [])
+        avg_dists.append(avg([avg(list(map(lambda x: matrix[x][strain], other_strains))) for strain in cluster]))
     
     return avg(avg_dists)
 
@@ -424,8 +425,7 @@ def intraDistance(clusters, matrix):
         clus_avgs = []
         for strain in cluster:
             other_strains = [x for x in cluster if x != strain]
-            clus_avgs.append(avg(map(lambda x: matrix[x][strain], other_strains)))
-        avg_dists.append(avg(clus_avgs))
+            avg_dists.append(avg([avg(list(map(lambda x: matrix[x][strain], other_strains))) for strain in cluster]))
     
     return avg(avg_dists)
     
@@ -719,7 +719,7 @@ def graphHeatMap(file_name, matrices, extents, names, axis_labels, title):
     fig.subplots_adjust(wspace = 0.45, hspace = 0.45)
     fig.suptitle(title)
     
-    for matrix, extent, name, ind, axis_label in zip(matrices, extents, names, xrange(len(matrices)), axis_labels):
+    for matrix, extent, name, ind, axis_label in zip(matrices, extents, names, range(len(matrices)), axis_labels):
 #         ax = plt.subplot2grid((width, length), (ind // 2, ind % 2))
         ax = fig.add_subplot(width, length, ind + 1)
         ax.set_title(name, fontsize=24)

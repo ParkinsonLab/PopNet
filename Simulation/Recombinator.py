@@ -21,7 +21,7 @@ def recombine(parent_a, parent_b, pos_tree):
     events = []
     
     #adjustable parameters
-    rate = 0.005 / 104000 #100 times less than experimental
+    rate = 0.002 / 10400 #100 times less than experimental
     conversion_rate = 0.5
     conversion_mean = 100000
     conversion_sigma = 10000 #range: 70 - 130kb

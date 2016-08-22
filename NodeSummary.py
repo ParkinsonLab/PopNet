@@ -22,6 +22,24 @@ from matplotlib.cm import ScalarMappable
 import resource
 import time
 
+
+def averageFeatureLength(directory):
+    sl = 10000
+    results_dict = []
+    
+    files = searchForFiles(directory)
+    for file in files:
+        with open(file, 'r') as input:
+            raw_text = input.read()
+            
+        features_dict = findSelfFeatures(raw_text)
+        values = []
+        for name in features_dict:
+            values += features_dict[name][1] #each slot is (gradient, values)
+    
+        print('{0} has average length of {1}\n'.format(file, np.mean(values)))
+
+
 #finds all the "features", i.e. all the block that are not self or 
 def findFeatures(raw_text):
     
@@ -34,21 +52,50 @@ def findFeatures(raw_text):
         gradient = getGradient(node)
         values = getValues(node)
         name = getName(node)
+        col = getColor(node)
         
         #gets rid of the blanks, leaving only "features"
         to_remove = []
         for index, (color, value) in enumerate(zip(gradient, values)):
-            if color is '#000000':
+            if color == '#000000':
                 to_remove.append(index)
         
-        for index in to_remove:
-            del gradient[index]
-            del values[index]
+        filtered_grad = [x for ind, x in enumerate(gradient) if ind not in to_remove]
+        filtered_vals = [x for ind, x in enumerate(values) if ind not in to_remove]
         
-        features_dict[name] = (gradient, values)
+        features_dict[name] = (filtered_grad, filtered_vals)
     
     return features_dict
+
+
+def findSelfFeatures(raw_text):
+    
+    regex = '(?ims)<node.+/node>'
+    nodes = re.split('</node>', re.search(regex, raw_text).group(0))[:-1] #last element is empty string
+    
+    features_dict = {}
+    
+    for node in nodes:
+        gradient = getGradient(node)
+        values = getValues(node)
+        name = getName(node)
+        col = getColor(node)
         
+        #gets rid of the blanks, leaving only "features"
+        to_remove = []
+        for index, (color, value) in enumerate(zip(gradient, values)):
+#             if color == col or color == '#000000': #NOT DELETING SELF
+            if color == '#000000':
+                to_remove.append(index)
+        
+
+        filtered_grad = [x for ind, x in enumerate(gradient) if ind not in to_remove]
+        filtered_vals = [x for ind, x in enumerate(values) if ind not in to_remove]
+        
+        features_dict[name] = (filtered_grad, filtered_vals)
+    
+    return features_dict
+
 # def findFeatureDistribution(features_dict):
 #     
 #     values = []
@@ -64,6 +111,7 @@ def findFeatures(raw_text):
 
 
 def findFeatureDistribution(features_dict):
+    #currently modded so that it's not percentage, but real numbers
     
     values = []
     for name in features_dict:
@@ -71,10 +119,15 @@ def findFeatureDistribution(features_dict):
     
     values = sorted(values)
     dist_dict = {}
-    total = sum(values)
     
+#     #for counting features only
+#     dist_dict[1] = len(values)
+    
+#     total = sum(values)
+    total = 1
+      
     count = 0
-    pre = values[0]
+    pre = values[0] #UNCOMMENT AFTER
     dist_dict[pre] = 0
     for value in values:
         if value not in dist_dict:
@@ -82,10 +135,11 @@ def findFeatureDistribution(features_dict):
             count = 0
             dist_dict[value] = 0
         count += 1
-        pre = value
+        pre = value #UNCOMMENT AFTER
     dist_dict[pre] = float(count) * pre / total
     
     return dist_dict
+
 
 def binResults(weighted_dict, bins):
     #first bin's always zero. not real. 
@@ -162,6 +216,7 @@ def loadColorTable(color_path, reverse = False):
     for line in re.split('\n', data)[:-1]: #last line is empty.
         parts = re.split('\t', line)
         if reverse == True:
+            hex_str = '{:0<6}'.format(parts[0])
             results[parts[1]] = parts[0]
         else:
             results[parts[0]] = parts[1]
@@ -334,6 +389,8 @@ def findDistribution(directory, output_directory):
     '''
     main runner method for finding that distribution. Requires all xgmml files
     to be in the same folder, named as 'IXXPIXXSXX.xgmml'
+    
+    currently changed the graph labels!
     '''
     
     #helpers
@@ -367,6 +424,7 @@ def findDistribution(directory, output_directory):
     inds = set()
     
     #bins!
+#     bins = [0,10000,20000,40000,60000,80000,120000,140000,160000,180000,200000]
 #     bins = [0,20000,50000,100000,200000,500000,1000000,1500000,5000000]
     bins = [0,100000,200000,300000,400000,500000,600000,700000,800000,900000,1000000,2000000]
     
@@ -380,9 +438,16 @@ def findDistribution(directory, output_directory):
         
         with open(file, 'r') as input:
             raw_text = input.read()
-        features_dict = findFeatures(raw_text)
+#         #    Change this back!
+#         features_dict = findFeatures(raw_text)
+        features_dict = findSelfFeatures(raw_text)
         results = findFeatureDistribution(features_dict) #returns a dict {length: weight}
-        weighted_results = {k * section_length: results[k] for k in results}
+        
+        
+#         weighted_results = {k * section_length: results[k] for k in results} #NORMAL
+        weighted_results = {k * 10000: results[k] * 10000 / 67 for k in results} #USE ONLY FOR THAT ONE GRAPH FOR YEAST. IF YOU DON'T RMB DON'T USE
+#         weighted_results = {k: results[k] / 67 for k in results} #USE ONLY FOR THAT ONE GRAPH FOR YEAST. IF YOU DON'T RMB DON'T USE
+
         binned_results = binResults(weighted_results, bins)
         results = binned_results
         try:
@@ -405,9 +470,11 @@ def findDistribution(directory, output_directory):
         results_dict[sl] = combine(dicts)
     
     transformed_list = transform(inds, [results_dict[k] for k in sl_set])
-            
-    makeStackedBarGraph(transformed_list, sl_set, inds, 'Distribution of Features', ('Section Length', 'Features'),'{}/binned_features.pdf'.format(output_directory))
-    
+
+# This is the label that is changed            
+#     makeStackedBarGraph(transformed_list, sl_set, inds, 'Distribution of Features', ('Section Length', 'Features'),'{}/binned_features.pdf'.format(output_directory))
+    makeStackedBarGraph(transformed_list, sl_set, inds, 'Distribution of Features', ('Max Gap Length', 'Number of Base Pairs'),'{}/max_basic.pdf'.format(output_directory))
+
     
         
             
@@ -446,17 +513,26 @@ def findDistribution(directory, output_directory):
     
 if __name__ == '__main__':
 #     a = "<graph label=/'Genome/' directed=/'0/'>\n\t<node label=/'-_-_A/' id=/'0/'></node>\n\t<node label=/'-_-_A/' id=/'0/'></node>\n\t<edge source=/'1/'"
-     
-    directory = '/data/new/javi/yeast/partial/2K'
-    input_path = directory + '/cytoscape/cytoscapeGenome.xgmml'
-    group_path = directory + '/groups.txt'
-    color_path = directory + '/colors.txt'
-    out_path = directory + '/node_summary.txt'
-    makeSummary(input_path, group_path, color_path, out_path)
+      
+#     directory = '/data/new/javi/yeast/pipeline/winvar2/SL10000'
+#     input_path = directory + '/cytoscape/cytoscapeGenome.xgmml'
+#     group_path = directory + '/groups.txt'
+#     color_path = directory + '/colors.txt'
+#     out_path = directory + '/node_summary.txt'
+#     makeSummary(input_path, group_path, color_path, out_path)
 
-#     directory = '/data/new/javi/yeast/networks3'
-#     output_directory = '/data/new/javi/yeast/network_graphs'
-#     start_time = time.time()
-#     findDistribution(directory, output_directory)
-#     print('Graph took {} seconds to make.'.format(time.time() - start_time))
+# Currently used for find only nonself. Change in findDistribution and findFeaturesDistribution
+    directory = '/data/new/javi/yeast/pipeline/penalty/networks2'
+    output_directory = '/data/new/javi/yeast/pipeline/penalty/'
+    start_time = time.time()
+    findDistribution(directory, output_directory)
+    print('Graph took {} seconds to make.'.format(time.time() - start_time))
     print('Run Complete')
+
+# # Currently used for find only self. Change in findDistribution and findFeaturesDistribution
+#     directory = '/data/new/javi/assorted_networks'
+#     output_directory = '/data/new/javi/'
+#     start_time = time.time()
+#     averageFeatureLength(directory)
+#     print('Graph took {} seconds to make.'.format(time.time() - start_time))
+#     print('Run Complete')

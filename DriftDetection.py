@@ -14,8 +14,8 @@ def scan(dataTree):
     print("scanning for drift")
     count = 0
     driftcount = 0
-    for name, chr in dataTree.items():
-        for posNum, position in chr.items():
+    for name, chr in list(dataTree.items()):
+        for posNum, position in list(chr.items()):
             count+= 1
             if len(position)<=2:
                 del chr[posNum]

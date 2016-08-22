@@ -359,15 +359,15 @@ def recordMatrix(matrixDict, sampleList, tabpath, persistentMatrixName, persiste
         print('SNPSorter: Applied I value is {}'.format(i))       
         for chrName in matrixDict:
             if re.search("(?i)chr", chrName): #Only real chromosomes allowed. 
-                persistentFile.write("@%s\n"%chrName)
-                persistentResult.write("@%s\n"%chrName)
+                persistentFile.write("@{}\n".format(chrName))
+                persistentResult.write("@{}\n".format(chrName))
                 chrBranch = matrixDict[chrName]
                 for pindex in sorted(chrBranch):
                     currString = buildMatrix(chrBranch[pindex], sampleList)
                     result = ag.mcl(currString, tabpath, i, pi, True)
                     
-                    persistentFile.write("#%d\n%s\n"%(pindex, currString))
-                    persistentResult.write("#%d\n%s\n"%(pindex, result))
+                    persistentFile.write("#{0}\n{1}\n".format(pindex, currString))
+                    persistentResult.write("#{0}\n{1}\n".format(pindex, result))
 #                 currString_list = [buildMatrix(chrBranch[pindex], sampleList) for pindex in sorted(chrBranch)]
 #                 param_list = generateParams(currString_list, tabpath, i, pi)
 #                 

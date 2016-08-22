@@ -203,7 +203,8 @@ def findContigsComposition(strain, dataTree):
     PENALTY_CONST = 1000.
 #     penalty = reduce(lambda x, y: x+y, [len(e) for e in dataTree.values()]) / PENALTY_CONST #Penalty for a mismatch to the current match
 #     #set to 0.1% of total.
-    penalty = 4
+#original is penalty = 8, max = 5 * penalty
+    penalty = 10
     maxScore = 5 * penalty
 #     print('Gap Penalty used is {}'.format(penalty))
     all_groups = getGroups() 
@@ -219,7 +220,7 @@ def findContigsComposition(strain, dataTree):
             else:
                 scores[racer] -= penalty
         
-        for racer, score in scores.items():
+        for racer, score in list(scores.items()):
             if score <= 0:
                 if max(scores.values()) > 0:
                     del scores[racer]
@@ -267,7 +268,7 @@ def findContigsComposition(strain, dataTree):
         blocks = iter(chr)
         try:
             while True:
-                block = blocks.next()
+                block = next(blocks)
                 length += 1           
                 matches = matchToGroupFull(strain, other_groups, block)
                 #Attempts a more sophisticated way to build the longest possible.
@@ -308,10 +309,10 @@ def cytoscapeComposition(strains, dataTree, groupfile):
     
     for strain, item in resultsList.items():
         for key, value in item.items():
-            resultsList[strain][key] = [iter(x).next() for x in value]
+            resultsList[strain][key] = [next(iter(x)) for x in value]
     
     compiledResults = {}
-    for chr in sorted(resultsList.values()[0].keys()):
+    for chr in sorted(list(resultsList.values())[0].keys()):
         chrList = {}
         for strain in resultsList.keys():
             chrList[strain] = condense(resultsList[strain][chr])
@@ -337,7 +338,7 @@ def condense(list):
 condenses all the chrs into one, for the whole genome picture'''
 def aggregate(matrixList, organism):
     import ChrNameSorter as cns
-    strains = matrixList.values()[0].keys()
+    strains = list(matrixList.values())[0].keys()
     results = {}
     for strain in strains:
         results[strain] = [(-30, 0, 'SPACER')]

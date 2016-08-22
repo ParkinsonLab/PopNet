@@ -100,7 +100,7 @@ def generateColors(x_list, y_list, **kwargs):
         RGB_arr = np.zeros((len(x_list), len(y_list)), dtype=object)
     except:
         raw = False
-        RGB_arr = np.zeros((len(x_list), len(y_list)), dtype='|S7')
+        RGB_arr = np.zeros((len(x_list), len(y_list)), dtype='|U7')
         
 #     HSV_arr = np.zeros(len(x_list), len(y_list), dtype=(('Hue', '>f4'), ('Sat', '>f4'), ('Lumi', '>f4')))
     for x_ind, x in enumerate(x_list):
