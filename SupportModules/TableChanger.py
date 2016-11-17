@@ -70,31 +70,31 @@ def changeColor(input_path, color_dict):
 
 if __name__ == '__main__':
 
-    ## To Reverse Order
-    directory = '/data/new/javi/reshape'
-    file_name = 'plasmo_partial.csv'
-    output_name = 'rev_plasmo_partial.csv'
-    
-    path = '/'.join([directory, file_name])
-    output_path = '/'.join([directory, output_name])
-    
-    with open(output_path, 'w') as output:
-        header, body = reverseOrder(readTable(path))
-        output.write('\n'.join([header] + body))
-        
-#     ## To change color
+#     ## To Reverse Order
 #     directory = '/data/new/javi/reshape'
-#     file_name = 'rev_toxo.csv'
-#     output_name = 'rev_toxo_rc.csv'
+#     file_name = 'plasmo_partial.csv'
+#     output_name = 'rev_plasmo_partial.csv'
 #     
 #     path = '/'.join([directory, file_name])
 #     output_path = '/'.join([directory, output_name])
 #     
-#     color_dict = {'#FF9900' : '#0000FF',
-#                   '#32FF00' : '#FF0000',
-#                   '#3200FF' : '#00FF00',
-#                   '#00FEFF' : '#FFa500'}
-#     
 #     with open(output_path, 'w') as output:
-#         output.write(changeColor(path, color_dict))
+#         header, body = reverseOrder(readTable(path))
+#         output.write('\n'.join([header] + body))
+        
+    ## To change color
+    directory = '/data/new/javi/toxo/newdata/nocutoff/cytoscape'
+    file_name = 'tabNetwork.tsv'
+    output_name = 'tabNetworkrc.tsv'
+     
+    path = '/'.join([directory, file_name])
+    output_path = '/'.join([directory, output_name])
+     
+    color_dict = {'#FF9900' : '#0000FF', #blue
+                  '#3200FF' : '#FF0000', #red
+                  '#32FF00' : '#00FF00', #green
+                  '#00FEFF' : '#FFA500'} #orange
+     
+    with open(output_path, 'w') as output:
+        output.write(changeColor(path, color_dict))
     

@@ -40,6 +40,9 @@ def translate(input, **kwargs):
             mobject = re.search(inpattern, input.upper())
             strain = 'TGME49'
             roman = mobject.group(1)
+        elif mode == 'strep':
+            strain = 'STREP'
+            roman = 'I'
         else:
             raise RuntimeError('unknown mode specified')
             import sys

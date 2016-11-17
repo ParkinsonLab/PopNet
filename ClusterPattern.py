@@ -121,17 +121,17 @@ def createColorTable(patternTree, groups):
 #         except StopIteration:
 #             pass
             
-    printColorTable(results)
+#     printColorTable(results)
     return results
 
 '''table is a dict of frozenset:value
 just a helper function because i don't like their print'''
 def printColorTable(table):
-    maxKeyLength = max([len(x) for x in table.keys()])
-    maxValueLength = max([len(str(x)) for x in table.values()])
-    print(maxKeyLength, maxValueLength)
+    maxKeyLength = max([len(x) for x in list(table.keys())])
+    maxValueLength = max([len(str(x)) for x in list(table.values())])
+#     print(maxKeyLength, maxValueLength)
     rowFormat = '{:<{klen}}\t{:<{vlen}}'
-    result = "\n".join([rowFormat.format(next(iter(x[0])), hex(x[1]), klen=maxKeyLength, vlen=maxValueLength) for x in table.items()])
+    result = "\n".join([rowFormat.format(next(iter(x[0])), hex(x[1]), klen=maxKeyLength, vlen=maxValueLength) for x in list(table.items())])
     return result
     
 '''(dict) -> display

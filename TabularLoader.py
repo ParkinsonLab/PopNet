@@ -18,6 +18,7 @@ def load(path, reference, excludePath=None):
         chrBranch = {}
         posBranch = {}
         prevLineSplit = None
+        accessory = 0
         
         if excludePath is not None:
             with open(excludePath, 'r') as tempfile:
@@ -25,7 +26,7 @@ def load(path, reference, excludePath=None):
         else:
             exclude = None
             
-        if reference is not None:
+        if reference is not 'None':
             nameList.pop(0)
             nameList.insert(0,reference)
 
@@ -34,6 +35,11 @@ def load(path, reference, excludePath=None):
                 
             lineSplit = re.split("\t", line.replace("\n", "").replace("\r", ""))
             chr = lineSplit[0].upper()
+            
+            if isAccessory(line): 
+                accessory += 1
+                continue
+            
             if chr not in tree:
                 chrBranch = {}
                 tree[chr] = chrBranch
@@ -65,8 +71,16 @@ def load(path, reference, excludePath=None):
         prunedNameList = [x for x in nameList if x not in exclude]
         return (tree, prunedNameList)
             
+    print('{} accessory SNPs detected'.format(accessory))
     print("loading done")
     return (tree, nameList)
+
+def isAccessory(line):
+    for e in line:
+        if e == '-':
+            return True
+            
+    return False
 
 '''(list of chars) -> boolean
 see if this position is valid: has at least one valid SNPs shared by more than two strains'''

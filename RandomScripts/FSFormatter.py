@@ -37,7 +37,7 @@ def recordFS(dataTree, outpath, sampleList, organism):
     fileListFileName = 'filelist.txt'
     sampleList = sorted(sampleList)
     newTree = rearrangeTree(dataTree, sampleList)
-    chrs = sorted(dataTree.keys(), key = lambda x: ct.translate(x, organism = organism))
+    chrs = sorted(dataTree.keys(), key = lambda x: ct.translate(x, mode = organism))
     
         
     
@@ -71,9 +71,9 @@ def formatToFS(directory, outpath, organism):
     #load the data like in FullRunner
     if organism == 'toxoplasma':
             #Grigg data
-        import GriggsLoader as gl
-        file_name = 'SortedSNPs.txt'
-        reference = None
+        import TabularLoader as gl
+        file_name = 'Toxo20new.txt'
+        reference = 'ME49'
         os.chdir(directory)
         griggpath = directory + '/' + file_name
         data = gl.load(griggpath, reference)
@@ -114,7 +114,7 @@ def formatToFS(directory, outpath, organism):
     recordFS(dataTree, outpath, sampleList, organism)
     
 if __name__ == '__main__':
-    directory = '/data/new/javi/toxo/structure-toxo'
+    directory = '/data/new/javi/toxo/structure-toxo_new'
     organism = 'toxoplasma'
     outpath = directory
     print('Initiating...')

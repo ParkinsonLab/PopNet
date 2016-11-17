@@ -98,9 +98,13 @@ def parse():
                         matrixTable[header][convert[cell[0]]] = cell[1]
                 for type in hitList:
                     tally = 0
+
                     for strain in type:
                         tally += float(matrixTable[target][strain])
                     tally = tally / len(type)
+                    
+                    if tally <= 0:
+                        print([target, strain, matrixTable[target][strain]])
                     #looks for specific points with in specific lines
                     #depending on the target and hitList. 
                     outfile.write("%s - %s: %s\n"%(target, type, tally))
@@ -186,6 +190,8 @@ def aggregate(matrix):
 
     
 if __name__ == '__main__':
+    '''
+    #for yeast
     path = "/data/new/javi/yeast/results/matrix"
     fname = "persistentMatrix.txt"
     tabname = "persistentMatrix.tab"
@@ -205,6 +211,28 @@ if __name__ == '__main__':
         print('parsing for type {}'.format(type))
         setTypes([typeI, typeIII, typeII], type)
         parse()
+    '''
+    
+    #for toxo
+    path = "/data/new/javi/toxo/newdata/nocutoff"
+    fname = "persistentMatrix.txt"
+    tabName = "persistentMatrix.tab"
+    setLocation(path, fname, tabName)
+    
+    global typeI 
+    typeI = ['GT1']
+    global typeII 
+    typeII = ['ME49']
+    global typeIII 
+    typeIII = ['CTG']
+    
+#     types = ['IIXIII_S22', 'IIXIII_S23', 'IIXIII_S30', 'ME49', 'CTG', 'GT1']
+    types = ['VEG', 'M7741']
+    for type in types:
+        print('parsing for type {}'.format(type))
+        setTypes([typeI, typeIII, typeII], type)
+        parse()
+        
     print("Done!")
         
         

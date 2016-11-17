@@ -204,7 +204,7 @@ def findContigsComposition(strain, dataTree):
 #     penalty = reduce(lambda x, y: x+y, [len(e) for e in dataTree.values()]) / PENALTY_CONST #Penalty for a mismatch to the current match
 #     #set to 0.1% of total.
 #original is penalty = 8, max = 5 * penalty
-    penalty = 10
+    penalty = 8
     maxScore = 5 * penalty
 #     print('Gap Penalty used is {}'.format(penalty))
     all_groups = getGroups() 

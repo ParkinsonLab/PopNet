@@ -253,10 +253,10 @@ def calculateCircos(composition, colorTable):
         valueList.append(str(section[1] - section[0] + 1))
         colorList.append(str(toHexColor(colorTable[section[2]])))
     
-    colorString = ",".join(colorList)
+    colorString = ",".join(reversed(colorList))
     valueString = "\
             <att name=\"values\" type=\"list\">\n"
-    for item in valueList:
+    for item in reversed(valueList):
         valueString += "\
                 <att type=\"real\" value=\"{0}\"/>\n".format(item)
     valueString += "\

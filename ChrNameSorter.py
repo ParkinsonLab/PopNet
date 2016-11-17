@@ -54,7 +54,7 @@ def getOffSet(num, letter, mode):
     if mode == 'toxoplasma':
         offsetList = {1: 1, 7: 1}
         letterValue = {"A": 0, "B": 1, "C": 2}
-    elif mode == 'yeast' or mode == 'plasmodium':
+    elif mode == 'yeast' or mode == 'plasmodium' or mode == 'strep':
         offsetList = {}
         letterValue = {}
     else:

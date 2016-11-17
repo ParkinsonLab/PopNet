@@ -96,8 +96,8 @@ def simulateBySimuPOP():
     
     
     number_of_ancestors = 3
-    expansion_pop_size = 50
-    offsprings_sampled = 50
+    expansion_pop_size = 15
+    offsprings_sampled = number_of_ancestors + expansion_pop_size
     gen = 3
     translate_mode = 'toxoplasma'
     structure_mode = 'simupop'
@@ -119,8 +119,9 @@ def simulateBySimuPOP():
                                chromNames = chromosome_names, lociNames = [], alleleNames = ['A','T','G','C'],\
                                infoFields=['name', 'ind_id', 'father_id', 'mother_id'])
     
-    for individual, sample in zip(population.individuals(), ancestral_genomes):
+    for individual, sample, ind_id in zip(population.individuals(), ancestral_genomes, range(len(ancestral_genomes))):
         individual.setInfo(ancestor_names.index(sample), 'name')
+        individual.setInfo(ind_id, 'ind_id')
         for ind, chr in enumerate(chromosome_names):
             individual.setGenotype(ancestral_genomes[sample][chr], chroms=[ind])
     

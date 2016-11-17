@@ -13,7 +13,7 @@ def sanitize_input(config, var_list, debug_var_list):
     if not os.path.isdir(config.get('Settings', 'base_directory')):
         raise ValueError("base directory doesn't exist")
     
-    if not config.get('Settings', 'organism') in ['toxoplasma', 'yeast', 'plasmodium']:
+    if not config.get('Settings', 'organism') in ['toxoplasma', 'yeast', 'plasmodium', 'strep']:
         raise ValueError("Unsupported organism: {}".format(config.get('Settings', 'organism')))
     
     if not config.get('Settings', 'input_type') in ['nucmer', 'tabular']:

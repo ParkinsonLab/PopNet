@@ -12,17 +12,18 @@ def getBase():
 [Settings]\n\
 base_directory= {0}\n\
 output_directory= {1}\n\
-organism= yeast\n\
-input_type= nucmer\n\
-file_name= Toxo20.txt\n\
-reference= S288C\n\
-optimize= True\n\
+organism= strep\n\
+input_type= tabular\n\
+file_name= 236SPN_tabular.txt\n\
+reference= None\n\
+optimize= False\n\
 optimize_level= 3\n\
-section_length= 8000\n\
-S1_iVal= {2}\n\
-S1_piVal= {3}\n\
-S2_iVal= 5\n\
-S2_piVal= 1.5\n\
+section_length= 2500\n\
+S1_iVal= 9\n\
+S1_piVal= 18\n\
+S2_iVal= {2}\n\
+S2_piVal= {3}\n\
+autogroup= true\n\
 [Optimization]\n\
 section_length_min= 2000\n\
 section_length_max= 10000\n\
@@ -49,10 +50,10 @@ def getBase2():
 [Settings]\n\
 base_directory= {0}\n\
 output_directory= {1}\n\
-organism= yeast\n\
+organism= strep\n\
 input_type= nucmer\n\
-file_name= Toxo20.txt\n\
-reference= S288C\n\
+file_name= 236SPN_tabular.txt\n\
+reference= None\n\
 optimize= False\n\
 optimize_level= 0\n\
 section_length= {2}\n\
@@ -60,6 +61,7 @@ S1_iVal= 8\n\
 S1_piVal= 19\n\
 S2_iVal= 4\n\
 S2_piVal= 1.5\n\
+autogroup= true\n\
 [Optimization]\n\
 section_length_min= 2000\n\
 section_length_max= 10000\n\
@@ -78,9 +80,9 @@ S2_piVal_max= 10\n\
 S2_piVal_step= 0.5"
 
 def makeConfigs():
-    base_directory = '/scratch/j/jparkins/xescape/yeast/input_files'
-    output_directory = '/scratch/j/jparkins/xescape/yeast/opti4'
-    working_directory = '/data/new/javi/configs_temp'
+    base_directory = '/scratch/j/jparkins/xescape/strep'
+    output_directory = '/scratch/j/jparkins/xescape/yeast/strep/tabular'
+    working_directory = '/data/new/javi/configs_strep'
     S1_iMin = 2
     S1_iMax = 15
     S1_iStep = 1

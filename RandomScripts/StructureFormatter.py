@@ -65,7 +65,7 @@ def formatToStructure(directory, outpath, organism):
     #load the data like in FullRunner
     if organism == 'toxoplasma':
             #Grigg data
-        import GriggsLoader as gl
+        import TabularLoader as gl
         file_name = 'SortedSNPs.txt'
         reference = None
         os.chdir(directory)
