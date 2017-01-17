@@ -209,6 +209,9 @@ if __name__ == '__main__':
     #     data = tl.load(griggpath, reference, excludepath)
         dataTree = data[0]
         sampleList = sorted(data[1])
+        grey_dict = data[2] #see if there are any grey regions.
+        grey_dict = tl.convertGreyDict(grey_dict, section_length)
+        #format = {sample:[(chr, position)]}
         
     elif input_type == 'nucmer':
         #Sequence data
@@ -246,6 +249,7 @@ if __name__ == '__main__':
                 print("Duplicate for {0}".format(sampleName))
                 
         sampleList = sorted(sampleList)
+        grey_dict = {n:[] for n in sampleList}
         
     with open(rawresultpath, "w") as results:
         snps.record(dataTree, results, sampleList)
@@ -325,7 +329,7 @@ if __name__ == '__main__':
         density = gc.loadMultiDensity(densitypath)   
                 
                 
-        composition = gc.cytoscapeComposition(strainList, dataMatrix, grouppath)  
+        composition = gc.cytoscapeComposition(strainList, dataMatrix, grouppath, grey_dict)  
         colorTable = {}
         for strain in expandedGroups:
             colorTable[strain[0]] = groupColors[frozenset([strain[1]])]
@@ -334,6 +338,7 @@ if __name__ == '__main__':
                    
         #enables the use of black spacer tiles
         colorTable['SPACER'] = 0
+        colorTable['GREY'] = 13421772
         print(colorTable)
         with open(colorout_path, 'w') as color_out:
             color_out.write(cp.printColorTable(colorTable))

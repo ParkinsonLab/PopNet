@@ -25,7 +25,7 @@ def loadGroups(file, strain):
         lines = re.split('\n', section)
         lineSplit = re.split("\t", lines[1])
         groups[getGroupID(pos)] = lineSplit
-    groups['NONE'] = ['NONE']
+#     groups['NONE'] = ['NONE']
     
     for name, group in groups.items():
         if strain in group or len(group) == 0:
@@ -300,7 +300,7 @@ def findContigsComposition(strain, dataTree):
 
 '''([strains], dataTree) -> [[(begin, end, color]]
 a variation on multicomposition that is divided by chromosomes. Used for generating the cytoscape view.'''
-def cytoscapeComposition(strains, dataTree, groupfile):
+def cytoscapeComposition(strains, dataTree, groupfile, grey_dict):
     resultsList = {}
     loadGroups(groupfile, "")
     for strain in strains:
@@ -310,6 +310,12 @@ def cytoscapeComposition(strains, dataTree, groupfile):
     for strain, item in resultsList.items():
         for key, value in item.items():
             resultsList[strain][key] = [next(iter(x)) for x in value]
+        
+        for pos_tup in grey_dict[strain]:
+            chr = pos_tup[0]
+            pos = pos_tup[1]
+            resultsList[strain]['@' + chr][pos] = 'GREY' #looks like I always add a @ before chr names after reloading
+            print('{0} at {1} {2} was Grey\'d'.format(strain, chr, pos))
     
     compiledResults = {}
     for chr in sorted(list(resultsList.values())[0].keys()):
@@ -341,7 +347,9 @@ def aggregate(matrixList, organism):
     strains = list(matrixList.values())[0].keys()
     results = {}
     for strain in strains:
-        results[strain] = [(-30, 0, 'SPACER')]
+#          results[strain] = [(-30, 0, 'SPACER')]
+        results[strain] = []
+         
     for chrName, chr in sorted(matrixList.items(), key=lambda x: cns.getValue(x[0], organism)):
         for strain, data in chr.items():
             results[strain] += [(-10, 0, 'SPACER')]

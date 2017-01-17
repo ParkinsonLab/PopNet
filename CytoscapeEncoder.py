@@ -240,6 +240,7 @@ def getEdgeText(source, target, width, colorTable):
     text = "\
         <edge source=\"{0}\" target=\"{1}\" >\n\
             <graphics width=\"{2}\" fill=\"{3}\" />\n\
+            <att name=\"width\" type=\"float\" value=\"{2}\" />\n\
         </edge>\n".format(source[0], target[0], width, color)
     return text
 

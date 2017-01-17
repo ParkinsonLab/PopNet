@@ -20,13 +20,15 @@ def load(path, reference, excludePath=None):
         prevLineSplit = None
         accessory = 0
         
+        grey_dict = {n:[] for n in nameList}
+        
         if excludePath is not None:
             with open(excludePath, 'r') as tempfile:
                 exclude = re.split("\n", tempfile.read().upper())
         else:
             exclude = None
             
-        if reference is not 'None':
+        if not reference == 'None':
             nameList.pop(0)
             nameList.insert(0,reference)
 
@@ -36,17 +38,18 @@ def load(path, reference, excludePath=None):
             lineSplit = re.split("\t", line.replace("\n", "").replace("\r", ""))
             chr = lineSplit[0].upper()
             
-            if isAccessory(line): 
-                accessory += 1
-                continue
+#             if isAccessory(line): 
+#                 accessory += 1
+#                 continue
             
             if chr not in tree:
                 chrBranch = {}
                 tree[chr] = chrBranch
             
-            if int(lineSplit[1]) not in chrBranch:
+            pos = int(lineSplit[1])
+            if pos not in chrBranch:
                 posBranch = {}
-                chrBranch[int(lineSplit[1])] = posBranch
+                chrBranch[pos] = posBranch
             
 #             if isDrift(lineSplit):
 #                 continue
@@ -63,7 +66,9 @@ def load(path, reference, excludePath=None):
 #                print "%s\t%s"%(samp, snp)
                 if not (exclude and samp in exclude):
                     posBranch[samp] = snp
-            
+                
+                if snp == '-':
+                    grey_dict[samp].append((chr, pos))
                 
             prevLineSplit = lineSplit
     
@@ -73,7 +78,7 @@ def load(path, reference, excludePath=None):
             
     print('{} accessory SNPs detected'.format(accessory))
     print("loading done")
-    return (tree, nameList)
+    return (tree, nameList, grey_dict)
 
 def isAccessory(line):
     for e in line:
@@ -168,6 +173,23 @@ def aggregateForNexus(treeTuple):
     print("aggregate done") 
     return {"Genome" : results}
 
+def convertGreyDict(grey_dict, blocksize):
+    '''simply converts the position of the grey dict into block numbers according to block size'''
+    new_dict = {}
+    
+    for sample in grey_dict:
+        new_dict[sample] = []
+        for item in grey_dict[sample]:
+            chr = item[0]
+            pos = item[1]
+            result = (chr, pos // blocksize)
+            if result not in grey_dict[sample]:
+                new_dict[sample].append(result)
+    
+    return new_dict
+
+                
+    
 if __name__ == '__main__':    
     os.chdir("/data/javi/Toxo/64Genomes")
     #OrderedSNPV6 
