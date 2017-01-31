@@ -1,0 +1,49 @@
+#This is an example config file for PopNet to be used for data in Nucmer's SNPS format.
+#To test the program, point base_directory to the Examples/Nucmer folder included with the program
+# and output_directory to the Output folder, then run as instructed in the README file.
+
+[Settings]
+
+#Location of the input file(s)
+base_directory=/home/javi/PopNet/examples/Nucmer
+
+#Location of the output files. Final level folder will be created if not there.
+output_directory=/home/javi/PopNet/examples/Nucmer/output
+
+#options: toxoplasma, yeast, plasmodium
+organism= yeast
+
+#options: nucmer, tabular
+input_type= nucmer
+
+#file name of the tabular file
+#ignored if input_type is not tabular
+file_name= Toxo20.txt
+
+#Name of the reference strain
+reference= S288C
+
+#length of each chromosome segment in bp
+section_length= 10000
+
+#Inflation parameter for Primary Clustering
+S1_iVal= 8
+
+#Pre-inflation parameter for Primary Clustering
+S1_piVal= 19
+
+#Inflation parameter for Secondary Clustering
+S2_iVal= 4
+
+#Pre-inflation parameter for Secondary Clustering
+S2_piVal= 1.5
+
+
+#Do Not Change
+optimize= False
+optimize_level= 3
+autogroup=True 
+
+
+
+

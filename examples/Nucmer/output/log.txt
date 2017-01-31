@@ -1,0 +1,13 @@
+Logging Parameters Used:
+S1_iVal	8.0
+S1_piVal	19.0
+S2_iVal	4.0
+S2_piVal	1.5
+base_directory	/home/javi/PopNet/examples/Nucmer
+file_name	Not Used.
+input_type	nucmer
+optimize	False
+organism	yeast
+reference	S288C
+section_length	10000
+Config Loading Successful
