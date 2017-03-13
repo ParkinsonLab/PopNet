@@ -174,10 +174,10 @@ if __name__ == '__main__':
     
     default_params = pw.ParamWrapper()
     
-    default_params.setIMax(10)
+    default_params.setIMax(20)
     default_params.setIMin(2)
     default_params.setIStep(0.5)
-    default_params.setPiMax(10)
+    default_params.setPiMax(20)
     default_params.setPiMin(1)
     default_params.setPiStep(0.5)
     

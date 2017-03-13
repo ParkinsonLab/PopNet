@@ -385,7 +385,7 @@ def makeSummary(input_path, group_path, color_path, out_path):
     
     print('Node Summaries Completed')
         
-def findDistribution(directory, output_directory):
+def findDistribution(directory, bins, title, axes, filepath):
     '''
     main runner method for finding that distribution. Requires all xgmml files
     to be in the same folder, named as 'IXXPIXXSXX.xgmml'
@@ -473,7 +473,7 @@ def findDistribution(directory, output_directory):
 
 # This is the label that is changed            
 #     makeStackedBarGraph(transformed_list, sl_set, inds, 'Distribution of Features', ('Section Length', 'Features'),'{}/binned_features.pdf'.format(output_directory))
-    makeStackedBarGraph(transformed_list, sl_set, inds, 'Distribution of Features', ('Max Gap Length', 'Number of Base Pairs'),'{}/max_basic.pdf'.format(output_directory))
+    makeStackedBarGraph(transformed_list, sl_set, inds, title, axes, filepath)
 
     
         
@@ -512,6 +512,7 @@ def findDistribution(directory, output_directory):
 #     
     
 if __name__ == '__main__':
+# #    Test Code
 #     a = "<graph label=/'Genome/' directed=/'0/'>\n\t<node label=/'-_-_A/' id=/'0/'></node>\n\t<node label=/'-_-_A/' id=/'0/'></node>\n\t<edge source=/'1/'"
       
 #     directory = '/data/new/javi/yeast/pipeline/winvar2/SL10000'
@@ -525,7 +526,21 @@ if __name__ == '__main__':
     directory = '/data/new/javi/yeast/pipeline/penalty/networks2'
     output_directory = '/data/new/javi/yeast/pipeline/penalty/'
     start_time = time.time()
-    findDistribution(directory, output_directory)
+    
+    #Various parameters for the graph
+    title = 'Distribution of Features'
+    x_axis = 'Max Gap Length'
+    y_axis = 'Number of Base Pairs'
+    filename = 'max_basic'
+    
+    #Vary the size of bins if too much of your data falls into one or a few of them.
+    bins = [0,100000,200000,300000,400000,500000,600000,700000,800000,900000,1000000,2000000]
+    
+    #Don't edit
+    path = '{0}/{1}.pdf'.format(output_directory, filename)
+    axes = (x_axis, y_axis)
+    
+    findDistribution(directory, bins, title, axes, path)
     print('Graph took {} seconds to make.'.format(time.time() - start_time))
     print('Run Complete')
 

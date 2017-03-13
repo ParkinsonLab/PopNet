@@ -18,7 +18,7 @@ input_type= tabular
 
 #file name of the tabular file
 #ignored if input_type is not tabular
-file_name= Toxo20.txt
+file_name= toxo20.txt
 
 #Name of the reference strain
 reference= ME49

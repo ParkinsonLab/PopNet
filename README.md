@@ -28,7 +28,7 @@ To Run:
 	Extract contents to local folder
 	Edit config file
 	cd /path/to/local_folder
-	python PopNet/FullRunner.py /path/to/config/file
+	python PopNet/PopNet.py /path/to/config/file
 
 ###Introduction
 
@@ -98,6 +98,17 @@ The remaining files are either intermediate files or for debug purposes.
 	Under Image/chart 1, set Column = Gradient, Mapping Type = Passthrough Mapping
 	The chromosome paintings will now be visible
 	Adjust other visual properties as needed
+
+
+###Additional Diagnostics
+
+The NodeSummary.py script, included in the PopNet directory, is able to generate stacked bar graphs (similar those seen in supplemental figure 2) to aid in the determination of parameters such as section length and gap penalty. Currently, the script has not been optimized for user experience, and requires some direct editing by the user.
+
+The first step is to run PopNet once under each of the condition being compared (i.e. with section length = 2000, 4000, 6000.. etc), and **saving the resulting xgmml as IXXPIXXSXXXX.xgmml**, where the first two 'XX' are the I and PI values used multiplied by 10, and the 'XXXX' following S is the value of the variable parameter. (i.e. if section length is being varied, and the run is done with I = 4, PI = 1.5, Section length = 8000, the file should be saved as I40PI15S8000.xgmml). All the numerical values need to be integers. If the file is not in this format it would not be recognized by NodeSummary.py.  
+
+Place the generated xgmml files into a folder. This is the directory to be specified in the NodeSummary.py. Open NodeSummary.py, and go to the main function at the bottom. The parameters to be specified include the directory containing the input files, title of the graph, axis titles, the output file's name, and the bins. The bins control the size of the features represented by each stack on the stacked bar graph. If all the features are fall into the same stack (e.g. because they are too large or small), the bins can be adjusted to offer better resolution. Please note that the script only looks at recombinant features (i.e. regions where a sample has inherited genes from an ancestry other than its own). 
+
+Run the script to generate the graph. The output file will be placed in the directory of the input files. 
 
 ###Examples
 
