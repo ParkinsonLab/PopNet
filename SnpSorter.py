@@ -30,7 +30,7 @@ def addData(f, sampleName, dataTree, minCoverage, reference, organism):
             raise Exception("Invalid file type in %s" % f.name)
     except Exception:
         sys.exit()  
-        
+            
 #parse that coverage file if it exists
     minCoverageData = None
     if minCoverage:
@@ -63,6 +63,8 @@ def addData(f, sampleName, dataTree, minCoverage, reference, organism):
     for line in rawLines[:-1]:
         totalCount += 1
         temp = organizeLine(line, sampleName, type, minCoverageData, organism)
+        
+        #modified for euks!
         if temp is not None and re.search('CHR', temp[0]):
             parsed.append(temp)
         elif temp is None:

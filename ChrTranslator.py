@@ -42,7 +42,7 @@ def translate(input, **kwargs):
             roman = mobject.group(1)
         elif mode == 'strep':
             strain = 'STREP'
-            roman = 'I'
+            roman = 'CHRI'
         else:
             raise RuntimeError('unknown mode specified')
             import sys
@@ -82,7 +82,11 @@ def reverseTranslate(numStr):
     
     return returnstring + toRoman(number) + lastchar
     
-    
+def isEuk(organism):
+    euks = ['toxoplasma', 'plasmodium', 'yeast']
+    if organism in euks: return True
+    else: return False
+          
 #testing purposes only
 if __name__ == '__main__':
     chr = "TGME49_chrVIIA"
