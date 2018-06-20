@@ -212,7 +212,7 @@ if __name__ == '__main__':
         setTypes([typeI, typeIII, typeII], type)
         parse()
     '''
-    
+    '''
     #for toxo
     path = "/data/new/javi/toxo/newdata/nocutoff"
     fname = "persistentMatrix.txt"
@@ -234,7 +234,7 @@ if __name__ == '__main__':
         parse()
         
     print("Done!")
-        
+    '''    
         
                     
                         
