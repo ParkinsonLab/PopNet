@@ -30,8 +30,9 @@ def pruneMatrix(matrix):
     
     filteredMatrix = npMatrix * (npMatrix >= dropCutoff)
     np.fill_diagonal(filteredMatrix, 0)
-    transformedMatrix = transformMatrix(filteredMatrix)
-    
+    #we're not filtering anymore
+#     transformedMatrix = transformMatrix(filteredMatrix)
+    transformedMatrix = transformMatrix(npMatrix)
     
 #     #debug code delete later
 #     key = 'EC9-8_S288C'
@@ -129,7 +130,8 @@ def transformMatrix(npMatrix):
 #     
 #     transformedMatrix = (np.power(toFraction / highAverage, scalingFactor)) * maxValue
     
-    transformedMatrix = np.power(toFraction, np.log(toFraction) * -1 * scalingFactor) * maxValue
+#     transformedMatrix = np.power(toFraction, np.log(toFraction) * -1 * scalingFactor) * maxValue
+    transformedMatrix = toFraction
     
     
     return transformedMatrix

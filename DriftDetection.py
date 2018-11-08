@@ -21,7 +21,7 @@ def scan(dataTree):
                 del chr[posNum]
                 driftcount+= 1
     print(dataTree.keys())
-    percent = float(driftcount) / float(count) * 100
+    percent = float(driftcount) / max(float(count), 1) * 100
     print("{0} drift positions deleted out of {1}, for a rate of {2} percent".format(driftcount, count, percent))
     
     return dataTree

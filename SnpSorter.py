@@ -104,7 +104,7 @@ def fetchRegexPattern(name):
 #[2]Sample name
 #[3]Nucleotide value
 def organizeLine(rawLine, name, type, minCoverage, organism):
-    
+   
     lineSplit = re.split("\s+",rawLine)
     try:
         if type is 'snps':
@@ -119,6 +119,7 @@ def organizeLine(rawLine, name, type, minCoverage, organism):
                 return None
         else:
             chr = ct.translate(lineSplit[0].upper(), mode=organism).upper()
+            print(chr)
             indel = len(lineSplit[3]) > 1 or len(lineSplit[4]) > 1 or re.search('[^AGCT]', lineSplit[3]) or re.search('[^AGCT]', lineSplit[4])
             hetero = re.search("1/1", lineSplit[9])
             quality = float(lineSplit[5])
@@ -275,6 +276,7 @@ def calculateMatrix(dataTree, sampleList, section_length):
     modSampleList = sampleList
     #Use only if having ME49 as part of the list!
 #    modSampleList.insert(0,"ME49")
+    
     for chrName in dataTree:
         if re.search("(?i)chr", chrName):
             chrBranch = dataTree[chrName]
@@ -461,6 +463,7 @@ def analyzeMatrix(results):
             if n == count: single_sections += 1
         import decimal as dc
         dc.getcontext().prec = 2
+       
         print("Analysis Results:\n Average {0} clusters over {1} sections.\n{2} unclustered region detected, representing {3}% of total".format(\
 str(round(total_clusters / total, 1)), str(total), str(single_sections), str(round(single_sections / total, 1))))
             

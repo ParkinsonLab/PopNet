@@ -8,8 +8,9 @@ import copy
 import os
 import NexusEncoder
 from collections import Counter as counter
+import ChrTranslator as ct
 
-def load(path, reference, excludePath=None):
+def load(path, reference, organism, excludePath=None):
     print("loading..")
     with open(path) as source:
         nameList = [_f.upper() for _f in re.split("\t",source.readline().replace("\r\n", "").replace("\n", ""))[2:] if _f] #gets names, split, filter for preceeding tabs. Name will be in order.
@@ -20,7 +21,7 @@ def load(path, reference, excludePath=None):
         prevLineSplit = None
         accessory = 0
         
-        grey_dict = {n:[] for n in nameList}
+        
         
         if excludePath is not None:
             with open(excludePath, 'r') as tempfile:
@@ -32,11 +33,11 @@ def load(path, reference, excludePath=None):
             nameList.pop(0)
             nameList.insert(0,reference)
 
-        
+        grey_dict = {n:[] for n in nameList}
         for index, line in enumerate(rawData[:-1]):
                 
             lineSplit = re.split("\t", line.replace("\n", "").replace("\r", ""))
-            chr = lineSplit[0].upper()
+            chr = ct.translate(lineSplit[0].upper(), mode=organism)
             
 #             if isAccessory(line): 
 #                 accessory += 1

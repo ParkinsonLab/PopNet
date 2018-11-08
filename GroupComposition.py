@@ -447,7 +447,7 @@ def loadMultiDensity(infile):
 if __name__ == '__main__':
     all_strains = 'ABCDEFGHIJKLMN'
     a,b,c,d,e,f,g,h,i,j,k,l,m,n = tuple(all_strains)
-    global groups
+
     groups = {'G1':[a,b,c,d], 'G2':[e,f,g,h,i], 'G3':[j,k], 'G4':[l,m,n]}
         
     block1 = [[a,b,c,d], [e,f,g,h,i], [j,k], [l,m,n]]

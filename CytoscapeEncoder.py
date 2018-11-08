@@ -29,7 +29,8 @@ def pruneMatrix(matrix):
     
     filteredMatrix = npMatrix * (npMatrix >= dropCutoff)
     np.fill_diagonal(filteredMatrix, 0)
-    transformedMatrix = transformMatrix(filteredMatrix)
+    #transformedMatrix = transformMatrix(filteredMatrix)
+    transformedMatrix = transformMatrix(npMatrix)
     
     
 #     #debug code delete later
@@ -40,7 +41,7 @@ def pruneMatrix(matrix):
 #     print('with the values \n' + str(npMatrix[index]))
 #     print('result \n' + str(filteredMatrix[index]))
 #     print('and the final one \n' + str(transformedMatrix[index]))
-    
+#     print(transformedMatrix)
     return transformedMatrix
     
 '''helper for prune. Calculates a few statistics about the matrix
@@ -49,7 +50,7 @@ and returns them
 dropCutoff: half way between the average and the highest'''
 def analyzeMatrix(npMatrix):
     #This value determines how many edges you get.
-    cutoffStringency = 0.8
+    cutoffStringency = 0.6
     
     #current method: cutoff is calculated from the interval cluster
     #then anything less than the cutoff is pruned. 
@@ -128,7 +129,8 @@ def transformMatrix(npMatrix):
 #     
 #     transformedMatrix = (np.power(toFraction / highAverage, scalingFactor)) * maxValue
     
-    transformedMatrix = np.power(toFraction, np.log(toFraction) * -1 * scalingFactor) * maxValue
+    #transformedMatrix = np.power(toFraction, np.log(toFraction) * -1 * scalingFactor) * maxValue
+    transformedMatrix = toFraction
     
     
     return transformedMatrix
@@ -147,7 +149,10 @@ def fromMatrix(matrix, name, colorTable, composition, groups):
     #nodes are two-tuples consisting of id and label
     nodes = [(index, nodeName) for index, nodeName in enumerate(sampleList)]
     edges = []
+    
+    #REMOVING PRUNING
     prunedMatrix = pruneMatrix(matrix)
+#    prunedMatrix = matrix
     
     #edges consists of three-tuples and excludes duplicated
     excluded = []

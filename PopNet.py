@@ -29,7 +29,8 @@ if __name__ == '__main__':
     import Chr_NexusEncoder as chrnex
     import os
     import similarity as sim
-    import CytoscapeEncoder as ce
+    import JSONEncoder as ce
+    #import CytoscapeEncoder as ce
     import GroupComposition as gc
     import ClusterPattern as cp
     import ParentFinder as pf
@@ -203,10 +204,10 @@ if __name__ == '__main__':
     if input_type == 'tabular':
         #Grigg data
         os.chdir(base_directory)
-        griggpath = base_directory + '/' + file_name
-        data = tl.load(griggpath, reference)
+        tab_path = base_directory + '/' + file_name
+        data = tl.load(tab_path, reference, organism)
     #     excludepath = outputDirectory + '/exclude.txt'
-    #     data = tl.load(griggpath, reference, excludepath)
+    #     data = tl.load(tab_path, reference, excludepath)
         dataTree = data[0]
         sampleList = sorted(data[1])
         grey_dict = data[2] #see if there are any grey regions.
@@ -275,6 +276,7 @@ if __name__ == '__main__':
          
     print('filling data tree')
     dataTree = snps.fillDataTree(dataTree, sampleList, reference)
+
         
     while loop: 
         print("generating matrix")     
@@ -292,14 +294,15 @@ if __name__ == '__main__':
             S1_iVal, S1_piVal = ag.findS1(matrix, tabpath, S1params, section_length)
             log.append('Step 1 Optimization for section_length of {0}:\ni = {1}\npi = {2}'.format(str(section_length), str(S1_iVal), str(S1_piVal)))
             log.append('Search range was i between {0} and {1}, pi between {2} and {3}\n'.format(str(S1_iVal_max), str(S1_iVal_min), str(S1_piVal_max), str(S1_piVal_min)))
+        
          
         print('Cluster step 1')
         snps.recordMatrix(matrix, sampleList, tabpath, permatrixpath, perresultpath, S1_iVal, S1_piVal)
         
         
-        print('encoding to nexus')     
-        treetuple = (dataTree, sampleList)
-        nex.nexusOutput(tl.aggregateForNexus(treetuple))
+#         print('encoding to nexus')     
+#         treetuple = (dataTree, sampleList)
+#         nex.nexusOutput(tl.aggregateForNexus(treetuple))
             
         reloaded_dataTree = mclc.loadClusters(perresultpath, tabpath)
         sampleList = reloaded_dataTree[1]
