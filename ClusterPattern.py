@@ -131,7 +131,7 @@ def printColorTable(table):
     maxValueLength = max([len(str(x)) for x in list(table.values())])
 #     print(maxKeyLength, maxValueLength)
     rowFormat = '{:<{klen}}\t{:<{vlen}}'
-    result = "\n".join([rowFormat.format(next(iter(x[0])), hex(x[1]), klen=maxKeyLength, vlen=maxValueLength) for x in list(table.items())])
+    result = "\n".join([rowFormat.format(x[0], hex(x[1]), klen=maxKeyLength, vlen=maxValueLength) for x in list(table.items())])
     return result
     
 '''(dict) -> display
