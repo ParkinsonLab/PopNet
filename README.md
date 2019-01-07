@@ -1,6 +1,9 @@
 ###Getting started
 
-PopNet is available at: www.compsysbio.org
+Try the new browser-based PopNetD3 at www.compsysbio.org/popnetd3
+Submit jobs to be run on our server, and view your results right in the browser!
+
+PopNet is available at: www.compsysbio.org/popnet
 
 Requirements:
 
