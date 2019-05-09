@@ -15,33 +15,6 @@ import numpy
 #tabpath = the tab file
 
 
-def loadSampleList(tabpath):
-    with open(tabpath, "r") as tab:
-        sampleList = []
-        rawSampleList = [_f for _f in re.split("\n", tab.read()) if _f]
-        for element in rawSampleList:
-            ts = re.split(" ", element)
-            sampleList.append(ts[1])
-    
-    return sampleList
-
-def loadClusters(path, tabpath):
-    print("loading clusters...")
-    with open(path, "r") as source:
-        #create the sampleList for making the matrix
-        sampleList = loadSampleList(tabpath)   
-        rawData = source.read()
-        results = {}
-        chrs = re.findall("(?s)(@.+?)\n(.+?)\n(?=$|@)", rawData)
-        for chr in chrs:
-            chrBranch = []
-            results[chr[0]] = chrBranch
-            segments = [_f for _f in re.split("\n\n", chr[1]) if _f] #each "matrix" is separated by a blank line.
-            for segment in segments:
-                chrBranch.append(segment)
-    print("done")    
-    return (results, sampleList)
-
 def distribution(treeTuple, outputpath):
     print("calculating distribution...")
     results = {}
@@ -123,34 +96,7 @@ def findDifferences(treeTuple, outpath, blackList):
                 prevCluster = clusterSplit[1:]
         
         return (results, resultMatrix)
-        
-                
-
-# def diffScore(lines, prevLines): #clusterSplit of the current cluster, clusterSplit of the previous cluster
-#     '''list, list -> int
-#     calculates a measure of how different the two clustering patterns are.
-#     It counts how many different pair-associations exist between the
-#     two patterns. May be normalized later.
-#     As things stand, this is biased towards migration between large clusters. 
-#     '''
-#     pairs = []
-#     results = []
-# 
-#     
-#     for line in lines:
-#         pairs.extend(returnAllPairs(filter(None, re.split("\t", line))))
-#     
-#     for line in prevLines:
-# #        print line
-#         pairs.extend(returnAllPairs(filter(None, re.split("\t", line))))
-#     
-#     for pair in pairs:
-#         if pairs.count(pair) == 1:
-#             results.append(pair)
-#             print pair
-#     print "--"
-#     return results
-            
+                    
 def diffScore(lines, prevLines):
     a = [re.split("\t", line) for line in lines]
     b = [re.split("\t", line) for line in prevLines]
@@ -231,17 +177,7 @@ def count(treeTuple, outputPath):
                         if x != y:
                             resultMatrix[y][x] += 1
             results[name] = resultMatrix
-                        
-        #return/outputs the result
-#             output.write(chr[0])
-#             output.write("\n")
-#             output.write(repr(sampleList))
-#             output.write("\n")
-#             output.write(repr(resultMatrix))
-#             output.write("\n")
-#             for x in resultMatrix:
-#                 output.write(str(resultMatrix[x]))
-#                 output.write("\n")
+                    
         print("done")
         return (results, sampleList)
 
@@ -345,20 +281,5 @@ if __name__ == '__main__':
     wholegenome = aggregate(treeTuple[0])
     Chr_NexusEncoder.clusterMatrixOutput(wholegenome, treeTuple[1])
     Chr_NexusEncoder.nexusMatrixOutput(wholegenome, treeTuple[1])
-#    NexusEncoder.nexusOutput(wholegenome)
-    
-#     #To calculate distribution
-#     path = "/data/javi/Toxo/64Genomes/Counting/persistentResult.txt"
-#     tabpath = "/data/javi/Toxo/64Genomes/Counting/persistentMatrix.tab"
-#     outputpath = "/data/javi/Toxo/64Genomes/Counting/distribution.txt"
-#     os.chdir("/data/javi/Toxo/64Genomes/Counting")
-#     summary_distribution(distribution(loadClusters(path, tabpath), outputpath))
-    
-#     # To calculate diff score
-#     results = findDifferences(treeTuple, outputpath, [])
-# #    print results
-#     graphResults("Differences", results[0])
-#     printDiff(diffPath, results[0])
-#     printMatrix(results[1], "diffmatrix.txt")
-#    print results
+
     print("end of MCLCounter script")

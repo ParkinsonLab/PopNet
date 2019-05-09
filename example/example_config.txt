@@ -1,0 +1,16 @@
+#For V2
+
+[Settings]
+output_directory = /d/data/neis/test
+input_path= /d/data/neis/neis2.tsv
+
+reference= None
+
+section_length= 5000
+S1_iVal= 8
+S1_piVal= 19
+S2_iVal= 4
+S2_piVal= 1.5
+
+#currently unused
+autogroup = True

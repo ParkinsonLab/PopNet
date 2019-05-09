@@ -189,11 +189,6 @@ def parse(matrix, name, sampleList, outfile, colorTable, composition, groups):
     with open(outfile, 'w') as output:
         output.write(fromMatrix(matrix, name, colorTable, composition, groups))
 
-# '''for the sake of readability, the header info for the GML file will be
-# stored here'''
-# def getHeader(label):
-#     header = "".format(label)
-#     return header
 
 '''(Int, String) -> String
 same idea for the node text.'''
