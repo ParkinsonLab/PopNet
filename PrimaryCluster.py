@@ -8,7 +8,6 @@ Created on Oct 11, 2013
 import numpy as np
 import pandas
 import os
-import objgraph
 
 from pathlib import Path
 from multiprocessing import Pool
