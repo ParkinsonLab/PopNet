@@ -4,10 +4,9 @@ Created on Aug 7, 2014
 @author: javi
 '''
 '''sorts chr names
-
-you need to change the offsets for each dataSet!!!!!
 '''
 import re
+import string
 
 romanNumeralMap = (('X',  10),
                    ('IX', 9),
@@ -15,7 +14,6 @@ romanNumeralMap = (('X',  10),
                    ('IV', 4),
                    ('I',  1),
                    ('M',  0))
-offset = 0
 
 def sortNames(chr_names):
     '''
@@ -28,12 +26,11 @@ def sortNames(chr_names):
         return chr_names
 
 def getValue(name):
-    global offset
-    tmp_offset = 0
+
     name = name.upper()
-    pattern = '.+_(CHR[XIMV]+[ABCDE]?|[XIMV]+|[0-9]+[ABCDE]?)(_.+|$)'
-    suffix = 'ABCDE'
-    
+    pattern = '.+_(CHR[XIMV]+[ABCDE]?|[XIMV]+|[0-9]+[A-Z]?)(_.+|$)'
+    offset = 0
+     
     section = re.search(pattern, name)
 
     if section is None:
@@ -46,17 +43,16 @@ def getValue(name):
         section = section[3:]
     
     #Removes suffix if applicable
-    if section[-1] in suffix:
-        tmp_offset = suffix.index(section[-1])
+    if section[-1] in string.ascii_uppercase and section[-1] not in 'IXVM':
+        offset = string.ascii_uppercase.index(section[-1]) / 10.
         section = section[:-1]
     
     #Try it as numeric, go for roman if it doesn't work.
     try:
-        val = int(section) + offset + tmp_offset
+        val = int(section) + offset
     except ValueError:
-        val = romanToNum(section) + offset + tmp_offset
+        val = romanToNum(section) + offset
 
-    offset += min(1, tmp_offset)
     return val
 
 def romanToNum(roman):

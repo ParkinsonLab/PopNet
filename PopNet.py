@@ -134,9 +134,8 @@ def main(config_file_path):
 
     #tabular data from GTAK loaded to pandas
     hdf_path = input_path.parent / '{0}.h5'.format(prefix)
-    df, sample_list = loadToPandas(hdf_path, input_path, reference)
+    df, sample_list = loadToPandas(hdf_path, input_path, reference, filtering=True)
     os.chdir(output_directory)
-        
 
 #Analysis
         
@@ -145,6 +144,7 @@ def main(config_file_path):
     clusters, chr_breaks = primaryCluster(df, sample_list, s1_params, logger)
 
     # diagnostic
+    print(chr_breaks)
     chr_names = list(df.index.get_level_values(0))
     io.writePrimaryClusters(chr_names, chr_breaks, clusters, Path('pclusters.txt'))
 

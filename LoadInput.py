@@ -42,12 +42,13 @@ def loadToPandas(hdf_path, tsv_path, reference, filtering=True):
             df_filtered = df.loc[msk]
             m = len(df) - sum(msk)
             n = len(df)
-            logger.info('{0} positions filtered out of {1} for drift ({2}%)'.format(m, n, round(m / n, 2)))
+            logger.info('{0} positions filtered out of {1} for drift ({2}%)'.format(m, n, round(m / n, 2) * 100))
         else:
             df_filtered = df
 
         #multiindex
         chrs = sortNames(list(set(df_filtered['CHROM'])))
+        print(chrs)
         cat = pandas.Categorical(df_filtered['CHROM'], chrs)
         df_filtered['CHROM'] = cat
         df_filtered = df_filtered.set_index(['CHROM', 'POS'])
@@ -57,10 +58,11 @@ def loadToPandas(hdf_path, tsv_path, reference, filtering=True):
         
         
         #writeout
+        logger.info('recording to hdf5')
         df = df_filtered
         df.to_hdf(hdf_path, key='genome')#move to the end
     
-    return df, sorted(list(df.columns))
+    return df, list(df.columns)
 
 def filter(x):
     '''

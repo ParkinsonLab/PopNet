@@ -26,8 +26,8 @@ def condenseToGroupMatrix(dfs, group_names, overall_clusters, sample_list):
     implements the logic of determining whether a sample belong to a group
     within one block
     '''
-    pool = mp.Pool(None, condenseInit, (group_names, overall_clusters, sample_list))
-    res = pool.map(condenseWorker, dfs)
+    with mp.Pool(processes=None, initializer=condenseInit, initargs=(group_names, overall_clusters, sample_list)) as pool:
+        res = pool.map(condenseWorker, dfs, chunksize=5)
 
     return res
 
@@ -94,8 +94,8 @@ def getChromosomePaintings(matrices, breaks, overall_clusters, group_names, samp
     MAX_SCORE = 40
     PENALTY = -8
 
-    pool = mp.Pool(1, paintWorkerInit, (matrices, breaks, overall_clusters, group_names, sample_list, MAX_SCORE, PENALTY))
-    res = pool.map(paintWorker, sample_list)
+    with mp.Pool(processes=None, initializer=paintWorkerInit, initargs=(matrices, breaks, overall_clusters, group_names, sample_list, MAX_SCORE, PENALTY)) as pool:
+        res = pool.map(paintWorker, sample_list, chunksize=5)
 
     return res
 
@@ -152,70 +152,76 @@ def paintWorker(sample):
     global penalty 
 
     
-    
-    #make a mask to hide scores for your own group
-    self_group = getSelfGroup(sample)
-    self_mask = np.full(len(group_names), 1)
-    self_mask[self_group] = 0
+    try:
+        #make a mask to hide scores for your own group
+        self_group = getSelfGroup(sample)
+        self_mask = np.full(len(group_names), 1)
+        self_mask[self_group] = 0
 
-    #iterate through the condensed matrices of this one sample
-    data = np.array([matrix.loc[sample] for matrix in matrices])
-    data[data==0] = penalty
+        #iterate through the condensed matrices of this one sample
+        data = np.array([matrix.loc[sample] for matrix in matrices])
+        data[data==0] = penalty
 
-    #transform the data to accomodate for self group
-    min_score = penalty * (len(group_names) - 1)
-    masked_data = data * self_mask
-    self_hits =  np.sum(masked_data, axis = 1) <= min_score
-    self_misses = ~self_hits
-    masked_data[self_hits, self_group] = 1
-    masked_data[self_misses, self_group] = penalty 
-    data = masked_data
+        #transform the data to accomodate for self group
+        min_score = penalty * (len(group_names) - 1)
+        masked_data = data * self_mask
+        self_hits =  np.sum(masked_data, axis = 1) <= min_score
+        self_misses = ~self_hits
+        masked_data[self_hits, self_group] = 1
+        masked_data[self_misses, self_group] = penalty 
+        data = masked_data
+        data[data == 0] = penalty
 
-    #put a black thing as the beginning
-    segments = [(10, -1)]
-    c = 0 #cutoff
-    i = 0 #iterator
-    for b in breaks:
-        chr_mat = data[i:b]
-        chr_mat[chr_mat == 0] = penalty
-        score = np.zeros(len(group_names))
-        dropped = np.full_like(score, 1)
-        while i < b:
-            pos_data = chr_mat[i]
-            # score = np.clip((score + pos_data) * dropped, 0, max_score) #updates the score, but puts the dropped ones to zero.
-            pos_score = pos_data * dropped
-            score = score + pos_score
-            
-            # #diagnostic
-            print(sample, c, i, score, pos_data)
+        #put a black thing as the beginning
+        segments = [(10, -1)]
+        c = 0 #cutoff
+        i = 0 #iterator
+        for b in breaks:
+            # chr_mat = data[i:b]
+            # chr_mat[chr_mat == 0] = penalty
+            score = np.zeros(len(group_names))
+            dropped = np.full_like(score, 1)
+            while i < b:
+                # pos_data = chr_mat[i]
+                pos_data = data[i]
+                # score = np.clip((score + pos_data) * dropped, 0, max_score) #updates the score, but puts the dropped ones to zero.
+                pos_score = pos_data * dropped
+                score = score + pos_score
+                
+                # #diagnostic
+                # print(sample, c, i, score, pos_data)
 
-            dropped[np.where(score <= 0)] = 0.
-            if np.sum(dropped) == 0:
-                assignment = np.argmin(score) #find the index with the last non-zero value
-                l = backTrack(assignment, chr_mat[c:i]) #length of this segment
-                if l == 'ERROR':
-                    print('error', b, c, i, score, pos_data, sample, chr_mat[c:i])
-                    raise Exception
+                dropped[np.where(score <= 0)] = 0.
+                if np.sum(dropped) == 0:
+                    assignment = np.argmin(score) #find the index with the last non-zero value
+                    # l = backTrack(assignment, chr_mat[c:i]) #length of this segment
+                    l = backTrack(assignment, data[c:i]) #length of this segment
+                    if l == 'ERROR':
+                        print('error', b, c, i, score, pos_data, sample, data[c:i])
+                        raise Exception
 
-                c = c + l #move the cutoff up
-                i = c #move the iterator up
-                segments.append((l, assignment)) #segment contains only length and assignment
-                score = np.zeros_like(score)
-                dropped = np.full_like(score, 1)
+                    c = c + l #move the cutoff up
+                    i = c #move the iterator up
+                    segments.append((l, assignment)) #segment contains only length and assignment
+                    score = np.zeros_like(score)
+                    dropped = np.full_like(score, 1)
+                else:
+                    score = np.clip(score, 1, max_score)
+                    i += 1
             else:
-                score = np.clip(score, 1, max_score)
-                i += 1
-        else:
-            #chooses the highest tally as the assignment for the last one.
-            # print(sample, c, i)
-            assignment = np.argmax(score)
-            segments.append((i - c, assignment))
-            segments.append((1, -1))
-            c = i
+                #chooses the highest tally as the assignment for the last one.
+                # print(sample, c, i)
+                assignment = np.argmax(score)
+                segments.append((i - c, assignment))
+                segments.append((1, -1))
+                c = i
 
-    
-    #flatten
-    return segments
+        
+        #flatten
+        return segments
+    except:
+        print('Error: {0}\nat paint worker for {1}'.format(traceback.format_exc(), sample))
+        return
 
 '''matrix (condensed but not aggregate), output file -> None (output)
 outputs the whole graph to tabular format

@@ -7,6 +7,8 @@ Created on Oct 11, 2013
 #system imports
 import numpy as np
 import pandas
+import os
+import objgraph
 
 from pathlib import Path
 from multiprocessing import Pool
@@ -65,29 +67,35 @@ def primaryCluster(df, sample_list, cluster_params, logger):
     res = []
     chr_breaks = []
     prev = 0
+    # pool = Pool(processes = 6, initializer=mclInit, initargs=(sample_list, tab_path, ival, pival))
+
 
     #slicing and handing out jobs
-    for chr_name, df_chr in df.groupby(level=0):
+    global df_chr_global
+    for chr_name, df_chr_global in df.groupby(level=0, sort=False):
+        with Pool(processes = None, initializer=mclInit, initargs=(sample_list, tab_path, ival, pival), maxtasksperchild=100) as pool:
+            print(chr_name)
 
+            positions = np.array(df_chr_global.index.get_level_values('POS'))
+            sections = groupBySection(positions, section_length)
 
-        positions = np.array(df_chr.index.get_level_values('POS'))
-        sections = groupBySection(positions, section_length)
-        pool = Pool(initializer=mclInit, initargs=(sample_list, tab_path, ival, pival))
-        clusters = pool.starmap(mclWorker, [(i, df_chr.loc[(slice(None),section),:]) for i, section in enumerate(sections)], chunksize=10)
-        res += clusters
+            # clusters = pool.starmap(mclWorker, [(i, df_chr.loc[(slice(None),section),:]) for i, section in enumerate(sections)], chunksize = 5)
+            #trial for globaling the data
+            clusters = pool.starmap(mclWorker, [(i, (slice(None),section)) for i, section in enumerate(sections)], chunksize = 5)
 
+            res += clusters
 
-        chr_breaks.append(prev + len(clusters))
-        prev += len(df_chr)
+            chr_breaks.append(prev + len(clusters))
+            prev += len(clusters)
     
     #post-processing
     analysis = analyzeClusters(res)
-    print(analysis)
     logger.info(analysis)
 
     return res, chr_breaks
 
 def mclInit(sample_list_arg, tab_path_arg, ival_arg, pival_arg):
+
     global sample_list
     global tab_path
     global ival
@@ -98,7 +106,10 @@ def mclInit(sample_list_arg, tab_path_arg, ival_arg, pival_arg):
     ival = ival_arg 
     pival = pival_arg
 
-def mclWorker(i, section):
+    return
+
+
+def mclWorker(i, section_pos_list):
     '''
     main function of an mcl worker
     gets an mcl result from a block
@@ -126,26 +137,29 @@ def mclWorker(i, section):
     global ival
     global pival
 
-    #get dists
-    if section.empty:
-        dists = np.full((len(sample_list), len(sample_list)), 1)
-    else:  
-        dists = matrixFromBlock(section.T)
+    # get dists
+    try:
+        section = df_chr_global.loc[section_pos_list, :]
 
- 
-    #reformat into mcl.   
-    mcl_matrix = buildMatrix(dists, sample_list)
-    
-    # #diagnostic
-    # print(i, section)
-    # print(i, mcl_matrix)
+        if section.empty:
+            dists = np.full((len(sample_list), len(sample_list)), 1)
+        else:  
+            dists = matrixFromBlock(section.T)
 
 
-    #call mcl
-    
-    groups = mcl(mcl_matrix, tab_path, ival, pival, raw=False)
-    #return some stuff?
-    return groups
+        #reformat into mcl.   
+        mcl_matrix = buildMatrix(dists, sample_list)
+        
+
+
+        #call mcl
+        groups = mcl(mcl_matrix, tab_path, ival, pival, raw=False)
+
+
+        return groups
+    except:
+        print('oh no an error in {0}'.format(os.getpid()))
+
 
     
 def recordTab(sample_list, tabpath):
