@@ -2,6 +2,7 @@
 An aggregate script containing functions for outputting stuff
 '''
 import os
+import numpy as np
 from subprocess import check_output
            
 def mcl(currString, tabpath, iValue, piValue, raw=False):
@@ -165,51 +166,48 @@ def writeOverallMatrix(matrix, outfile):
     [x[1] for x in matrix.items()]
     writes a representation of the matrix into the output file'''
     matrix.to_csv(outfile, sep='\t')
-#     header = sorted([x for x in matrix.keys()])
-#     header.insert(0," ")
-#     maxLength = 0
-#     for e in header:
-#         if len(e) > maxLength:
-#             maxLength = len(e)
+
+def writeTabularPainting(composition, chrs, section_length, sample_list, path):
+
+    def makeLine(data, *args):
+        #put the data first
+        args = [str(e) for e in args]
+        data = [str(e) for e in data]
+        return '\t'.join(args + data) + '\n'
     
-#     row_format ="{:>{length}}\t" * len(header) + "\n"            
-#     with open(outfile, "w") as output:    
-# #        row_format = "{:>30}" * 2 + "\n"
-# #        output.write(row_format.format("", *header) + "\n")
-#         output.write(row_format.format(length=maxLength, *header))
-#         for name, info in sorted(matrix.items()):
-# #            output.write(row_format.format(name, *[x[1] for x in info.items()]) + "\n")
-#             items = [str(x[1]) for x in sorted(info.items())]
-#             items.insert(0, name)
-#             output.write(row_format.format(length=maxLength, *items))
+    def expand(data):
+        #now we gotta expand the painting instead so it's a bit of a shame
+        result = []
+        for e in data:
+            if e[1] >= 0:
+                result += [e[1]] * e[0]
+            else:
+                result.append(-1) 
+        return result
 
-# def nexusMatrixOutput(matrix, sample_list):
-#     '''
-#     legacy function from before to write nexus files for neighbournet.
-#     needs work to adapt to new format, possibly?
-#     '''
-#     samplecount = len(sample_list)    
-#     print("writing..")
-#     for chr in matrix:
-#         data = matrix[chr]
-#         with open("%s_matrix_nexus.nex"%chr, "w") as output:
-#             output.write("#NEXUS\nBEGIN taxa;\n\tDIMENSIONS ntax=%i;\nTAXLABELS\n"%(samplecount))
-#             #for the taxa names thinga at the top.
-#             for index, name in enumerate(sample_list):
-#                 output.write("[%i]    %s\n"%(index, name))
-#             output.write(";\nEND [taxa];\n\nBEGIN distances;\nDIMENSIONS ntax=%i;\
-#             \nFORMAT labels diagonal triangle=both;\nMATRIX\n"%samplecount)
-#             #the actual data
-#             for index, x in enumerate(sample_list):
-#                 output.write("[%i] %s\t" % (index, x))
-#                 for y in sample_list:
-#                     output.write("%i "%data[x][y])
-#                 output.write("\n")
-#             output.write(";\nEND [distances];")
-#     print("done")
+    chr_itr = iter(chrs)
+    comp_array = np.array([expand(sample) for sample in composition])
+    chr = None
+    c = 0
 
-# def writeTabularPainting(composition, path):
-#     return
+    with open(path, 'w') as output:
+        output.write(makeLine(sample_list, 'CHR', 'POS'))
+        for row in comp_array.T:
+
+            if np.sum(row) <= 0:
+                try:
+                    # print('Terminating at {0}'.format(row))
+                    chr = next(chr_itr)
+                    # print('Moving to {0} after {1} positions'.format(chr, c))
+                    c = 0
+                    
+                except:
+                    pass
+            else:
+                # print(row)
+                pos = c * section_length
+                output.write(makeLine(row, chr, pos))
+                c += 1
 
 def writePrimaryClusters(chr_names, chr_breaks, clusters, path):
 

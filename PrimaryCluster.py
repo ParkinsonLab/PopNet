@@ -65,6 +65,7 @@ def primaryCluster(df, sample_list, cluster_params, logger):
 
     res = []
     chr_breaks = []
+    chr_names = []
     prev = 0
     # pool = Pool(processes = 6, initializer=mclInit, initargs=(sample_list, tab_path, ival, pival))
 
@@ -72,8 +73,9 @@ def primaryCluster(df, sample_list, cluster_params, logger):
     #slicing and handing out jobs
     global df_chr_global
     for chr_name, df_chr_global in df.groupby(level=0, sort=False):
-        with Pool(processes = None, initializer=mclInit, initargs=(sample_list, tab_path, ival, pival), maxtasksperchild=100) as pool:
+        with Pool(processes = None, initializer=mclInit, initargs=(sample_list, tab_path, ival, pival)) as pool:
             print(chr_name)
+            chr_names.append(chr_name)
 
             positions = np.array(df_chr_global.index.get_level_values('POS'))
             sections = groupBySection(positions, section_length)
@@ -91,7 +93,7 @@ def primaryCluster(df, sample_list, cluster_params, logger):
     analysis = analyzeClusters(res)
     logger.info(analysis)
 
-    return res, chr_breaks
+    return res, chr_names, chr_breaks
 
 def mclInit(sample_list_arg, tab_path_arg, ival_arg, pival_arg):
 
@@ -136,6 +138,7 @@ def mclWorker(i, section_pos_list):
     global ival
     global pival
 
+    print('thread {0} is doing section {1}'.format(os.getpid(), i))
     # get dists
     try:
         section = df_chr_global.loc[section_pos_list, :]

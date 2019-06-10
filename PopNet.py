@@ -141,12 +141,10 @@ def main(config_file_path):
         
     logger.info('Start Primary Clustering')
     io.writeTab(sample_list, tab_path) 
-    clusters, chr_breaks = primaryCluster(df, sample_list, s1_params, logger)
+    clusters, chr_names, chr_breaks = primaryCluster(df, sample_list, s1_params, logger)
 
-    # diagnostic
-    print(chr_breaks)
-    chr_names = list(df.index.get_level_values(0))
     io.writePrimaryClusters(chr_names, chr_breaks, clusters, Path('pclusters.txt'))
+
 
     matrices = at.clustersToMatrix(clusters, sample_list)   
     overall_matrix = at.overallMatrix(matrices)
@@ -163,8 +161,8 @@ def main(config_file_path):
        
 #    for the whole thing
     logger.info('writing output')
-    # io.writeTabularPainting(composition, tab_network_path)
-    # io.writeOverallMatrix(overall_matrix, sample_list)
+    io.writeTabularPainting(composition, chr_names, s1_params.getSectionLength(), sample_list, tab_network_path)
+    io.writeOverallMatrix(overall_matrix, matrixout_path)
     exporter.parse(overall_matrix, color_table, composition, group_names, overall_clusters, sample_list, prefix)
     print("PopNet Completed")
     print('Run time was {0} seconds'.format(time.time() - start_time))

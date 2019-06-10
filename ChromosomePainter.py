@@ -2,10 +2,19 @@
 Created on Apr 28, 2014
 
 @author: javi
+
+This file contains functions related to obtaining a chromosome painting from primary clustering
+and secondary clustering results.
+
+Roughly:
+the condenseToGroups related functions determines whether a sample matches a subpopulation. It turns N_sample x N_sample
+matrices to N_sample x N_group matrices that are all 1s and 0s. 
+
+the paintworker related functions does the tiling and gap filling. Each sample is handled separately in a different thread.
+this gives us a N_samples x N_sections 2D list. There is a 'black' section (10, -1) or (1, -1) at the beginning and after each chromosome in order
+to allow for recognition. 
 '''
-'''in fulfillment of John's request for a chromosome coloring scheme where each section
-is colored according to which group is based on.. MCL. zzz.
-Use the createColorTable and calculateColor from ClusterPattern to visualize.'''
+
 
 '''Strain -> Dict
 number represents the group ID, as specified in this function'''

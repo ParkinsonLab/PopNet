@@ -50,7 +50,7 @@ def loadToPandas(hdf_path, tsv_path, reference, filtering=True):
         chrs = sortNames(list(set(df_filtered['CHROM'])))
         print(chrs)
         cat = pandas.Categorical(df_filtered['CHROM'], chrs)
-        df_filtered['CHROM'] = cat
+        df_filtered.loc[:,'CHROM'] = cat
         df_filtered = df_filtered.set_index(['CHROM', 'POS'])
 
 
