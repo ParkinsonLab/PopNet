@@ -38,7 +38,8 @@ def primaryCluster(df, sample_list, cluster_params, logger):
             try:
                 idx = np.argmax(dists[dists <= 0]) + 1
             except ValueError:
-                idx = -1
+                print('Warning: empty block')
+                idx = 0
 
             #if we want to return the last position, return -1 isntead
             if idx == len(positions) - 1:
@@ -79,11 +80,9 @@ def primaryCluster(df, sample_list, cluster_params, logger):
 
             positions = np.array(df_chr_global.index.get_level_values('POS'))
             sections = groupBySection(positions, section_length)
+            # print([len(section) for section in sections])
 
-            # clusters = pool.starmap(mclWorker, [(i, df_chr.loc[(slice(None),section),:]) for i, section in enumerate(sections)], chunksize = 5)
-            #trial for globaling the data
             clusters = pool.starmap(mclWorker, [(i, (slice(None),section)) for i, section in enumerate(sections)], chunksize = 5)
-
             res += clusters
 
             chr_breaks.append(prev + len(clusters))
@@ -132,15 +131,18 @@ def mclWorker(i, section_pos_list):
 
         return dists
 
+    
+
     #use initialized variables
     global sample_list
     global tab_path
     global ival
     global pival
 
-    print('thread {0} is doing section {1}'.format(os.getpid(), i))
+    # print('thread {0} is doing section {1}'.format(os.getpid(), i))
     # get dists
     try:
+
         section = df_chr_global.loc[section_pos_list, :]
 
         if section.empty:
@@ -148,15 +150,11 @@ def mclWorker(i, section_pos_list):
         else:  
             dists = matrixFromBlock(section.T)
 
-
         #reformat into mcl.   
         mcl_matrix = buildMatrix(dists, sample_list)
         
-
-
-        #call mcl
+        # call mcl
         groups = mcl(mcl_matrix, tab_path, ival, pival, raw=False)
-
 
         return groups
     except:
