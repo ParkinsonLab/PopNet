@@ -24,7 +24,7 @@ def clusterWorkerInit(_base):
     global base 
     base = _base 
 
- #decompose one cluster
+#decompose one cluster
 def clusterWorker(cluster):
     '''
     does it for one cluster

@@ -80,7 +80,6 @@ def primaryCluster(df, sample_list, cluster_params, logger):
 
             positions = np.array(df_chr_global.index.get_level_values('POS'))
             sections = groupBySection(positions, section_length)
-            # print([len(section) for section in sections])
 
             clusters = pool.starmap(mclWorker, [(i, (slice(None),section)) for i, section in enumerate(sections)], chunksize = 5)
             res += clusters

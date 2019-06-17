@@ -2,6 +2,8 @@
 An aggregate script containing functions for outputting stuff
 '''
 import os
+import json
+import pandas
 import numpy as np
 from subprocess import check_output
            
@@ -94,35 +96,6 @@ def writeClusters(clusters, chrs, clusters_path):
     
     with open(clusters_path) as output:
         output.write(output_string)
-
-# def clmInfo(currString, tabpath, params):
-#     '''runs clminfo in with a range of values, and finds the pattern with the least amount of change over time.'''
-    
-#     #helper functions
-#     ###
-    
-#     matrixName = 'in.mci'
-#     with open(matrixName, 'w') as tmp:
-#         tmp.write(currString)
-        
-#     iVals = stepList(params.getIMin(),params.getIMax(),params.getIStep(), reverse=True)
-#     piVals = stepList(params.getPiMin(),params.getPiMax(),params.getPiStep())
-    
-#     files = []
-#     for i in iVals:
-#         files += setupClm(currString, i, piVals)
-# #     files = reduce(lambda x, y: x + y, files) #make 2d list flat
-    
-#     result = check_output(['clm', 'info', matrixName] + files, close_fds=True)
-#     result = bytes.decode(result)
-#     #returns the clm dist (variance of information) but not using that atm.
-# #    result = subp.check_output(['clm', 'dist', '-mode', 'sj', '--chain'] + files, close_fds=True)
-    
-#     for file in files:
-#         os.remove(file)
-#     os.remove(matrixName)
-        
-#     return result
 
 '''(dict, list) -> string
 builds the matrix (.mci) string to be used in mcl
@@ -218,3 +191,42 @@ def writePrimaryClusters(chr_names, chr_breaks, clusters, path):
             for i, cluster in enumerate(clusters[prev:break_point]):
                 output.write('\n'.join([str(i)] + [' '.join(c) for c in cluster] + ['\n']))
             prev = break_point
+
+def checkPrimaryClustering(parameters, save_state_path):
+    try:
+        with open(save_state_path, 'r') as input:
+            save_state = json.loads(input.read())
+
+        if parameters.getIVal() == save_state['i'] and parameters.getPiVal() == save_state['pi'] and parameters.getSectionLength() == save_state['sl']:
+            return False 
+        else:
+            return True
+    except:
+        return True
+
+def writeSaveState(parameters, sample_list, chr_names, chr_breaks, matrices, save_state_path, matrices_hdf_path):
+
+    save_state = {
+        'i': parameters.getIVal(),
+        'pi': parameters.getPiVal(),
+        'sl': parameters.getSectionLength(),
+        'sample_list': sample_list,
+        'chr_names': chr_names,
+        'chr_breaks': chr_breaks,
+        'n_matrices': len(matrices)
+    }
+    with open(save_state_path, 'w') as output:
+        output.write(json.dumps(save_state))
+
+    with pandas.HDFStore(matrices_hdf_path) as store:
+        for x in range(len(matrices)):
+            store['M'+str(x)] = matrices[x]
+
+    
+def loadSaveState(save_state_path, matrices_hdf_path):
+    with open(save_state_path, 'r') as input:
+        save_state = json.loads(input.read())
+    
+    with pandas.HDFStore(matrices_hdf_path) as store:
+        matrices = [store['M' + str(x)] for x in range(save_state['n_matrices'])]
+        return save_state, matrices

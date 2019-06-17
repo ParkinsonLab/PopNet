@@ -1,12 +1,12 @@
 #For V2
 
 [Settings]
-output_directory = /d/data/neis/test
-input_path= /d/data/neis/neis2.tsv
+output_directory = /d/workspace/PopNet/example/out
+input_path= /d/workspace/PopNet/example/toxo20.txt
 
 reference= None
 
-section_length= 5000
+section_length= 10000
 S1_iVal= 8
 S1_piVal= 19
 S2_iVal= 4

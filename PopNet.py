@@ -28,14 +28,6 @@ import ParamWrapper as pw
 import IOTools as io 
 import AnalysisTools as at 
   
-def sanitize_input(config):
-    
-    #check various inputs to make sure they are fine
-
-    if not os.path.isdir(config.get('Settings', 'base_directory')):
-        raise ValueError("base directory doesn't exist")
-
-    
 def configLogger(_path):
     
     logger = logging.getLogger()
@@ -93,12 +85,10 @@ def main(config_file_path):
         s2_params.setPiStep(0.5)
         
         reference = config.get('Settings', 'reference')
-        autogroup = config.getboolean('Settings', 'autogroup')
+        autogroup = bool(config.getboolean('Settings', 'autogroup'))
 
     except:
-        raise RuntimeError('Error reading configureation file')
-
-    
+        raise RuntimeError('Error reading configuration file')
 
     #output paths 
     if not output_directory.is_dir():
@@ -119,38 +109,60 @@ def main(config_file_path):
 
     colorout_path = Path("colors.txt")
     log_path = Path("log.txt")
-    
+
+    hdf_path = input_path.parent / '{0}.h5'.format(prefix)
+    matrices_hdf_path = input_path.parent / '{0}_matrices.h5'.format(prefix)
+    save_state_path = input_path.parent / '{0}_savestate.json'.format(prefix)
+
     #other variables
-    # accepted_values = ['A', 'T', 'C', 'G', 'N']  
     logger = configLogger(log_path)
     
-    #let's log some params used later
-    # msg = '\n'.join(['{0}\t{1}'.format(name, str(globals()[name])) for name in sorted(var_list)])
-    # logger.log(msg)
+    #sanitize input
+    try:
+        assert(input_path.is_file())
+        assert(0 <= s1_params.getPiVal() <= 20)
+        assert(0 <= s1_params.getIVal() <= 20)
+        assert(0 <= s2_params.getPiVal() <= 20)
+        assert(0 <= s2_params.getIVal() <= 20)
+    except:
+        raise ValueError('Configuration file contains bad values')
 
+    #let's log some params used later
     logger.info('config loaded')
 
+
 #Input Processing
+    
+    #true means need to cluster
+    if not io.checkPrimaryClustering(s1_params, save_state_path):
+        logger.info('Primary Clustering exists, loading existing matrices')
+        save_state, matrices = io.loadSaveState(save_state_path, matrices_hdf_path)
+        sample_list = save_state['sample_list']
+        chr_names = save_state['chr_names']
+        chr_breaks = save_state['chr_breaks']
+        io.writeTab(sample_list, tab_path)
+    else:
+        #tabular data from GTAK loaded to pandas
+        df, sample_list = loadToPandas(hdf_path, input_path, reference, s1_params, True)
+        os.chdir(output_directory)
+            
+        logger.info('Start Primary Clustering')
+        io.writeTab(sample_list, tab_path) 
+        #TODO: check for whether we're skipping primary clustering
+        clusters, chr_names, chr_breaks = primaryCluster(df, sample_list, s1_params, logger)
+        io.writePrimaryClusters(chr_names, chr_breaks, clusters, Path('pclusters.txt'))
+        matrices = at.clustersToMatrix(clusters, sample_list)
+        logger.info('Writing Save State')
+        io.writeSaveState(s1_params, sample_list, chr_names, chr_breaks, matrices, save_state_path, matrices_hdf_path)
 
-    #tabular data from GTAK loaded to pandas
-    hdf_path = input_path.parent / '{0}.h5'.format(prefix)
-    df, sample_list = loadToPandas(hdf_path, input_path, reference, filtering=True)
-    os.chdir(output_directory)
-
-#Analysis
         
-    logger.info('Start Primary Clustering')
-    io.writeTab(sample_list, tab_path) 
-    clusters, chr_names, chr_breaks = primaryCluster(df, sample_list, s1_params, logger)
 
-    io.writePrimaryClusters(chr_names, chr_breaks, clusters, Path('pclusters.txt'))
-
-
-    matrices = at.clustersToMatrix(clusters, sample_list)   
+    #TODO: output the primary clustering stuff to hdf5
+       
     overall_matrix = at.overallMatrix(matrices)
 
     logger.info('Start Secondary Clustering')
-    group_names, overall_clusters = sc.group(overall_matrix, tab_path, group_path, s2_params)
+    group_names, overall_clusters = sc.group(overall_matrix, tab_path, group_path, s2_params, autogroup)
             
     color_table = at.createColorTable(group_names, overall_clusters, sample_list)
     color_table.to_csv(colorout_path)

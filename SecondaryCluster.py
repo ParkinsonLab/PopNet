@@ -55,7 +55,8 @@ def group(similarity_matrix, tab_path, out_path, params, autogroup=False):
 def optimize(matrix, tab_path, params):
     '''
     find the best thing according silhouette index
-    '''    
+    '''
+    print('Beginning Optimization')    
     #list of (ival, pival) from small to large
     sample_list = readTab(tab_path)
     params_to_try = []
@@ -65,8 +66,6 @@ def optimize(matrix, tab_path, params):
         for y in pi_list:
             params_to_try.append((x, y))
     
-
-
     pool = mp.Pool(None, getMetricsInit, (matrix, tab_path, sample_list))
     metrics = pool.starmap(getMetricsWorker, params_to_try, chunksize=10)
     n_clusters, silhouette = zip(*metrics)
@@ -89,6 +88,7 @@ def optimize(matrix, tab_path, params):
     ival, pival = params_to_try[np.argmax(metrics)]
     params.setIVal(ival)
     params.setPiVal(pival)
+    print('Finished Optimization')
     return params
 
 def getMetricsInit(_matrix, _tab_path, _sample_list):

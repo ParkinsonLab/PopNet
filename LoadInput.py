@@ -16,8 +16,8 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from ChrNameSorter import sortNames
 
 
-def loadToPandas(hdf_path, tsv_path, reference, filtering=True):
-    
+def loadToPandas(hdf_path, tsv_path, reference, parameters, filtering=True):
+
     logger = logging.getLogger()
     
     #load df. tries to get hdf first. Otherwise go to tsv and write a feather file.
@@ -48,7 +48,6 @@ def loadToPandas(hdf_path, tsv_path, reference, filtering=True):
 
         #multiindex
         chrs = sortNames(list(set(df_filtered['CHROM'])))
-        print(chrs)
         cat = pandas.Categorical(df_filtered['CHROM'], chrs)
         df_filtered.loc[:,'CHROM'] = cat
         df_filtered = df_filtered.set_index(['CHROM', 'POS'])
@@ -58,7 +57,6 @@ def loadToPandas(hdf_path, tsv_path, reference, filtering=True):
         
         
         #writeout
-        logger.info('recording to hdf5')
         df = df_filtered
         df.to_hdf(hdf_path, key='genome')#move to the end
     
