@@ -85,7 +85,7 @@ def condenseWorker(input_df):
     for sample in sample_list:
         tmp = getMatchingGroup(sample)
         if sum(tmp) <= 0:
-            tmp = np.array([0 for x in range(len(group_names))])
+            tmp = np.zeros(len(group_names))
             tmp[getSelfGroup(sample)] = 1
         base_df.loc[sample] = tmp
 
