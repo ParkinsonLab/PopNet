@@ -20,6 +20,7 @@ import SecondaryCluster as sc
 
 from LoadInput import loadToPandas
 import Exporter as exporter
+from GenerateNNData import genNNData
 
 #import CytoscapeEncoder as exporter
 import ChromosomePainter as gc
@@ -109,6 +110,7 @@ def main(config_file_path):
 
     colorout_path = Path("colors.txt")
     log_path = Path("log.txt")
+    nn_out_path = Path("{0}_nn.tsv".format(prefix))
 
     hdf_path = input_path.parent / '{0}.h5'.format(prefix)
     matrices_hdf_path = input_path.parent / '{0}_matrices.h5'.format(prefix)
@@ -150,6 +152,7 @@ def main(config_file_path):
         io.writeTab(sample_list, tab_path) 
         #TODO: check for whether we're skipping primary clustering
         clusters, chr_names, chr_breaks = primaryCluster(df, sample_list, s1_params, logger)
+        genNNData(clusters, sample_list, nn_out_path)
         io.writePrimaryClusters(chr_names, chr_breaks, clusters, Path('pclusters.txt'))
         matrices = at.clustersToMatrix(clusters, sample_list)
         logger.info('Writing Save State')
@@ -157,8 +160,7 @@ def main(config_file_path):
 
         
 
-    #TODO: output the primary clustering stuff to hdf5
-       
+      
     overall_matrix = at.overallMatrix(matrices)
 
     logger.info('Start Secondary Clustering')
