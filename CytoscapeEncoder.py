@@ -133,7 +133,7 @@ def transformMatrix(npMatrix):
 #     transformedMatrix = (np.power(toFraction / highAverage, scalingFactor)) * maxValue
     
 #    transformedMatrix = np.power(toFraction, np.log(toFraction) * -1 * scalingFactor) * maxValue
-     transformedMatrix = toFraction
+    transformedMatrix = toFraction
     
     return transformedMatrix
     

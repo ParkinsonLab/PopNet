@@ -14,7 +14,7 @@ import string
 import re
 import copy
 
-groups = {}
+
 
 def loadGroups(file, strain):
     with open(file, 'r') as input_type:

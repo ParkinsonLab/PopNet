@@ -29,7 +29,8 @@ if __name__ == '__main__':
     import Chr_NexusEncoder as chrnex
     import os
     import similarity as sim
-    import CytoscapeEncoder as ce
+#    import CytoscapeEncoder as ce
+    import JSONEncoder as ce
     import GroupComposition as gc
     import ClusterPattern as cp
     import ParentFinder as pf
@@ -125,7 +126,8 @@ if __name__ == '__main__':
     perresultpath = outputDirectory + "/persistentResult.txt"
     permatrixpath = outputDirectory + "/persistentMatrix.txt"
     tabpath = outputDirectory + "/persistentMatrix.tab"
-    outpath = cytoscapeDirectory + "/cytoscape{0}.xgmml"
+#    outpath = cytoscapeDirectory + "/cytoscape{0}.xgmml"
+    outpath = cytoscapeDirectory + "/graph.json"
     tab_networkpath = cytoscapeDirectory + "/tabNetwork.tsv"
     matrixDirectory = cytoscapeDirectory + "/countMatrices"
     matrixoutpath = matrixDirectory + "/{0}.txt"
