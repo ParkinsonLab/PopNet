@@ -350,7 +350,7 @@ def aggregate(matrixList, organism):
 #          results[strain] = [(-30, 0, 'SPACER')]
         results[strain] = []
          
-    for chrName, chr in sorted(matrixList.items(), key=lambda x: cns.getValue(x[0], organism)):
+    for chrName, chr in sorted(matrixList.items(), key=lambda x: cns.getValue(x[0])):
         for strain, data in chr.items():
             results[strain] += [(-10, 0, 'SPACER')]
             results[strain] += data
