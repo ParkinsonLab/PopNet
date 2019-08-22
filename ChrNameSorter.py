@@ -8,6 +8,7 @@ Created on Aug 7, 2014
 you need to change the offsets for each dataSet!!!!!
 '''
 import re
+import string
 
 romanNumeralMap = (('X',  10),
                    ('IX', 9),
@@ -16,25 +17,35 @@ romanNumeralMap = (('X',  10),
                    ('I',  1),
                    ('M',  0))
 
-def getValue(name, mode):
+def getValue(name):
 
-    pattern = '.+_CHR(.+)'
-    
-    
-    endPattern = ".*[XIVM]$"
-    
-    tempValue = re.match(pattern, name.upper()).group(1)
-    
-    if re.match(endPattern, tempValue):
-        lastchar = None
+    name = name.upper()
+    pattern = '.+_(CHR[XIMV]+[ABCDE]?|[XIMV]+|[0-9]+[A-Z]?)(_.+|$)'
+    offset = 0
+     
+    section = re.search(pattern, name)
+
+    if section is None:
+        raise ValueError
     else:
-        lastchar = tempValue[-1]
-        tempValue = tempValue[:-1]
-        
-    value = romanToNum(tempValue)
-    offset = getOffSet(value, lastchar, mode)
-        
-    return value + offset
+        section = section.group(1)
+
+    #Removes CHR if applicable
+    if section.startswith('CHR'):
+        section = section[3:]
+    
+    #Removes suffix if applicable
+    if section[-1] in string.ascii_uppercase and section[-1] not in 'IXVM':
+        offset = string.ascii_uppercase.index(section[-1]) / 10.
+        section = section[:-1]
+    
+    #Try it as numeric, go for roman if it doesn't work.
+    try:
+        val = int(section) + offset
+    except ValueError:
+        val = romanToNum(section) + offset
+
+    return val
 
 def romanToNum(roman):
     result = 0
