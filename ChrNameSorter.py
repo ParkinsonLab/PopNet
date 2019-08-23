@@ -63,3 +63,8 @@ def romanToNum(roman):
             result += integer
             index += len(numeral)
     return result
+
+
+if __name__ == '__main__':
+    #testing
+    print(getValue('Pf3D7_13_v3'))

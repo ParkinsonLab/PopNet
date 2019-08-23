@@ -32,7 +32,7 @@ def group(similarity_matrix, tab_path, out_path, params, autogroup=False):
         chars = list(string.ascii_uppercase)
         m = len(chars)
 
-        if n <= m:
+        if n < m:
             return chars[n]
         else:
             return chars[int(n/m)] + chars[n % m]
@@ -124,8 +124,10 @@ def getMetricsWorker(ival, pival):
     cluster = mcl(mci_string, tab_path, ival, pival)
     label_dict = reduce(lambda x, y: {**x, **getLabels(y)}, [(i, e) for i, e in enumerate(cluster)], {})
     labels = [label_dict[label] for label in sample_list]
-
-    return (len(cluster), silhouette_score(matrix, labels, metric='precomputed'))
+    try:
+        return (len(cluster), silhouette_score(matrix, labels, metric='precomputed'))
+    except ValueError:
+        return (len(cluster), -1)
 
 def stepList(start, end, step, reverse=False):
     if start == end:
