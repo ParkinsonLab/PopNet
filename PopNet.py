@@ -158,9 +158,6 @@ def main(config_file_path):
         logger.info('Writing Save State')
         io.writeSaveState(s1_params, sample_list, chr_names, chr_breaks, matrices, save_state_path, matrices_hdf_path)
 
-        
-
-      
     overall_matrix = at.overallMatrix(matrices)
 
     logger.info('Start Secondary Clustering')

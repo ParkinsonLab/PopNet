@@ -67,4 +67,4 @@ def romanToNum(roman):
 
 if __name__ == '__main__':
     #testing
-    print(getValue('Pf3D7_13_v3'))
+    print(getValue('Pf3D7_06_v3'))

@@ -11,6 +11,7 @@ import multiprocessing as mp
 import numpy as np
 from functools import reduce
 from sklearn.metrics import silhouette_score
+from sklearn.preprocessing import normalize
 
 
 import matplotlib
@@ -32,7 +33,7 @@ def group(similarity_matrix, tab_path, out_path, params, autogroup=False):
         chars = list(string.ascii_uppercase)
         m = len(chars)
 
-        if n <= m:
+        if n < m:
             return chars[n]
         else:
             return chars[int(n/m)] + chars[n % m]
@@ -40,9 +41,10 @@ def group(similarity_matrix, tab_path, out_path, params, autogroup=False):
 
     sample_list = readTab(tab_path)
     mci_string = buildMatrix(similarity_matrix.values, sample_list)
+    norm_matrix = similarity_matrix.values[0,0] - similarity_matrix.values
 
     if autogroup:
-        params_to_use = optimize(similarity_matrix, tab_path, params)
+        params_to_use = optimize(norm_matrix, tab_path, params)
     else:
         params_to_use = params
     
@@ -60,7 +62,7 @@ def optimize(matrix, tab_path, params):
     #list of (ival, pival) from small to large
     sample_list = readTab(tab_path)
     params_to_try = []
-    i_list = stepList(params.getIMin(), params.getIMax(), params.getIStep(), reverse=True)
+    i_list = stepList(params.getIMin(), params.getIMax(), params.getIStep())
     pi_list = stepList(params.getPiMin(), params.getPiMax(), params.getPiStep())
     for x in i_list:
         for y in pi_list:
@@ -83,14 +85,11 @@ def optimize(matrix, tab_path, params):
     axis_labels = [('pI value', 'I value')] * 2
     graphHeatMap(output_name, matricies, extents, names, axis_labels, graph_title)
 
+
     #For silhouette, higher is better. return the best parameters
-    best = np.argmax(silhouette)
-    print(silhouette)
-    
-    ival, pival = params_to_try[best]
+    ival, pival = params_to_try[np.argmax(silhouette)]
     params.setIVal(ival)
     params.setPiVal(pival)
-    print('Optimization selected values I = {0}, pI = {1}'.format(ival, pival))
     print('Finished Optimization')
     return params
 
@@ -99,7 +98,7 @@ def getMetricsInit(_matrix, _tab_path, _sample_list):
     global tab_path
     global sample_list
     global mci_string
-    matrix = _matrix.values
+    matrix = _matrix
     tab_path = _tab_path 
     sample_list = _sample_list
     mci_string = buildMatrix(matrix, sample_list)
@@ -129,10 +128,12 @@ def getMetricsWorker(ival, pival):
     labels = [label_dict[label] for label in sample_list]
     try:
         score = silhouette_score(matrix, labels, metric='precomputed')
-    except ValueError:
+        # print("score for I = {0}, Pi = {1} is {2}".format(ival, pival, score))
+        return (len(cluster), silhouette_score(matrix, labels, metric='precomputed'))
+    except ValueError as e:
         score = -1
-
-    return (len(cluster), score)
+        # print("score for I = {0}, Pi = {1} is {2}".format(ival, pival, score))
+        return (len(cluster), -1)
 
 def stepList(start, end, step, reverse=False):
     if start == end:

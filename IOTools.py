@@ -166,7 +166,6 @@ def writeTabularPainting(composition, chrs, section_length, sample_list, path):
     with open(path, 'w') as output:
         output.write(makeLine(sample_list, 'CHR', 'POS'))
         for row in comp_array.T:
-
             if np.sum(row) <= 0:
                 try:
                     # print('Terminating at {0}'.format(row))

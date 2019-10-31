@@ -55,7 +55,6 @@ def createColorTable(groups, overall_clusters, sample_list):
     lum_sets = [[0.5], [0.75, 0.25], [0.75, 0.50, 0.25]]
 
     n_lums = int(np.ceil(n_groups / n_hue_pref))
-    print(n_lums)
     lums = lum_sets[n_lums - 1]
     
     n_hues = int(np.ceil(n_groups / n_lums))
