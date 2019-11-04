@@ -60,7 +60,7 @@ def optimize(matrix, tab_path, params):
     #list of (ival, pival) from small to large
     sample_list = readTab(tab_path)
     params_to_try = []
-    i_list = stepList(params.getIMin(), params.getIMax(), params.getIStep(), reverse=True)
+    i_list = stepList(params.getIMin(), params.getIMax(), params.getIStep())
     pi_list = stepList(params.getPiMin(), params.getPiMax(), params.getPiStep())
     for x in i_list:
         for y in pi_list:
@@ -83,14 +83,11 @@ def optimize(matrix, tab_path, params):
     axis_labels = [('pI value', 'I value')] * 2
     graphHeatMap(output_name, matricies, extents, names, axis_labels, graph_title)
 
+
     #For silhouette, higher is better. return the best parameters
-    best = np.argmax(silhouette)
-    print(silhouette)
-    
-    ival, pival = params_to_try[best]
+    ival, pival = params_to_try[np.argmax(metrics)]
     params.setIVal(ival)
     params.setPiVal(pival)
-    print('Optimization selected values I = {0}, pI = {1}'.format(ival, pival))
     print('Finished Optimization')
     return params
 
@@ -127,12 +124,8 @@ def getMetricsWorker(ival, pival):
     cluster = mcl(mci_string, tab_path, ival, pival)
     label_dict = reduce(lambda x, y: {**x, **getLabels(y)}, [(i, e) for i, e in enumerate(cluster)], {})
     labels = [label_dict[label] for label in sample_list]
-    try:
-        score = silhouette_score(matrix, labels, metric='precomputed')
-    except ValueError:
-        score = -1
 
-    return (len(cluster), score)
+    return (len(cluster), silhouette_score(matrix, labels, metric='precomputed'))
 
 def stepList(start, end, step, reverse=False):
     if start == end:
