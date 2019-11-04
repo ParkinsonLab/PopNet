@@ -12,7 +12,6 @@ import numpy as np
 from functools import reduce
 from sklearn.metrics import silhouette_score
 
-
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.figure as figure
@@ -85,7 +84,7 @@ def optimize(matrix, tab_path, params):
 
 
     #For silhouette, higher is better. return the best parameters
-    ival, pival = params_to_try[np.argmax(metrics)]
+    ival, pival = params_to_try[np.argmax(silhouette)]
     params.setIVal(ival)
     params.setPiVal(pival)
     print('Finished Optimization')
@@ -96,7 +95,7 @@ def getMetricsInit(_matrix, _tab_path, _sample_list):
     global tab_path
     global sample_list
     global mci_string
-    matrix = _matrix.values
+    matrix = _matrix
     tab_path = _tab_path 
     sample_list = _sample_list
     mci_string = buildMatrix(matrix, sample_list)
@@ -124,8 +123,14 @@ def getMetricsWorker(ival, pival):
     cluster = mcl(mci_string, tab_path, ival, pival)
     label_dict = reduce(lambda x, y: {**x, **getLabels(y)}, [(i, e) for i, e in enumerate(cluster)], {})
     labels = [label_dict[label] for label in sample_list]
-
-    return (len(cluster), silhouette_score(matrix, labels, metric='precomputed'))
+    try:
+        score = silhouette_score(matrix, labels, metric='precomputed')
+        # print("score for I = {0}, Pi = {1} is {2}".format(ival, pival, score))
+        return (len(cluster), silhouette_score(matrix, labels, metric='precomputed'))
+    except ValueError as e:
+        score = -1
+        # print("score for I = {0}, Pi = {1} is {2}".format(ival, pival, score))
+        return (len(cluster), -1)
 
 def stepList(start, end, step, reverse=False):
     if start == end:
