@@ -46,7 +46,7 @@ def group(similarity_matrix, tab_path, out_path, params, logger, autogroup=False
     else:
         params_to_use = params
 
-    logger.info('params used are: I = {0}, pI = {1}, SL = {2}'.format(params_to_use.getIVal(), params_to_use.getPiVal(), params_to_use.getSectionLength()))
+    logger.info('params used are: I = {0}, pI = {1}'.format(params_to_use.getIVal(), params_to_use.getPiVal()))
     
     cluster = mcl(mci_string, tab_path, params_to_use.getIVal(), params_to_use.getPiVal())
     names = [getGroupName(n) for n in range(len(cluster))]
