@@ -161,7 +161,7 @@ def main(config_file_path):
     overall_matrix = at.overallMatrix(matrices)
 
     logger.info('Start Secondary Clustering')
-    group_names, overall_clusters = sc.group(overall_matrix, tab_path, group_path, s2_params, autogroup)
+    group_names, overall_clusters = sc.group(overall_matrix, tab_path, group_path, s2_params, logger, autogroup)
             
     color_table = at.createColorTable(group_names, overall_clusters, sample_list)
     color_table.to_csv(colorout_path)
