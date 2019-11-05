@@ -87,7 +87,7 @@ def optimize(matrix, tab_path, params):
 
     #For silhouette, higher is better. return the best parameters
     best = np.argmax(silhouette)
-    print(silhouette)
+    print(np.around(silhouette), best, silhouette[best])
     
     ival, pival = params_to_try[best]
     params.setIVal(ival)
