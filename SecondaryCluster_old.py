@@ -11,8 +11,6 @@ import multiprocessing as mp
 import numpy as np
 from functools import reduce
 from sklearn.metrics import silhouette_score
-from sklearn.preprocessing import normalize
-
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -33,7 +31,7 @@ def group(similarity_matrix, tab_path, out_path, params, autogroup=False):
         chars = list(string.ascii_uppercase)
         m = len(chars)
 
-        if n < m:
+        if n <= m:
             return chars[n]
         else:
             return chars[int(n/m)] + chars[n % m]
@@ -41,10 +39,9 @@ def group(similarity_matrix, tab_path, out_path, params, autogroup=False):
 
     sample_list = readTab(tab_path)
     mci_string = buildMatrix(similarity_matrix.values, sample_list)
-    norm_matrix = similarity_matrix.values[0,0] - similarity_matrix.values
 
     if autogroup:
-        params_to_use = optimize(norm_matrix, tab_path, params)
+        params_to_use = optimize(similarity_matrix, tab_path, params)
     else:
         params_to_use = params
     

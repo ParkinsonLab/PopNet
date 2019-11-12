@@ -21,7 +21,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 from IOTools import mcl, readTab, buildMatrix, writeGroup
 
-def group(similarity_matrix, tab_path, out_path, params, autogroup=False):
+def group(similarity_matrix, tab_path, out_path, params, logger, autogroup=False):
 
     def getGroupName(n):
         '''
@@ -45,6 +45,8 @@ def group(similarity_matrix, tab_path, out_path, params, autogroup=False):
         params_to_use = optimize(similarity_matrix, tab_path, params)
     else:
         params_to_use = params
+
+    logger.info('params used are: I = {0}, pI = {1}'.format(params_to_use.getIVal(), params_to_use.getPiVal()))
     
     cluster = mcl(mci_string, tab_path, params_to_use.getIVal(), params_to_use.getPiVal())
     names = [getGroupName(n) for n in range(len(cluster))]
@@ -85,7 +87,8 @@ def optimize(matrix, tab_path, params):
 
     #For silhouette, higher is better. return the best parameters
     best = np.argmax(silhouette)
-    print(silhouette)
+    print(np.around(sil_matrix, 2), best, silhouette[best])
+    print(params_to_try)
     
     ival, pival = params_to_try[best]
     params.setIVal(ival)
