@@ -74,7 +74,7 @@ def primaryCluster(df, sample_list, cluster_params, logger):
     #slicing and handing out jobs
     global df_chr_global
     for chr_name, df_chr_global in df.groupby(level=0, sort=False):
-        with Pool(processes = None, initializer=mclInit, initargs=(sample_list, tab_path, ival, pival)) as pool:
+        with Pool(processes = 4, initializer=mclInit, initargs=(sample_list, tab_path, ival, pival)) as pool:
             print(chr_name)
             chr_names.append(chr_name)
 
@@ -157,7 +157,7 @@ def mclWorker(i, section_pos_list):
 
         return groups
     except:
-        print('oh no an error in {0}'.format(os.getpid()))
+        print('mcl worker crashed in {0}'.format(os.getpid()))
 
 
     

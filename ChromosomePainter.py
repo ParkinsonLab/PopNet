@@ -35,7 +35,7 @@ def condenseToGroupMatrix(dfs, group_names, overall_clusters, sample_list):
     implements the logic of determining whether a sample belong to a group
     within one block
     '''
-    with mp.Pool(processes=None, initializer=condenseInit, initargs=(group_names, overall_clusters, sample_list)) as pool:
+    with mp.Pool(processes=4, initializer=condenseInit, initargs=(group_names, overall_clusters, sample_list)) as pool:
         res = pool.map(condenseWorker, dfs, chunksize=5)
 
     return res
@@ -103,7 +103,7 @@ def getChromosomePaintings(matrices, breaks, overall_clusters, group_names, samp
     MAX_SCORE = 40
     PENALTY = -8
 
-    with mp.Pool(processes=None, initializer=paintWorkerInit, initargs=(matrices, breaks, overall_clusters, group_names, sample_list, MAX_SCORE, PENALTY)) as pool:
+    with mp.Pool(processes=4, initializer=paintWorkerInit, initargs=(matrices, breaks, overall_clusters, group_names, sample_list, MAX_SCORE, PENALTY)) as pool:
         res = pool.map(paintWorker, sample_list, chunksize=5)
 
     return res
@@ -236,7 +236,7 @@ def paintWorker(sample):
 outputs the whole graph to tabular format
 input_type should bear the format {chr: strain, [(start, end, group)]}'''
 def tab_output(composition, samplelist, colortable, blocksize, outpath):
-    import CytoscapeEncoder as ce
+    import Exporter as ce
     import copy
     samplelist = sorted(samplelist)
     matrix = copy.deepcopy(composition)
