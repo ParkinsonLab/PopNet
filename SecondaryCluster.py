@@ -32,7 +32,7 @@ def group(similarity_matrix, tab_path, out_path, params, logger, autogroup=False
         chars = list(string.ascii_uppercase)
         m = len(chars)
 
-        if n <= m:
+        if n < m:
             return chars[n]
         else:
             return chars[int(n/m)] + chars[n % m]
@@ -87,8 +87,6 @@ def optimize(matrix, tab_path, params):
 
     #For silhouette, higher is better. return the best parameters
     best = np.argmax(silhouette)
-    print(np.around(sil_matrix, 2), best, silhouette[best])
-    print(params_to_try)
     
     ival, pival = params_to_try[best]
     params.setIVal(ival)
