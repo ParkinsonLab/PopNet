@@ -152,7 +152,7 @@ def main(config_file_path):
         io.writeTab(sample_list, tab_path) 
         #TODO: check for whether we're skipping primary clustering
         clusters, chr_names, chr_breaks = primaryCluster(df, sample_list, s1_params, logger)
-        genNNData(clusters, sample_list, nn_out_path)
+        genNNData(clusters, chr_names, chr_breaks, s1_params, sample_list, nn_out_path)
         io.writePrimaryClusters(chr_names, chr_breaks, clusters, Path('pclusters.txt'))
         matrices = at.clustersToMatrix(clusters, sample_list)
         logger.info('Writing Save State')
