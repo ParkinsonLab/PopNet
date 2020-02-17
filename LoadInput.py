@@ -48,7 +48,7 @@ def loadToPandas(hdf_path, tsv_path, reference, parameters, filtering=True):
 
         #fix index
         df = toMultiIndex(df_filtered)
-    
+
         #writeout
         df.reset_index().to_hdf(hdf_path, key='genome', format="table")#move to the end
     
