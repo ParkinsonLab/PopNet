@@ -22,7 +22,7 @@ def loadToPandas(hdf_path, tsv_path, reference, parameters, filtering=True):
     
     #load df. tries to get hdf first. Otherwise go to tsv and write a feather file.
     try:
-        df = pandas.read_hdf(hdf_path, key='genome')
+        df = toMultiIndex(pandas.read_hdf(hdf_path, key='genome'))
     except:
         df = pandas.read_csv(tsv_path, sep='\t')
         #position as int
@@ -46,21 +46,21 @@ def loadToPandas(hdf_path, tsv_path, reference, parameters, filtering=True):
         else:
             df_filtered = df
 
-        #multiindex
-        chrs = sortNames(list(set(df_filtered['CHROM'])))
-        cat = pandas.Categorical(df_filtered['CHROM'], chrs)
-        df_filtered.loc[:,'CHROM'] = cat
-        df_filtered = df_filtered.set_index(['CHROM', 'POS'])
-
-
-        df_filtered.sort_index(0, ['CHROM', 'POS'], ascending=True, inplace=True)
-        
-        
+        #fix index
+        df = toMultiIndex(df_filtered)
+    
         #writeout
-        df = df_filtered
-        df.to_hdf(hdf_path, key='genome')#move to the end
+        df.reset_index().to_hdf(hdf_path, key='genome', format="table")#move to the end
     
     return df, list(df.columns)
+
+def toMultiIndex(original_df):
+    chrs = sortNames(list(dict.fromkeys(list((original_df['CHROM'])))))
+    cat = pandas.Categorical(original_df['CHROM'], chrs)
+    original_df.loc[:,'CHROM'] = cat
+    res = original_df.set_index(['CHROM', 'POS'])
+    res.sort_index(0, ['CHROM', 'POS'], ascending=True, inplace=True)
+    return res
 
 def filter(x):
     '''
