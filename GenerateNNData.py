@@ -27,7 +27,10 @@ def genNNData(clusters, chr_names, chr_breaks, s1_params, sample_list, out_path)
         c = b
 
     df = pd.DataFrame(res, columns = sample_list, index = idx)
-    df.T.to_csv(out_path, sep='\t', header=False)
+    print(df)
+    print(idx)
+
+    df.T.to_csv(out_path, sep='\t', header=True)
 
 if __name__ == "__main__":
     #TESTING ONLY
