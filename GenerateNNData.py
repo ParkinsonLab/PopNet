@@ -19,17 +19,13 @@ def genNNData(clusters, chr_names, chr_breaks, s1_params, sample_list, out_path)
     sl = s1_params.getSectionLength()
     c = 0
     idx = []
-    itr = iter(clusters)
     for i, chr in enumerate(chr_names):
         b = chr_breaks[i]
         for x in range(c, b):
-            idx.append((chr, sl * x))
+            idx.append("{0}:{1}".format(chr, int(sl * x)))
         c = b
 
     df = pd.DataFrame(res, columns = sample_list, index = idx)
-    print(df)
-    print(idx)
-
     df.T.to_csv(out_path, sep='\t', header=True)
 
 if __name__ == "__main__":
