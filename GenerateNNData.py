@@ -21,8 +21,8 @@ def genNNData(clusters, chr_names, chr_breaks, s1_params, sample_list, out_path)
     idx = []
     for i, chr in enumerate(chr_names):
         b = chr_breaks[i]
-        for x in range(c, b):
-            idx.append("{0}:{1}".format(chr, int(sl * x)))
+        for j, x in enumerate(range(c, b)):
+            idx.append("{0}:{1}".format(chr, int(sl * j)))
         c = b
 
     df = pd.DataFrame(res, columns = sample_list, index = idx)
