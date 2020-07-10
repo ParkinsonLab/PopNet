@@ -75,7 +75,7 @@ def primaryCluster(df, sample_list, cluster_params, logger):
     #slicing and handing out jobs
     global df_chr_global
     for chr_name, df_chr_global in df.groupby(level=0, sort=False):
-        with Pool(processes = int(cpu_count / 2), initializer=mclInit, initargs=(sample_list, tab_path, ival, pival)) as pool:
+        with Pool(processes = int(cpu_count() / 2), initializer=mclInit, initargs=(sample_list, tab_path, ival, pival)) as pool:
             print(chr_name)
             chr_names.append(chr_name)
 
