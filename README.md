@@ -52,16 +52,18 @@ output folder, which may be useful for extracting particular bits of information
 ### Input Requirements
 
 PopNet now expects a tab separated SNP table, formatted as:
-
-\#CHROM	POS	SAMPLE1	SAMPLE2	...  
+```
+#CHROM	POS	SAMPLE1	SAMPLE2	...  
 XX_CHRI	1	A	T	...  
 XX_CHRI	2	G	C	...  
+```
 
 PopNet expects that all individual genomes to be aligned to a common reference. In other words, that the coordinates
 in each genome refers to the same location. In addition, all chromosome names should be in the format:
+```
 	XX_ChrI
 	XX_ChrXIV
-
+```
 ### Configuration File
 
 PopNet requires a configuration file that includes the output directory, input path, clustering parameters, segment length,
