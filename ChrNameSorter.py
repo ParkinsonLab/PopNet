@@ -4,10 +4,9 @@ Created on Aug 7, 2014
 @author: javi
 '''
 '''sorts chr names
-
-you need to change the offsets for each dataSet!!!!!
 '''
 import re
+import string
 
 romanNumeralMap = (('X',  10),
                    ('IX', 9),
@@ -16,25 +15,45 @@ romanNumeralMap = (('X',  10),
                    ('I',  1),
                    ('M',  0))
 
-def getValue(name, mode):
+def sortNames(chr_names):
+    '''
+    main sort function
+    '''
 
-    pattern = '.+_CHR(.+)'
-    
-    
-    endPattern = ".*[XIVM]$"
-    
-    tempValue = re.match(pattern, name.upper()).group(1)
-    
-    if re.match(endPattern, tempValue):
-        lastchar = None
+    try:
+        return sorted(chr_names, key=lambda x: getValue(x))
+    except ValueError:
+        return chr_names
+
+def getValue(name):
+
+    name = name.upper()
+    pattern = '.+_(CHR[XIMV]+[ABCDE]?|[XIMV]+|[0-9]+[A-Z]?)(_.+|$)'
+    offset = 0
+     
+    section = re.search(pattern, name)
+
+    if section is None:
+        raise ValueError
     else:
-        lastchar = tempValue[-1]
-        tempValue = tempValue[:-1]
-        
-    value = romanToNum(tempValue)
-    offset = getOffSet(value, lastchar, mode)
-        
-    return value + offset
+        section = section.group(1)
+
+    #Removes CHR if applicable
+    if section.startswith('CHR'):
+        section = section[3:]
+    
+    #Removes suffix if applicable
+    if section[-1] in string.ascii_uppercase and section[-1] not in 'IXVM':
+        offset = string.ascii_uppercase.index(section[-1]) / 10.
+        section = section[:-1]
+    
+    #Try it as numeric, go for roman if it doesn't work.
+    try:
+        val = int(section) + offset
+    except ValueError:
+        val = romanToNum(section) + offset
+
+    return val
 
 def romanToNum(roman):
     result = 0
@@ -45,33 +64,7 @@ def romanToNum(roman):
             index += len(numeral)
     return result
 
-    
-def getOffSet(num, letter, mode):
-#     #for plasmo and yeast
-#     offsetList = {}
-#     letterValue = {}
-
-    if mode == 'toxoplasma':
-        offsetList = {1: 1, 7: 1}
-        letterValue = {"A": 0, "B": 1, "C": 2}
-    elif mode == 'yeast' or mode == 'plasmodium' or mode == 'strep':
-        offsetList = {}
-        letterValue = {}
-    else:
-        raise TypeError('Unknown type for chr translation')
-    
-    offset = 0
-    for chr, value in offsetList.items():
-        if num > chr:
-            offset += value
-    
-    if letter:
-        offset += letterValue[letter]
-        
-    return offset
 
 if __name__ == '__main__':
-    a = "@PF3D7_CHRIV"
-#    b = "@TGME49_CHRVIIA"
-    print(getValue(a))
-#    print(getValue(b))
+    #testing
+    print(getValue('Pf3D7_06_v3'))
