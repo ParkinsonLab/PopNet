@@ -68,6 +68,7 @@ PopNet requires a configuration file that includes the output directory, input p
 and whether to use the autogroup feature.
 
 Requirements:
+```
 output_directory=/path/to/outputdirectory
 input_path=/path/to/input/file
 reference=name_of_reference #this is relevant only if the first sample in your SNP table is called REF. Otherwise put 'None'
@@ -77,7 +78,7 @@ S1_piVal=(float) #between 1 and 20. Should be 19 unless you're sure.
 S2_iVal=(float) #between 1 and 20. Default is 4.
 S2_piVal(float) #between 1 and 20. Default is 1.5.
 autogrouop=(True/False) #the autogroup feature will ignore your S2_iVal/piVal and determine it based on Silhouette coefficient. 
-
+```
 ### Output
 
 Output files are generated at the location specified in the config file, and are always named the same way.
@@ -88,33 +89,34 @@ The key file for network visualization is located at:
 where name is the name of your input file. 
 
 Other potentially helpful output include:
-	Heatmaps.pdf               Metrics to help you decide on the Inflation (I) and Pre-inflation (pI) parameters for 
-	                           secondary clustering. Only created if autogroup = True in config.  
+```
+Heatmaps.pdf               Metrics to help you decide on the Inflation (I) and Pre-inflation (pI) parameters for 
+			   secondary clustering. Only created if autogroup = True in config.  
 
-	log.txt                    A log file that includes all the run parameters  
+log.txt                    A log file that includes all the run parameters  
 
-	overall_similarity.tsv     The raw matrix used in secondary clustering. Derived from the co-clustring frequency of samples.  
+overall_similarity.tsv     The raw matrix used in secondary clustering. Derived from the co-clustring frequency of samples.  
 
-	pclusters.txt              The clustering results of each individual chromosome segment during primary clustering  
+pclusters.txt              The clustering results of each individual chromosome segment during primary clustering  
 
-	results.txt                A tab-delimited file containing all the SNPs used  
+results.txt                A tab-delimited file containing all the SNPs used  
 
-	chromosome_painting.tsv    A tab-delimited file containing all chromosome paintings in the network.  
-
+chromosome_painting.tsv    A tab-delimited file containing all chromosome paintings in the network.  
+```
 The remaining files are either intermediate files or for debug purposes.
 
 ### Visualization
 ```
-	Start Cytoscape
-	Install the enhancedGraphics plugin if not installed
-	Select 'Import Network from File'
-	Find and Select 'cytoscapeGenome.xgmml' described in the Output section
-	Select Layout -> Profuse Force Directed Layout or another of your choice
-	In the Control Panel -> Style -> Properties -> Paint -> Custom Paint 1 select Image/Chart 1
-	Image/Chart 1 will now be in the list of properties
-	Under Image/chart 1, set Column = Gradient, Mapping Type = Passthrough Mapping
-	The chromosome paintings will now be visible
-	Adjust other visual properties as needed
+Start Cytoscape
+Install the enhancedGraphics plugin if not installed
+Select 'Import Network from File'
+Find and Select 'cytoscapeGenome.xgmml' described in the Output section
+Select Layout -> Profuse Force Directed Layout or another of your choice
+In the Control Panel -> Style -> Properties -> Paint -> Custom Paint 1 select Image/Chart 1
+Image/Chart 1 will now be in the list of properties
+Under Image/chart 1, set Column = Gradient, Mapping Type = Passthrough Mapping
+The chromosome paintings will now be visible
+Adjust other visual properties as needed
 ```
 
 ### Examples
@@ -127,10 +129,10 @@ First, edit the example_config.txt file to change the input_path and output_dire
 
 Then:
 ```
-	cd PopNet
-	python3 PopNet.py examples/example_config.txt
-	Open Cytoscape
-	Select 'Import Network from File'
-	Find and Select the xgmml file generated at your output location
-	Follow subsequent steps described in Visualization to visualize
+cd PopNet
+python3 PopNet.py examples/example_config.txt
+Open Cytoscape
+Select 'Import Network from File'
+Find and Select the xgmml file generated at your output location
+Follow subsequent steps described in Visualization to visualize
 ```
