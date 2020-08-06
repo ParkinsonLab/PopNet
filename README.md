@@ -61,8 +61,8 @@ XX_CHRI	2	G	C	...
 PopNet expects that all individual genomes to be aligned to a common reference. In other words, that the coordinates
 in each genome refers to the same location. In addition, all chromosome names should be in the format:
 ```
-	XX_ChrI
-	XX_ChrXIV
+XX_ChrI
+XX_ChrXIV
 ```
 ### Configuration File
 
