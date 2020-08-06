@@ -1,14 +1,23 @@
-###Getting started
+### Notice
 
-Try the new browser-based PopNetD3 at www.compsysbio.org/popnetd3
+I've recently moved the nn branch to master. There has been a significant upgrades to the software since publication, so please read through this readme file. 
+
+I encourage you to use the browser-based version at [www.compsysbio.org/popnetd3](www.compsysbio.org/popnetd3). It runs this program in the backend on our server, thereby saving you both the trouble and the resources. If you have any questions regarding either this program or the browser-based version, please contact me at [javi.zhang@mail.utoronto.ca](mailto:javi.zhang@mail.utoronto.ca). 
+
+Another advantage of the browser version is that the visualizer can handle more samples. I find that cytoscape is slow at rendering chromosome paintings at more than 20 samples, while the online visualizer can handle up to 200. 
+
+Finally, 700 samples with 150k positions each appear to be the upper limit for a typical desktop with 32G of RAM. If your dataset is bigger, I would recommend using a high-performance computing resource. 
+
+
+### Getting started
+
+Try the new browser-based PopNetD3 at [www.compsysbio.org/popnetd3](www.compsysbio.org/popnetd3)
 
 Submit jobs to be run on our server, and view your results right in the browser!
 
-PopNet is available at: www.compsysbio.org/popnet
-
 Requirements:
 	Operating System:
-		Ubuntu 14.04 or equivalent Linux-based OS
+		Ubuntu or equivalent Linux-based OS
 
 	Dependencies:
 		Python 3.6.5 or later
@@ -17,7 +26,7 @@ Requirements:
 			- Matplotlib
 			- Scikit-learn 
 			- Pandas
-		MCL (available from http://micans.org/mcl/)
+		MCL (available from [http://micans.org/mcl/](http://micans.org/mcl))
 	
 	Visualization:
 		Cytoscape 2.7.0 or later (available from www.cytoscape.org/)
@@ -29,7 +38,7 @@ Quick Start:
 	cd /path/to/popnet/folder
 	python PopNet.py /path/to/config/file
 
-###Introduction
+### Introduction
 
 PopNet is a set of Python scripts that generates a XGMML file to be visualized in Cytoscape as well as a json file that can be viewed on popnetd3. 
 The scripts are run by executing the runner script, PopNet.py, with the path to a configuration file as argument. All configurable
@@ -50,7 +59,7 @@ in each genome refers to the same location. In addition, all chromosome names sh
 	XX_ChrI
 	XX_ChrXIV
 
-###Configuration File
+### Configuration File
 
 PopNet requires a configuration file that includes the output directory, input path, clustering parameters, segment length,
 and whether to use the autogroup feature.
@@ -66,34 +75,32 @@ S2_iVal=(float) #between 1 and 20. Default is 4.
 S2_piVal(float) #between 1 and 20. Default is 1.5.
 autogrouop=(True/False) #the autogroup feature will ignore your S2_iVal/piVal and determine it based on Silhouette coefficient. 
 
-###Output
+### Output
 
 Output files are generated at the location specified in the config file, and are always named the same way.
 
 The key file for network visualization is located at:
-	/path/to/results/cytoscape/cytoscapeGenome.xgmml
+	/path/to/results/name.xgmml
+
+where name is the name of your input file. 
 
 Other potentially helpful output include:
 	Heatmaps.pdf               Metrics to help you decide on the Inflation (I) and Pre-inflation (pI) parameters for 
-	                           secondary clustering
+	                           secondary clustering. Only created if autogroup = True in config. 
 
 	log.txt                    A log file that includes all the run parameters
 
-	Genome_nexus.nex           A neighbor-net of the population
+	overall_similarity.tsv     The raw matrix used in secondary clustering. Derived from the co-clustring frequency of samples.
 
-	groups.txt.mci             The raw matrix used in secondary clustering. You can quickly try out the effects of
-	                           different I and pI values.
-
-	persistentResult.txt       The clustering results of each individual chromosome segment during primary clustering
+	pclusters.txt              The clustering results of each individual chromosome segment during primary clustering
 
 	results.txt                A tab-delimited file containing all the SNPs used
 
-	/cytoscape/tabNetwork.tsv  A tab-delimited file containing all chromosome paintings in the network. Useful for
-	                           focusing on specific locations on the genome.	
+	chromosome_painting.tsv    A tab-delimited file containing all chromosome paintings in the network.
 
 The remaining files are either intermediate files or for debug purposes.
 
-###Visualization
+### Visualization
 
 	Start Cytoscape
 	Install the enhancedGraphics plugin if not installed
@@ -107,34 +114,18 @@ The remaining files are either intermediate files or for debug purposes.
 	Adjust other visual properties as needed
 
 
-###Additional Diagnostics
+### Examples
 
-The NodeSummary.py script, included in the PopNet directory, is able to generate stacked bar graphs (similar those seen in supplemental figure 2) to aid in the determination of parameters such as section length and gap penalty. Currently, the script has not been optimized for user experience, and requires some direct editing by the user.
-
-The first step is to run PopNet once under each of the condition being compared (i.e. with section length = 2000, 4000, 6000.. etc), and **saving the resulting xgmml as IXXPIXXSXXXX.xgmml**, where the first two 'XX' are the I and PI values used multiplied by 10, and the 'XXXX' following S is the value of the variable parameter. (i.e. if section length is being varied, and the run is done with I = 4, PI = 1.5, Section length = 8000, the file should be saved as I40PI15S8000.xgmml). All the numerical values need to be integers. If the file is not in this format it would not be recognized by NodeSummary.py.  
-
-Place the generated xgmml files into a folder. This is the directory to be specified in the NodeSummary.py. Open NodeSummary.py, and go to the main function at the bottom. The parameters to be specified include the directory containing the input files, title of the graph, axis titles, the output file's name, and the bins. The bins control the size of the features represented by each stack on the stacked bar graph. If all the features are fall into the same stack (e.g. because they are too large or small), the bins can be adjusted to offer better resolution. Please note that the script only looks at recombinant features (i.e. regions where a sample has inherited genes from an ancestry other than its own). 
-
-Run the script to generate the graph. The output file will be placed in the directory of the input files. 
-
-###Examples
-
-Two example datasets are provided, one for yeast in .SNPs format and one for toxoplasma in tabular format. Note that either format can be used for any species, the examples simply give two different species in two formats.
-
-The two example configuration scripts can be used to analyze the example datasets. 
+The examples include a data set, toxo20.txt, and a config file, example_config.txt. 
 
 To run the yeast example:
 
-First, edit the Example_Config_Yeast file to change the base_directory and output_directory to the absolute path of /examples/Nucmer and /examples/Nucmer/output on your computer. The prefilled default serves to illustrate the format, and will not work.
+First, edit the example_config.txt file to change the input_path and output_directory to the absolute path of /examples/toxo20.txt and a desired output location on your computer. The prefilled default serves to illustrate the format, and will not work.
 
 Then:
 	cd PopNet
-	python scripts/FullRunner.py Example_Config_Yeast.txt
+	python3 PopNet.py examples/example_config.txt
 	Open Cytoscape
 	Select 'Import Network from File'
-	Find and Select /examples/Nucmer/output/cytoscape/cytoscapeGenome.xgmml
+	Find and Select the xgmml file generated at your output location
 	Follow subsequent steps described in Visualization to visualize
-
-A similar procedure can be used to run the Toxoplasma dataset using Example_Config_Toxo.txt and /examples/Tabular/Toxo20.txt
-
-Pregenerated results are already placed in the coresponding /output folders for reference.
