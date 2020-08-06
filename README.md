@@ -1,4 +1,4 @@
-### Notice
+### Welcome
 
 I've recently moved the nn branch to master. There has been a significant upgrades to the software since publication, so please read through this readme file. 
 
