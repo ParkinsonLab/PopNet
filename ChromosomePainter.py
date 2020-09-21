@@ -182,7 +182,7 @@ def paintWorker(sample):
         data[data == 0] = penalty
 
         #put a black thing as the beginning
-        segments = [(10, -1)]
+        segments = [] #no spacer
         c = 0 #cutoff
         i = 0 #iterator
         for b in breaks:
@@ -222,7 +222,7 @@ def paintWorker(sample):
                 # print(sample, c, i)
                 assignment = np.argmax(score)
                 segments.append((i - c, assignment))
-                segments.append((1, -1))
+                # segments.append((1, -1)) #no spacer
                 c = i
 
         
